@@ -511,6 +511,10 @@ class Traffic(Entity):
         self.lon = self.lon + np.degrees(bs.sim.simdt * self.gseast / self.coslat / Rearth)
         self.distflown += self.gs * bs.sim.simdt
 
+    def update_fromfile(self):
+
+        pass
+
     def id2idx(self, acid):
         """Find index of aircraft id"""
         if not isinstance(acid, str):
