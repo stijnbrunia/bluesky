@@ -3,6 +3,8 @@ import math
 import os
 import traceback
 import bluesky as bs
+import pandas as pd
+import numpy as np
 from bluesky.stack.stackbase import Stack, stack, checkscen, forward
 from bluesky.stack.cmdparser import Command, command
 from bluesky.stack.basecmds import initbasecmds
@@ -145,36 +147,46 @@ def readscn(fname):
     # The entire filename, possibly with added path and extension
     fname_full = os.path.normpath(base + ext)
 
-    with open(fname_full, "r") as fscen:
-        prevline = ''
-        for line in fscen:
-            line = line.strip()
-            # Skip emtpy lines and comments
-            if len(line) < 12 or line[0] == "#":
-                continue
-            line = prevline + line
+    if ext == '.csv':
+        bs.traf.vemmis_simt = np.genfromtxt(fname_full, delimiter=';', usecols=[0], skip_header=1)
+        bs.traf.vemmis_id = np.genfromtxt(fname_full, delimiter=';', usecols=[1], skip_header=1, dtype=str)
+        bs.traf.vemmis_lat = np.genfromtxt(fname_full, delimiter=';', usecols=[2], skip_header=1)
+        bs.traf.vemmis_lon = np.genfromtxt(fname_full, delimiter=';', usecols=[3], skip_header=1)
+        bs.traf.vemmis_alt = np.genfromtxt(fname_full, delimiter=';', usecols=[4], skip_header=1)
+        bs.traf.vemmis_hdg = np.genfromtxt(fname_full, delimiter=';', usecols=[5], skip_header=1)
+        bs.traf.vemmis_spd = np.genfromtxt(fname_full, delimiter=';', usecols=[6], skip_header=1)
 
-            # Check for line continuation
-            if line[-1] == '\\':
-                prevline = f'{line[:-1].strip()} '
-                continue
+    else:
+        with open(fname_full, "r") as fscen:
             prevline = ''
+            for line in fscen:
+                line = line.strip()
+                # Skip emtpy lines and comments
+                if len(line) < 12 or line[0] == "#":
+                    continue
+                line = prevline + line
 
-            # Try reading timestamp and command
-            try:
-                icmdline = line.index(">")
-                tstamp = line[:icmdline]
-                ttxt = tstamp.strip().split(":")
-                ihr = int(ttxt[0]) * 3600.0
-                imin = int(ttxt[1]) * 60.0
-                xsec = float(ttxt[2])
-                cmdtime = ihr + imin + xsec
+                # Check for line continuation
+                if line[-1] == '\\':
+                    prevline = f'{line[:-1].strip()} '
+                    continue
+                prevline = ''
 
-                yield (cmdtime, line[icmdline + 1:].strip("\n"))
-            except (ValueError, IndexError):
-                # nice try, we will just ignore this syntax error
-                if not (len(line.strip()) > 0 and line.strip()[0] == "#"):
-                    print("except this:" + line)
+                # Try reading timestamp and command
+                try:
+                    icmdline = line.index(">")
+                    tstamp = line[:icmdline]
+                    ttxt = tstamp.strip().split(":")
+                    ihr = int(ttxt[0]) * 3600.0
+                    imin = int(ttxt[1]) * 60.0
+                    xsec = float(ttxt[2])
+                    cmdtime = ihr + imin + xsec
+
+                    yield (cmdtime, line[icmdline + 1:].strip("\n"))
+                except (ValueError, IndexError):
+                    # nice try, we will just ignore this syntax error
+                    if not (len(line.strip()) > 0 and line.strip()[0] == "#"):
+                        print("except this:" + line)
 
 
 @command(aliases=('CALL',), brief="PCALL filename [REL/ABS/args]")

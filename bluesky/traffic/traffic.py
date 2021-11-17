@@ -17,6 +17,7 @@ from bluesky.tools import geo
 from bluesky.tools.misc import latlon2txt, angleFromCoordinate
 from bluesky.tools.aero import cas2tas, casormach2tas, fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
+from bluesky.traffic.vemmis import update_radardata
 
 
 from bluesky.traffic.asas import ConflictDetection, ConflictResolution
@@ -80,6 +81,15 @@ class Traffic(Entity):
         self.wind = WindSim()
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
+
+        self.vemmis_simt = np.array([])
+        self.vemmis_id = np.array([])
+        self.vemmis_lat = np.array([])
+        self.vemmis_lon = np.array([])
+        self.vemmis_alt = np.array([])
+        self.vemmis_hdg = np.array([])
+        self.vemmis_spd = np.array([])
+        self.vemmis_cre = np.array([])
 
         with self.settrafarrays():
             # Aircraft Info
@@ -395,6 +405,7 @@ class Traffic(Entity):
         self.ntraf = len(self.lat)
         return True
 
+    #@vemmis.update_radardata
     def update(self):
         # Update only if there is traffic ---------------------
         if self.ntraf == 0:
