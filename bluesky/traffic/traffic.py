@@ -82,14 +82,17 @@ class Traffic(Entity):
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
 
+        # Vemmis data
         self.vemmis_simt = np.array([])
         self.vemmis_id = np.array([])
+        self.vemmis_type = np.array([])
         self.vemmis_lat = np.array([])
         self.vemmis_lon = np.array([])
         self.vemmis_alt = np.array([])
         self.vemmis_hdg = np.array([])
         self.vemmis_spd = np.array([])
         self.vemmis_cre = np.array([])
+        self.vemmis_del = np.array([])
 
         with self.settrafarrays():
             # Aircraft Info
@@ -405,7 +408,7 @@ class Traffic(Entity):
         self.ntraf = len(self.lat)
         return True
 
-    #@vemmis.update_radardata
+    @update_radardata
     def update(self):
         # Update only if there is traffic ---------------------
         if self.ntraf == 0:
