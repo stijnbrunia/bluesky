@@ -2,17 +2,19 @@ import psycopg2
 import sqlite3
 import pandas as pd
 from math import floor, ceil
+from bluesky.simulation import Simulation
+import bluesky as bs
 
-def Connect_SQL_DB():
+def Connect_SQL_DB(dbname):
     conn = psycopg2.connect(
         host="localhost",
-        database="bluesky_2309",
+        database=dbname,
         user="postgres",
         password="lucht_1")
     return conn
 
-def query_DB_to_DF(query):
-    conn = Connect_SQL_DB()
+def query_DB_to_DF(dbname, query):
+    conn = Connect_SQL_DB(dbname)
     sql_query = pd.read_sql_query(query, conn)
     df = pd.DataFrame(sql_query, columns=['timestamp_data', 'timestamp_prediction', 'lon', 'lat', 'alt', 'uwind', 'vwind'])
     return df
@@ -66,14 +68,42 @@ def interpolate(value , value_a , value_b, answer_a , answer_b):
         return answer
     return answer_a
 
+def utc2stamps(utc):
+    utc = str(utc)
+    day = utc[8:10]
+    month = utc[5:7]
+    year = utc[0:4]
+    hour = utc[11:13]
+    minutes = utc[14:16]
+    """ WHAT IF 5"""
+    stamp1 = year[2:] + month + day + hour + minutes[0]
+    stamp2 = str(int(stamp1) + 1)
+    return stamp1, stamp2
+
+def utc2frac(utc, stamp):
+    utc = str(utc)
+    stamp = str(stamp)
+    minutes_utc = utc[14:16]
+    seconds_utc = utc[17:19]
+
+    minutes_stamp = stamp[6:8]
+    d_minutes = int(minutes_utc) - int(minutes_stamp)
+    d_seconds = int(d_minutes) * 60 + int(seconds_utc)
+    print(d_minutes, d_seconds)
+    frac = d_seconds/600
+
+    return frac
+
+
+
 #def winddata_location(point1, point2):  <-----------------------------------------------------
 
-query = '''SELECT * FROM bluesky_2309_top WHERE timestamp_data = 210923003'''
-df = query_DB_to_DF(query)
-print(find_datapoint_timeframe(df, [210923003, 30000, 50.03, 2.63]))
+# query = '''SELECT * FROM bluesky_2309_top WHERE timestamp_data = 210923003'''
+# df = query_DB_to_DF(query)
+# print(find_datapoint_timeframe(df, [210923003, 30000, 50.03, 2.63]))
 
 
-
+#print(bs.sim.return_utc)
 
 
 #print(interpolation([10000,50,0,20,20],[10000,50,10,40,40],[10000,70,0,30,60],[10000,70,10,80,80],[5000,50,0,20,20],[5000,50,10,40,40],[5000,70,0,0,10],[5000,70,10,10,80],7500,60,5))

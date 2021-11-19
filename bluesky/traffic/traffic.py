@@ -16,7 +16,7 @@ import bluesky as bs
 from bluesky.core import Entity, timed_function
 from bluesky.stack import refdata
 from bluesky.stack.recorder import savecmd
-from bluesky.tools import geo
+from bluesky.tools import geo, Functions
 from bluesky.tools.misc import latlon2txt, angleFromCoordinate
 from bluesky.tools.aero import cas2tas, casormach2tas, fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
@@ -86,6 +86,11 @@ class Traffic(Entity):
 
         self.HighRes = False
         self.Wind_DB = ""
+        self.df_top_1 = ""
+        self.df_top_2 = ""
+        self.df_low_1 = ""
+        self.df_low_2 = ""
+
         with self.settrafarrays():
             # Aircraft Info
             self.id      = []  # identifier (string)
@@ -107,6 +112,10 @@ class Traffic(Entity):
             self.cas     = np.array([])  # calibrated airspeed [m/s]
             self.M       = np.array([])  # mach number
             self.vs      = np.array([])  # vertical speed [m/s]
+
+            # Meteo data
+            self.wind_u  = np.array([])
+            self.wind_v  = np.array([])
 
             # Acceleration
             self.ax = np.array([])  # [m/s2] current longitudinal acceleration
@@ -204,7 +213,6 @@ class Traffic(Entity):
         acspd = acspd or np.random.randint(250, 450, n) * kts
 
         self.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
-
 
     def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0):
         """ Create one or more aircraft. """
@@ -408,7 +416,17 @@ class Traffic(Entity):
         #---------- Atmosphere --------------------------------
         self.p, self.rho, self.Temp = vatmos(self.alt)
         if self.HighRes == True:
-            "update df's"
+            """ Only goes here when the High resolution data is enabled. """
+
+            if len(str(bs.sim.utc)) == 19:
+                """ Only goes here when one whole second has past. """
+                if str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0":
+                    """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
+                    stamp1, stamp2 = Functions.utc2stamps(bs.sim.utc)
+                    self.df_top_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(stamp1)) #210923003
+                    self.df_top_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(stamp2))
+                    self.df_top_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_low WHERE timestamp_data = " + str(stamp1))
+                    self.df_top_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_low WHERE timestamp_data = " + str(stamp2))
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
@@ -485,32 +503,32 @@ class Traffic(Entity):
 
     def update_groundspeed(self):
         if self.HighRes == True:
-            print("hello")
-        # Compute ground speed and track from heading, airspeed and wind
-        if self.wind.winddim == 0:  # no wind
-            self.gsnorth  = self.tas * np.cos(np.radians(self.hdg))
-            self.gseast   = self.tas * np.sin(np.radians(self.hdg))
-
-            self.gs  = self.tas
-            self.trk = self.hdg
-            self.windnorth[:], self.windeast[:] = 0.0,0.0
+            """ Adding Meteo Points"""
 
         else:
-            applywind = self.alt>50.*ft # Only apply wind when airborne
+            # Compute ground speed and track from heading, airspeed and wind
+            if self.wind.winddim == 0:  # no wind
+                self.gsnorth  = self.tas * np.cos(np.radians(self.hdg))
+                self.gseast   = self.tas * np.sin(np.radians(self.hdg))
 
-            vnwnd,vewnd = self.wind.getdata(self.lat, self.lon, self.alt)
-            self.windnorth[:], self.windeast[:] = vnwnd,vewnd
-            self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
-            self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind
+                self.gs  = self.tas
+                self.trk = self.hdg
+                self.windnorth[:], self.windeast[:] = 0.0,0.0
+            else:
+                applywind = self.alt>50.*ft # Only apply wind when airborne
 
-            self.gs  = np.logical_not(applywind)*self.tas + \
-                       applywind*np.sqrt(self.gsnorth**2 + self.gseast**2)
+                vnwnd,vewnd = self.wind.getdata(self.lat, self.lon, self.alt)
+                self.windnorth[:], self.windeast[:] = vnwnd,vewnd
+                self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
+                self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind
 
-            self.trk = np.logical_not(applywind)*self.hdg + \
-                       applywind*np.degrees(np.arctan2(self.gseast, self.gsnorth)) % 360.
+                self.gs  = np.logical_not(applywind)*self.tas + \
+                           applywind*np.sqrt(self.gsnorth**2 + self.gseast**2)
+
+                self.trk = np.logical_not(applywind)*self.hdg + \
+                           applywind*np.degrees(np.arctan2(self.gseast, self.gsnorth)) % 360.
 
         self.work += (self.perf.thrust * bs.sim.simdt * np.sqrt(self.gs * self.gs + self.vs * self.vs))
-
 
     def update_pos(self):
         # Update position
