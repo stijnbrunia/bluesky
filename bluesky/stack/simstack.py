@@ -148,17 +148,13 @@ def readscn(fname):
     fname_full = os.path.normpath(base + ext)
 
     # Read vemmis data
-    if ext == '.csv':
-        bs.traf.vemmis_simt = np.genfromtxt(fname_full, delimiter=';', usecols=[0], skip_header=1)
-        bs.traf.vemmis_id = np.genfromtxt(fname_full, delimiter=';', usecols=[1], skip_header=1, dtype=str)
-        bs.traf.vemmis_type = np.genfromtxt(fname_full, delimiter=';', usecols=[2], skip_header=1, dtype=str)
-        bs.traf.vemmis_lat = np.genfromtxt(fname_full, delimiter=';', usecols=[3], skip_header=1)
-        bs.traf.vemmis_lon = np.genfromtxt(fname_full, delimiter=';', usecols=[4], skip_header=1)
-        bs.traf.vemmis_alt = np.genfromtxt(fname_full, delimiter=';', usecols=[5], skip_header=1)
-        bs.traf.vemmis_hdg = np.genfromtxt(fname_full, delimiter=';', usecols=[6], skip_header=1)
-        bs.traf.vemmis_spd = np.genfromtxt(fname_full, delimiter=';', usecols=[7], skip_header=1)
-        bs.traf.vemmis_cre = np.genfromtxt(fname_full, delimiter=';', usecols=[8], skip_header=1, dtype=bool)
-        bs.traf.vemmis_del = np.genfromtxt(fname_full, delimiter=';', usecols=[9], skip_header=1, dtype=bool)
+    if ext == '.npz':
+        vemmis_data = np.load(fname_full, allow_pickle=True)
+        bs.traf.vemmis_flightdata = vemmis_data['flightdata']
+        bs.traf.vemmis_trackdata = vemmis_data['trackdata']
+
+        Stack.scentime = list(bs.traf.vemmis_flightdata.T[0])
+        Stack.scencmd = list(bs.traf.vemmis_flightdata.T[1])
 
     else:
         with open(fname_full, "r") as fscen:

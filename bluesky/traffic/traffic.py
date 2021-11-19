@@ -83,16 +83,8 @@ class Traffic(Entity):
         self.translvl = 5000.*ft # [m] Default transition level
 
         # Vemmis data
-        self.vemmis_simt = np.array([])
-        self.vemmis_id = np.array([])
-        self.vemmis_type = np.array([])
-        self.vemmis_lat = np.array([])
-        self.vemmis_lon = np.array([])
-        self.vemmis_alt = np.array([])
-        self.vemmis_hdg = np.array([])
-        self.vemmis_spd = np.array([])
-        self.vemmis_cre = np.array([])
-        self.vemmis_del = np.array([])
+        self.vemmis_flightdata = None
+        self.vemmis_trackdata = None
 
         with self.settrafarrays():
             # Aircraft Info
