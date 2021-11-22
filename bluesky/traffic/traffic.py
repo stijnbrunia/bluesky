@@ -82,9 +82,10 @@ class Traffic(Entity):
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
 
-        # Vemmis data
+        # Take state from data file
         self.vemmis_flightdata = None
-        self.vemmis_trackdata = None
+        self.trackdata = None
+        self.fromfile_cre = False
 
         with self.settrafarrays():
             # Aircraft Info
@@ -133,6 +134,7 @@ class Traffic(Entity):
             self.swvnav    = np.array([], dtype=np.bool)
             self.swvnavspd = np.array([], dtype=np.bool)
             self.manual = np.array([], dtype=np.bool)
+            self.fromfile = np.array([], dtype=np.bool)  # Take state from data file
 
             # Flight Models
             self.cd       = ConflictDetection()
@@ -288,6 +290,8 @@ class Traffic(Entity):
         self.selspd[-n:] = self.cas[-n:]
         self.aptas[-n:]  = self.tas[-n:]
         self.selalt[-n:] = self.alt[-n:]
+        if self.fromfile_cre:
+            self.fromfile[-n:] = True
 
         # Display information on label
         self.label[-n:] = n*[['', '', '', 0]]
@@ -400,7 +404,7 @@ class Traffic(Entity):
         self.ntraf = len(self.lat)
         return True
 
-    @update_radardata
+    #@update_radardata
     def update(self):
         # Update only if there is traffic ---------------------
         if self.ntraf == 0:
@@ -408,6 +412,12 @@ class Traffic(Entity):
 
         #---------- Atmosphere --------------------------------
         self.p, self.rho, self.Temp = vatmos(self.alt)
+
+        #---------- Split into radar and sim traffic ----------
+        i_radar = np.where(self.fromfile)
+        i_insert = i_radar - np.arange(len(i_radar))
+        if round(bs.sim.simt,1) == 1.0:
+            print(self.ax)
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
@@ -517,6 +527,9 @@ class Traffic(Entity):
         self.lon = self.lon + np.degrees(bs.sim.simdt * self.gseast / self.coslat / Rearth)
         self.distflown += self.gs * bs.sim.simdt
 
+    def update_fromfile(self):
+
+        return
 
     def id2idx(self, acid):
         """Find index of aircraft id"""
@@ -553,7 +566,7 @@ class Traffic(Entity):
             elif not flag:
                 """ Manual Mode off """
                 print("MANUAL OFF")
-                bs.traf.swlnav[idx] = True
+
 
     def setnoise(self, noise=None):
         """Noise (turbulence, ADBS-transmission noise, ADSB-truncated effect)"""

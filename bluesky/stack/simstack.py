@@ -11,6 +11,7 @@ from bluesky.stack.basecmds import initbasecmds
 from bluesky.stack import recorder
 from bluesky.stack import argparser, ArgumentError
 from bluesky import settings
+from bluesky.tools import vemmisread
 
 
 # Register settings defaults
@@ -146,8 +147,9 @@ def readscn(fname):
 
     # The entire filename, possibly with added path and extension
     fname_full = os.path.normpath(base + ext)
+    print(fname_full)
 
-    # Read vemmis data
+    # Read flight data from file
     if ext == '.npz':
         vemmis_data = np.load(fname_full, allow_pickle=True)
         bs.traf.vemmis_flightdata = vemmis_data['flightdata']
@@ -156,6 +158,7 @@ def readscn(fname):
         Stack.scentime = list(bs.traf.vemmis_flightdata.T[0])
         Stack.scencmd = list(bs.traf.vemmis_flightdata.T[1])
 
+    # Read scenario file
     else:
         with open(fname_full, "r") as fscen:
             prevline = ''
@@ -188,6 +191,26 @@ def readscn(fname):
                     if not (len(line.strip()) > 0 and line.strip()[0] == "#"):
                         print("except this:" + line)
 
+def read_trackdata(folder, time0):
+    path = os.getcwd()+"\\scenario\\"+folder.lower()
+    if os.path.isdir(path):
+        bs.traf.fromfile_cre = True
+        bs.scr.echo('Preparing data from '+path+' ...')
+        vemmisdata = vemmisread.VEMMISRead(path, time0)
+        bs.scr.echo('Loading start commands ...')
+        cmds, cmdst = vemmisdata.get_commands()
+        Stack.scencmd = cmds
+        Stack.scentime = cmdst
+
+        bs.scr.echo('Loading track data ...')
+        bs.traf.trackdata = vemmisdata.get_trackdata()
+        bs.scr.echo('Finished')
+
+    else:
+        return False, f"TRACKDATA: Folder does not exist"
+
+
+    return
 
 @command(aliases=('CALL',), brief="PCALL filename [REL/ABS/args]")
 def pcall(fname, *pcall_arglst):

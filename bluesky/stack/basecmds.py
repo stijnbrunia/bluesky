@@ -8,6 +8,7 @@ from bluesky.core import select_implementation, simtime, varexplorer as ve
 from bluesky.tools import geo, aero, areafilter, plotter
 from bluesky.tools.calculator import calculator
 from bluesky.stack.cmdparser import append_commands
+from bluesky.stack import simstack
 
 
 def initbasecmds():
@@ -385,6 +386,12 @@ def initbasecmds():
             "[txt]",
             bs.sim.setutc,
             "Set simulated clock time",
+        ],
+        "TRACKDATA": [
+            "TRACKDATA folder, time0 (s)",
+            "[txt], [float]",
+            simstack.read_trackdata,
+            "Load track data (e.g. VEMMIS data) and provide the name of the folder in the scenario folder & start time"
         ],
         "TRAIL": [
             "TRAIL ON/OFF, [dt] OR TRAIL acid color",
