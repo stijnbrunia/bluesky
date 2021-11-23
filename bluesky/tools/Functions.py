@@ -1,9 +1,7 @@
 import psycopg2
-import sqlite3
 import pandas as pd
 from math import floor, ceil
-from bluesky.simulation import Simulation
-import bluesky as bs
+
 
 def Connect_SQL_DB(dbname):
     conn = psycopg2.connect(
@@ -22,10 +20,10 @@ def query_DB_to_DF(dbname, query):
 
 def find_datapoint_timeframe(df, point): #point is [time,alt,lat,lon]
     """ Function that calculates the correct meteo values, interpolating over alt,lat,lon  """
-    lon_min = floor(point[3] * 10) / 10
-    lon_plus = ceil(point[3] * 10) / 10
-    lat_min = floor(point[2] * 10) / 10
-    lat_plus = ceil(point[2] * 10) / 10
+    lon_min  = floor(point[3] * 10) / 10
+    lon_plus = ceil(point[3]  * 10) / 10
+    lat_min  = floor(point[2] * 10) / 10
+    lat_plus = ceil(point[2]  * 10) / 10
 
     value_mmm, value_pmm = find_height_levels(df, point, lat_min, lon_min)
     value_mmp, value_pmp = find_height_levels(df, point, lat_min, lon_plus)
@@ -33,7 +31,7 @@ def find_datapoint_timeframe(df, point): #point is [time,alt,lat,lon]
     value_mpp, value_ppp = find_height_levels(df, point, lat_plus, lon_plus)
 
     timeless_value  = interpolation(value_mmm, value_mmp, value_mpm, value_mpp, value_pmm, value_pmp, value_ppm, value_ppp, point[1], point[2], point[3])
-    value = [point[0], timeless_value[0], timeless_value[1], timeless_value[2], timeless_value[3], timeless_value[4]]
+    value           = [point[0], timeless_value[0], timeless_value[1], timeless_value[2], timeless_value[3], timeless_value[4]]
     return value
 
 def find_height_levels(df, point, lat, lon):
@@ -78,29 +76,53 @@ def time_interpolation(timefrac , answer_a , answer_b):
 
 def utc2stamps(utc):
     """ Goes from utc to timestamp """
-    utc = str(utc)
-    day = utc[8:10]
-    month = utc[5:7]
-    year = utc[0:4]
-    hour = utc[11:13]
+    utc     = str(utc)
+    day     = utc[8:10]
+    month   = utc[5:7]
+    year    = utc[0:4]
+    hour    = utc[11:13]
     minutes = utc[14:16]
 
     stamp1 = year[2:] + month + day + hour + minutes[0]
     if int(minutes[0]) < 5:
         stamp2 = str(int(stamp1) + 1)
     else:
-        stamp2 = str(int(stamp1) - minutes[0])
+        stamp2 = str(int(stamp1) + 10 - int(minutes[0]))
+        if int(stamp2[6:8]) > 23:
+            stamp2 = str(int(stamp2) + 760 )
+            days = days_in_month(int(stamp2[2:4]), int("20" + stamp2[0:2]))
+            if int(stamp2[4:6]) > days:
+                stamp2 = str(int(stamp2) + 100000 - days*1000)
+                if int(stamp2[2:4]) > 12:
+                    stamp2 = str(int(stamp2) +8800000)
     return stamp1, stamp2
 
 def utc2frac(utc, stamp):
     """ Goes from UTC to time fraction using the first timestamp, needed for time interpolation """
-    utc = str(utc)
-    stamp = str(stamp)
-    minutes_utc = utc[14:16]
-    seconds_utc = utc[17:19]
-    minutes_stamp = stamp[8] + "0"
-    d_minutes = int(minutes_utc) - int(minutes_stamp)
-    d_seconds = int(d_minutes) * 60 + int(seconds_utc)
-    frac = d_seconds/600
+    utc             = str(utc)
+    stamp           = str(stamp)
+    minutes_utc     = utc[14:16]
+    seconds_utc     = utc[17:19]
+    minutes_stamp   = stamp[8] + "0"
+    d_minutes       = int(minutes_utc) - int(minutes_stamp)
+    d_seconds       = int(d_minutes) * 60 + int(seconds_utc)
+    frac            = d_seconds/600
 
     return frac
+
+def days_in_month(month, year):
+    """ Check the number of days in the month"""
+    days = 31;
+    if month == 2:
+        days = 28;
+        if floor(year / 4) == (year / 4):
+            days = 29
+    if month == 4:
+        days = 30
+    if month == 6:
+        days = 30
+    if month == 9:
+        days = 30
+    if month == 11:
+        days = 30
+    return days

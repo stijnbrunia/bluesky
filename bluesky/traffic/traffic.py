@@ -413,9 +413,10 @@ class Traffic(Entity):
         # Update only if there is traffic ---------------------
         if self.ntraf == 0:
             return
-
         #---------- Atmosphere --------------------------------
         self.p, self.rho, self.Temp = vatmos(self.alt)
+
+        #---------- HighRes Meteo -----------------------------
         if self.HighRes == True:
             """ Only goes here when the High resolution data is enabled. """
             if len(str(bs.sim.utc)) == 19:
@@ -423,7 +424,7 @@ class Traffic(Entity):
                 if str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0":
                     """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
                     self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
-                    self.df_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(self.prev_timestamp)) #210923003
+                    self.df_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(self.prev_timestamp))
                     self.df_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(self.next_timestamp))
                     self.HR_Loaded = True
 
@@ -431,10 +432,15 @@ class Traffic(Entity):
                     for idx in range(len(self.lat)):
                         """ Fill the uwind and vwind variables. """
                         timefrac = Functions.utc2frac(bs.sim.utc , self.prev_timestamp)
-                        value1 = Functions.find_datapoint_timeframe(self.df_1, [self.prev_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
-                        value2 = Functions.find_datapoint_timeframe(self.df_2, [self.next_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
-                        self.windnorth[idx] = Functions.time_interpolation(timefrac, value1[4], value2[4])
-                        self.windeast[idx]  = Functions.time_interpolation(timefrac, value1[5], value2[5])
+                        if self.lat[idx] >= 49 and self.lat[idx] <= 55.9 and self.lon[idx] >= -1 and self.lon[idx] <= 9.9:
+                            value1 = Functions.find_datapoint_timeframe(self.df_1, [self.prev_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
+                            value2 = Functions.find_datapoint_timeframe(self.df_2, [self.next_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
+                            self.windnorth[idx] = Functions.time_interpolation(timefrac, value1[4], value2[4])
+                            self.windeast[idx]  = Functions.time_interpolation(timefrac, value1[5], value2[5])
+                        else:
+                            self.windnorth[idx] = 0
+                            self.windeast[idx] = 0
+                        #print(self.windnorth[idx], self.lat[idx], self.lon[idx])
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
