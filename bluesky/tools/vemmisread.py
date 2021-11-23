@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from .geo import qdrpos
+from .aero import kts, ft
 
 class VEMMISRead:
     def __init__(self, data_path, time0, fixed_rate=True, deltat=5.):
@@ -121,12 +122,12 @@ class VEMMISRead:
             alt = str(track['ALTITUDE'].iloc[0])
             spd = str(track['SPEED'].iloc[0])
 
-            str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
+            str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd+", ON"
             str_orig = "ORIG "+acid+" "+orig
             str_dest = "DEST "+acid+" "+dest
             str_del = "DEL "+acid
             command += [str_cre, str_orig, str_dest, str_del]
-            commandtime += [t_cre, t_cre, t_cre, t_del]
+            commandtime += [t_cre]*3 + [t_del]
 
             i_cre = track.index[0]
             i_del = track.index[-1]
@@ -139,10 +140,16 @@ class VEMMISRead:
 
     def get_trackdata(self):
         simt = np.array(self.trackdata['SIM_TIME'])
+        unique, i, count = np.unique(simt, return_index=True, return_counts=True)
+        simt_i = []
+        for j in range(len(unique)):
+            for c in range(count[j]):
+                simt_i.append(list(range(i[j], i[j] + count[j])))
+
         id = list(self.trackdata['CALLSIGN'])
         lat = np.array(self.trackdata['LATITUDE'])
         lon = np.array(self.trackdata['LONGITUDE'])
-        alt = np.array(self.trackdata['ALTITUDE'])
+        alt = np.array(self.trackdata['ALTITUDE'])*ft
         hdg = np.array(self.trackdata['HEADING'])
-        spd = np.array(self.trackdata['SPEED'])
-        return simt, id, lat, lon, alt, hdg, spd
+        spd = np.array(self.trackdata['SPEED'])*kts
+        return simt, simt_i, id, lat, lon, alt, hdg, spd

@@ -143,8 +143,8 @@ def initbasecmds():
             "Set a custom color for an aircraft or shape",
         ],
         "CRE": [
-            "CRE acid,type,lat,lon,hdg,alt,spd",
-            "txt,txt,latlon,[hdg,alt,spd]",
+            "CRE acid,type,lat,lon,hdg,alt,spd,fromfile",
+            "txt,txt,latlon,[hdg,alt,spd,onoff]",
             bs.traf.cre,
             "Create an aircraft",
         ],

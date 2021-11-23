@@ -83,9 +83,10 @@ class Traffic(Entity):
         self.translvl = 5000.*ft # [m] Default transition level
 
         # Take state from data file
-        self.vemmis_flightdata = None
-        self.trackdata = None
-        self.fromfile_cre = False
+        self.trackdata = ()
+        self.trackdata_prev = ()
+        self.i_next = 0
+        self.t_next = 0.0
 
         with self.settrafarrays():
             # Aircraft Info
@@ -208,7 +209,7 @@ class Traffic(Entity):
         self.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
 
 
-    def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0):
+    def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0, fromfile=False):
         """ Create one or more aircraft. """
         # Determine number of aircraft to create from array length of acid
         n = 1 if isinstance(acid, str) else len(acid)
@@ -290,8 +291,6 @@ class Traffic(Entity):
         self.selspd[-n:] = self.cas[-n:]
         self.aptas[-n:]  = self.tas[-n:]
         self.selalt[-n:] = self.alt[-n:]
-        if self.fromfile_cre:
-            self.fromfile[-n:] = True
 
         # Display information on label
         self.label[-n:] = n*[['', '', '', 0]]
@@ -303,6 +302,14 @@ class Traffic(Entity):
         # Finally call create for child TrafficArrays. This only needs to be done
         # manually in Traffic.
         self.create_children(n)
+
+        if fromfile:
+            self.fromfile[-n:] = True
+            self.swlnav[-n:] = False
+            self.swvnav[-n:] = False
+            self.swvnavspd[-n:] = False
+            self.swhdgsel[-n:] = False
+            self.swats[-n:] = False
 
         # Record as individual CRE commands for repeatability
         #print(self.ntraf-n,self.ntraf)
@@ -404,7 +411,6 @@ class Traffic(Entity):
         self.ntraf = len(self.lat)
         return True
 
-    #@update_radardata
     def update(self):
         # Update only if there is traffic ---------------------
         if self.ntraf == 0:
@@ -412,12 +418,6 @@ class Traffic(Entity):
 
         #---------- Atmosphere --------------------------------
         self.p, self.rho, self.Temp = vatmos(self.alt)
-
-        #---------- Split into radar and sim traffic ----------
-        i_radar = np.where(self.fromfile)
-        i_insert = i_radar - np.arange(len(i_radar))
-        if round(bs.sim.simt,1) == 1.0:
-            print(self.ax)
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
@@ -439,6 +439,7 @@ class Traffic(Entity):
         self.update_airspeed()
         self.update_groundspeed()
         self.update_pos()
+        self.update_fromfile()
 
         #---------- Simulate Turbulence -----------------------
         self.turbulence.update()
@@ -528,8 +529,46 @@ class Traffic(Entity):
         self.distflown += self.gs * bs.sim.simdt
 
     def update_fromfile(self):
+        # Check if the next data point is reached
+        if self.t_next <= bs.sim.simt:
+            # Get all indices with this SIM_TIME
+            i = self.trackdata[1][self.i_next]
+            # Get the indices for the traffic arrays
+            idx = np.nonzero(np.array(self.trackdata[2])[i][:, None] == self.id)[1]
 
-        return
+            # Update the traffic arrays with the data from the data point
+            self.lat[idx] = self.trackdata[3][i]
+            self.lon[idx] = self.trackdata[4][i]
+            self.alt[idx] = self.trackdata[5][i]
+            self.hdg[idx] = self.trackdata[6][i]
+            self.gs[idx] = self.trackdata[7][i]
+
+            # Get the index and the SIM_TIME of the next data point
+            self.i_next = i[-1]+1
+            self.t_next = self.trackdata[0][self.i_next]
+            # Store the current data point
+            self.trackdata_prev = (self.trackdata[2][i], self.trackdata[3][i], self.trackdata[4][i],
+                                   self.trackdata[5][i], self.trackdata[6][i], self.trackdata[7][i])
+
+        else:
+            # Get the indices for the traffic arrays
+            idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)
+
+            # Update the traffic arrays with the data from the previous data point
+            self.lat[idx] = self.trackdata[1]
+            self.lon[idx] = self.trackdata[2]
+            self.alt[idx] = self.trackdata[3]
+            self.hdg[idx] = self.trackdata[4]
+            self.gs[idx] = self.trackdata[5]
+
+        # Determine other speed types
+        self.tas[idx] = self.gs[idx]
+        self.cas[idx] = vtas2cas(self.tas[idx], self.alt[idx])
+        self.M[idx] = vtas2mach(self.tas[idx], self.alt[idx])
+        self.gsnorth[idx] = self.gs[idx]*np.cos(np.radians(self.hdg[idx]))
+        self.gseast[idx] = self.gs[idx]*np.sin(np.radians(self.hdg[idx]))
+
+        # self.distflown[idx] += self.gs[idx]*(round(bs.sim.simt, 1) - self.t_prev)
 
     def id2idx(self, acid):
         """Find index of aircraft id"""

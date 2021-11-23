@@ -147,65 +147,65 @@ def readscn(fname):
 
     # The entire filename, possibly with added path and extension
     fname_full = os.path.normpath(base + ext)
-    print(fname_full)
 
-    # Read flight data from file
-    if ext == '.npz':
-        vemmis_data = np.load(fname_full, allow_pickle=True)
-        bs.traf.vemmis_flightdata = vemmis_data['flightdata']
-        bs.traf.vemmis_trackdata = vemmis_data['trackdata']
+    with open(fname_full, "r") as fscen:
+        prevline = ''
+        for line in fscen:
+            line = line.strip()
+            # Skip emtpy lines and comments
+            if len(line) < 12 or line[0] == "#":
+                continue
+            line = prevline + line
 
-        Stack.scentime = list(bs.traf.vemmis_flightdata.T[0])
-        Stack.scencmd = list(bs.traf.vemmis_flightdata.T[1])
-
-    # Read scenario file
-    else:
-        with open(fname_full, "r") as fscen:
+            # Check for line continuation
+            if line[-1] == '\\':
+                prevline = f'{line[:-1].strip()} '
+                continue
             prevline = ''
-            for line in fscen:
-                line = line.strip()
-                # Skip emtpy lines and comments
-                if len(line) < 12 or line[0] == "#":
-                    continue
-                line = prevline + line
 
-                # Check for line continuation
-                if line[-1] == '\\':
-                    prevline = f'{line[:-1].strip()} '
-                    continue
-                prevline = ''
+            # Try reading timestamp and command
+            try:
+                icmdline = line.index(">")
+                tstamp = line[:icmdline]
+                ttxt = tstamp.strip().split(":")
+                ihr = int(ttxt[0]) * 3600.0
+                imin = int(ttxt[1]) * 60.0
+                xsec = float(ttxt[2])
+                cmdtime = ihr + imin + xsec
 
-                # Try reading timestamp and command
-                try:
-                    icmdline = line.index(">")
-                    tstamp = line[:icmdline]
-                    ttxt = tstamp.strip().split(":")
-                    ihr = int(ttxt[0]) * 3600.0
-                    imin = int(ttxt[1]) * 60.0
-                    xsec = float(ttxt[2])
-                    cmdtime = ihr + imin + xsec
-
-                    yield (cmdtime, line[icmdline + 1:].strip("\n"))
-                except (ValueError, IndexError):
-                    # nice try, we will just ignore this syntax error
-                    if not (len(line.strip()) > 0 and line.strip()[0] == "#"):
-                        print("except this:" + line)
+                yield (cmdtime, line[icmdline + 1:].strip("\n"))
+            except (ValueError, IndexError):
+                # nice try, we will just ignore this syntax error
+                if not (len(line.strip()) > 0 and line.strip()[0] == "#"):
+                    print("except this:" + line)
 
 def read_trackdata(folder, time0):
     path = os.getcwd()+"\\scenario\\"+folder.lower()
+
     if os.path.isdir(path):
-        bs.traf.fromfile_cre = True
+
+        for root, dirs, files in os.walk(path):
+            if len(files) < 6:
+                return False, f"TRACKDATA: The folder does not contain all the (correct) files"
+            if len(files) > 6:
+                return False, f"TRACKDATA: The folder does contain too many files"
+
+        bs.sim.reset()
+
         bs.scr.echo('Preparing data from '+path+' ...')
         vemmisdata = vemmisread.VEMMISRead(path, time0)
-        bs.scr.echo('Loading start commands ...')
+
+        bs.scr.echo('Loading initial commands ...')
         cmds, cmdst = vemmisdata.get_commands()
-        Stack.scencmd = cmds
-        Stack.scentime = cmdst
 
         bs.scr.echo('Loading track data ...')
         bs.traf.trackdata = vemmisdata.get_trackdata()
-        bs.scr.echo('Finished')
 
+        bs.scr.echo('Initialize simulation ...')
+        Stack.scencmd = cmds
+        Stack.scentime = cmdst
+
+        bs.scr.echo('Done')
     else:
         return False, f"TRACKDATA: Folder does not exist"
 
