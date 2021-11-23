@@ -86,10 +86,10 @@ class Traffic(Entity):
 
         self.HighRes = False
         self.Wind_DB = ""
-        self.df_top_1 = ""
-        self.df_top_2 = ""
-        self.df_low_1 = ""
-        self.df_low_2 = ""
+
+        self.df_1 = ""
+        self.df_2 = ""
+        self.HR_Loaded = False
 
         with self.settrafarrays():
             # Aircraft Info
@@ -104,6 +104,10 @@ class Traffic(Entity):
             self.hdg     = np.array([])  # traffic heading [deg]
             self.trk     = np.array([])  # track angle [deg]
 
+            #Timestamps
+            self.prev_timestamp = 0
+            self.next_timestamp = 0
+
             # Velocities
             self.tas     = np.array([])  # true airspeed [m/s]
             self.gs      = np.array([])  # ground speed [m/s]
@@ -112,10 +116,6 @@ class Traffic(Entity):
             self.cas     = np.array([])  # calibrated airspeed [m/s]
             self.M       = np.array([])  # mach number
             self.vs      = np.array([])  # vertical speed [m/s]
-
-            # Meteo data
-            self.wind_u  = np.array([])
-            self.wind_v  = np.array([])
 
             # Acceleration
             self.ax = np.array([])  # [m/s2] current longitudinal acceleration
@@ -126,6 +126,7 @@ class Traffic(Entity):
             self.Temp    = np.array([])  # air temperature [K]
             self.dtemp   = np.array([])  # delta t for non-ISA conditions
             self.topwind = pd.DataFrame  # dataframe for the wind on
+
             # Wind speeds
             self.windnorth = np.array([])  # wind speed north component a/c pos [m/s]
             self.windeast  = np.array([])  # wind speed east component a/c pos [m/s]
@@ -417,16 +418,23 @@ class Traffic(Entity):
         self.p, self.rho, self.Temp = vatmos(self.alt)
         if self.HighRes == True:
             """ Only goes here when the High resolution data is enabled. """
-
             if len(str(bs.sim.utc)) == 19:
                 """ Only goes here when one whole second has past. """
                 if str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0":
                     """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
-                    stamp1, stamp2 = Functions.utc2stamps(bs.sim.utc)
-                    self.df_top_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(stamp1)) #210923003
-                    self.df_top_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(stamp2))
-                    self.df_top_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_low WHERE timestamp_data = " + str(stamp1))
-                    self.df_top_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_low WHERE timestamp_data = " + str(stamp2))
+                    self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
+                    self.df_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(self.prev_timestamp)) #210923003
+                    self.df_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(self.next_timestamp))
+                    self.HR_Loaded = True
+
+                if self.HR_Loaded:
+                    for idx in range(len(self.lat)):
+                        """ Fill the uwind and vwind variables. """
+                        timefrac = Functions.utc2frac(bs.sim.utc , self.prev_timestamp)
+                        value1 = Functions.find_datapoint_timeframe(self.df_1, [self.prev_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
+                        value2 = Functions.find_datapoint_timeframe(self.df_2, [self.next_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
+                        self.windnorth[idx] = Functions.time_interpolation(timefrac, value1[4], value2[4])
+                        self.windeast[idx]  = Functions.time_interpolation(timefrac, value1[5], value2[5])
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
@@ -502,31 +510,27 @@ class Traffic(Entity):
         self.vs = np.where(np.isfinite(self.vs), self.vs, 0)    # fix vs nan issue
 
     def update_groundspeed(self):
-        if self.HighRes == True:
-            """ Adding Meteo Points"""
+        # Compute ground speed and track from heading, airspeed and wind
+        if self.wind.winddim == 0:  # no wind
+            self.gsnorth  = self.tas * np.cos(np.radians(self.hdg))
+            self.gseast   = self.tas * np.sin(np.radians(self.hdg))
 
+            self.gs  = self.tas
+            self.trk = self.hdg
+            self.windnorth[:], self.windeast[:] = 0.0,0.0
         else:
-            # Compute ground speed and track from heading, airspeed and wind
-            if self.wind.winddim == 0:  # no wind
-                self.gsnorth  = self.tas * np.cos(np.radians(self.hdg))
-                self.gseast   = self.tas * np.sin(np.radians(self.hdg))
+            applywind = self.alt>50.*ft # Only apply wind when airborne
 
-                self.gs  = self.tas
-                self.trk = self.hdg
-                self.windnorth[:], self.windeast[:] = 0.0,0.0
-            else:
-                applywind = self.alt>50.*ft # Only apply wind when airborne
+            vnwnd,vewnd = self.wind.getdata(self.lat, self.lon, self.alt)
+            self.windnorth[:], self.windeast[:] = vnwnd,vewnd
+            self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
+            self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind
 
-                vnwnd,vewnd = self.wind.getdata(self.lat, self.lon, self.alt)
-                self.windnorth[:], self.windeast[:] = vnwnd,vewnd
-                self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
-                self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind
+            self.gs  = np.logical_not(applywind)*self.tas + \
+                       applywind*np.sqrt(self.gsnorth**2 + self.gseast**2)
 
-                self.gs  = np.logical_not(applywind)*self.tas + \
-                           applywind*np.sqrt(self.gsnorth**2 + self.gseast**2)
-
-                self.trk = np.logical_not(applywind)*self.hdg + \
-                           applywind*np.degrees(np.arctan2(self.gseast, self.gsnorth)) % 360.
+            self.trk = np.logical_not(applywind)*self.hdg + \
+                       applywind*np.degrees(np.arctan2(self.gseast, self.gsnorth)) % 360.
 
         self.work += (self.perf.thrust * bs.sim.simdt * np.sqrt(self.gs * self.gs + self.vs * self.vs))
 
@@ -579,6 +583,10 @@ class Traffic(Entity):
         """ Function for meteo data """
         self.HighRes = flag
         self.Wind_DB = name
+        if self.HighRes:
+            self.wind.winddim = 1
+        else:
+            self.wind.winddim = 0
 
     def setnoise(self, noise=None):
         """Noise (turbulence, ADBS-transmission noise, ADSB-truncated effect)"""
