@@ -86,6 +86,7 @@ class Traffic(Entity):
         self.trackdata = ()
         self.trackdata_prev = ()
         self.nfromfile = 0
+        self.nfromfile_prev = 0
         self.i_next = 0
         self.t_next = 0.0
 
@@ -533,9 +534,12 @@ class Traffic(Entity):
         self.distflown += self.gs * bs.sim.simdt
 
     def update_fromfile(self):
+        # Check if there is traffic
+        if self.nfromfile == 0:
+            return
+
         # Check if the next data point is reached
         if self.t_next <= bs.sim.simt:
-
             # Delete aircraft which have already reached the last data point
             i = self.trackdata[1][self.i_next-1]
             if True in self.trackdata[10][i[0]: i[-1] + 1]:
@@ -560,12 +564,12 @@ class Traffic(Entity):
 
                 self.cre(acid_cre, actype, lat, lon, hdg, alt, spd, True)
 
-            # Check if there is traffic
-            if self.nfromfile == 0:
-                return
-
-            # Get the indices for the traffic arrays
-            idx = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1]+1])[:, None] == self.id)[1]
+            # Check if UCO command has been given for some aircraft and get the indices for the traffic arrays
+            if self.nfromfile < self.nfromfile_prev:
+                idx_fromfile = np.where(self.fromfile)[0]
+                idx = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1]+1])[:, None] == self.id)[1]
+            else:
+                idx = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1]+1])[:, None] == self.id)[1]
 
             # Update the traffic arrays with the data from the data point
             self.lat[idx] = self.trackdata[4][i[0]: i[-1]+1]
@@ -583,8 +587,12 @@ class Traffic(Entity):
                                    self.trackdata[7][i[0]: i[-1]+1], self.trackdata[8][i[0]: i[-1]+1])
 
         else:
-            # Get the indices for the traffic arrays
-            idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)[1]
+            # Check if UCO command has been given for some aircraft and get the indices for the traffic arrays
+            if self.nfromfile < self.nfromfile_prev:
+                idx_fromfile = np.where(self.fromfile)[0]
+                idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)[1]
+            else:
+                idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)[1]
 
             # Update the traffic arrays with the data from the previous data point
             self.lat[idx] = self.trackdata_prev[1]
@@ -599,6 +607,9 @@ class Traffic(Entity):
         self.M[idx] = vtas2mach(self.tas[idx], self.alt[idx])
         self.gsnorth[idx] = self.gs[idx]*np.cos(np.radians(self.hdg[idx]))
         self.gseast[idx] = self.gs[idx]*np.sin(np.radians(self.hdg[idx]))
+
+        # Store number of fromfile aircraft
+        self.nfromfile_prev = self.nfromfile
 
         # self.distflown[idx] += self.gs[idx]*(round(bs.sim.simt, 1) - self.t_prev)
 
@@ -628,6 +639,7 @@ class Traffic(Entity):
             """ When there are no waypoints, the sim is running on a scn-file made from radar or ADSB"""
             bs.stack.stackbase.manual_del()
             self.fromfile[idx] = False
+            self.nfromfile -= 1
         else:
             """" There are waypoints, so the ac has a route to follow"""
             if flag:
@@ -635,6 +647,7 @@ class Traffic(Entity):
                 print("MANUAL ON")
                 bs.traf.swlnav[idx] = False
                 self.fromfile[idx] = False
+                self.nfromfile -= 1
 
             elif not flag:
                 """ Manual Mode off """
