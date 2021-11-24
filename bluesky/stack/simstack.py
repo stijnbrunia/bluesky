@@ -202,17 +202,17 @@ def read_trackdata(folder, time0, i=None):
         # Create first aircraft
         i = bs.traf.trackdata[1][0]
         acid = bs.traf.trackdata[2][i[0]: i[-1]+1]
-        actype = ['B738']*len(i)
-        lat = bs.traf.trackdata[3][i]
-        lon = bs.traf.trackdata[4][i]
-        hdg = bs.traf.trackdata[5][i]
-        alt = bs.traf.trackdata[6][i]
-        spd = bs.traf.trackdata[7][i]
+        actype = bs.traf.trackdata[3][i[0]: i[-1]+1]
+        lat = bs.traf.trackdata[4][i[0]: i[-1]+1]
+        lon = bs.traf.trackdata[5][i[0]: i[-1]+1]
+        hdg = bs.traf.trackdata[6][i[0]: i[-1]+1]
+        alt = bs.traf.trackdata[7][i[0]: i[-1]+1]
+        spd = bs.traf.trackdata[8][i[0]: i[-1]+1]
         bs.traf.cre(acid, actype, lat, lon, hdg, alt, spd, True)
         # Initialize previous data point
-        bs.traf.trackdata_prev = (bs.traf.trackdata[2][i[0]: i[-1]+1], bs.traf.trackdata[3][i[0]: i[-1]+1],
-                                  bs.traf.trackdata[4][i[0]: i[-1]+1], bs.traf.trackdata[5][i[0]: i[-1]+1],
-                                  bs.traf.trackdata[6][i[0]: i[-1]+1], bs.traf.trackdata[7][i[0]: i[-1]+1])
+        bs.traf.trackdata_prev = (bs.traf.trackdata[2][i[0]: i[-1]+1], bs.traf.trackdata[4][i[0]: i[-1]+1],
+                                  bs.traf.trackdata[5][i[0]: i[-1]+1], bs.traf.trackdata[6][i[0]: i[-1]+1],
+                                  bs.traf.trackdata[7][i[0]: i[-1]+1], bs.traf.trackdata[8][i[0]: i[-1]+1])
         bs.traf.i_next = i[-1]+1
         bs.traf.t_next = bs.traf.trackdata[0][bs.traf.i_next]
 

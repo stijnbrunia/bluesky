@@ -105,7 +105,7 @@ class VEMMISRead:
         self.tracks_merged = self.tracks_merged[self.tracks_merged['SIM_TIME'] >= self.time0]
         self.tracks_merged['SIM_TIME'] = self.tracks_merged['SIM_TIME'] - self.tracks_merged['SIM_TIME'].iloc[0]
 
-        columns = ['SIM_TIME', 'CALLSIGN', 'LATITUDE', 'LONGITUDE', 'ALTITUDE', 'HEADING', 'SPEED', 'CREATE', 'DELETE']
+        columns = ['SIM_TIME', 'CALLSIGN', 'ICAO_ACTYPE', 'LATITUDE', 'LONGITUDE', 'ALTITUDE', 'HEADING', 'SPEED', 'CREATE', 'DELETE']
         self.trackdata = self.tracks_merged[columns]
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
 
@@ -165,6 +165,7 @@ class VEMMISRead:
                 simt_i.append(list(range(i[j], i[j] + count[j])))
 
         id = list(self.trackdata['CALLSIGN'])
+        actype = list(self.trackdata['ICAO_ACTYPE'])
         lat = np.array(self.trackdata['LATITUDE'])
         lon = np.array(self.trackdata['LONGITUDE'])
         alt = np.array(self.trackdata['ALTITUDE'])*ft
@@ -172,4 +173,4 @@ class VEMMISRead:
         spd = np.array(self.trackdata['SPEED'])*kts
         create = np.array(self.trackdata['CREATE'], dtype=np.bool)
         delete = np.array(self.trackdata['DELETE'], dtype=np.bool)
-        return simt, simt_i, id, lat, lon, alt, hdg, spd, create, delete
+        return simt, simt_i, id, actype, lat, lon, alt, hdg, spd, create, delete

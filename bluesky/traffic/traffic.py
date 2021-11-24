@@ -535,28 +535,30 @@ class Traffic(Entity):
     def update_fromfile(self):
         # Check if the next data point is reached
         if self.t_next <= bs.sim.simt:
-            #print(self.t_next, '<=', bs.sim.simt, 'Update from file')
+
+            # Delete aircraft which have already reached the last data point
+            i = self.trackdata[1][self.i_next-1]
+            if True in self.trackdata[10][i[0]: i[-1] + 1]:
+                bool_del = np.where(self.trackdata[10][i[0]: i[-1] + 1])[0]
+                idx_del = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1] + 1])[bool_del][:, None] == self.id)[1]
+                self.delete(idx_del)
+
             # Get all indices with this SIM_TIME
             i = self.trackdata[1][self.i_next]
 
             # Check if aircraft needs to be created/deleted
-            if True in self.trackdata[8][i[0]: i[-1]+1]:
-                i_cre = np.where(self.trackdata[8][i[0]: i[-1]+1])[0]
+            if True in self.trackdata[9][i[0]: i[-1]+1]:
+                bool_cre = self.trackdata[9][i[0]: i[-1]+1]
 
-                acid_cre = list(np.array(self.trackdata[2])[i_cre])
-                actype = ['B738']*len(i_cre)
-                lat = self.trackdata[3][i_cre]
-                lon = self.trackdata[4][i_cre]
-                hdg = self.trackdata[5][i_cre]
-                alt = self.trackdata[6][i_cre]
-                spd = self.trackdata[7][i_cre]
+                acid_cre = list(np.array(self.trackdata[2][i[0]: i[-1]+1])[bool_cre])
+                actype = list(np.array(self.trackdata[3][i[0]: i[-1]+1])[bool_cre])
+                lat = self.trackdata[4][i[0]: i[-1]+1][bool_cre]
+                lon = self.trackdata[5][i[0]: i[-1]+1][bool_cre]
+                hdg = self.trackdata[6][i[0]: i[-1]+1][bool_cre]
+                alt = self.trackdata[7][i[0]: i[-1]+1][bool_cre]
+                spd = self.trackdata[8][i[0]: i[-1]+1][bool_cre]
 
                 self.cre(acid_cre, actype, lat, lon, hdg, alt, spd, True)
-
-            if True in self.trackdata[9][i[0]: i[-1]+1]:
-                i_del = np.where(self.trackdata[9][i[0]: i[-1]+1])[0]
-                idx_del = np.nonzero(np.array(self.trackdata[2][i_del])[:, None] == self.id)[1]
-                self.delete(idx_del)
 
             # Check if there is traffic
             if self.nfromfile == 0:
@@ -566,19 +568,19 @@ class Traffic(Entity):
             idx = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1]+1])[:, None] == self.id)[1]
 
             # Update the traffic arrays with the data from the data point
-            self.lat[idx] = self.trackdata[3][i[0]: i[-1]+1]
-            self.lon[idx] = self.trackdata[4][i[0]: i[-1]+1]
-            self.alt[idx] = self.trackdata[5][i[0]: i[-1]+1]
-            self.hdg[idx] = self.trackdata[6][i[0]: i[-1]+1]
-            self.gs[idx] = self.trackdata[7][i[0]: i[-1]+1]
+            self.lat[idx] = self.trackdata[4][i[0]: i[-1]+1]
+            self.lon[idx] = self.trackdata[5][i[0]: i[-1]+1]
+            self.alt[idx] = self.trackdata[6][i[0]: i[-1]+1]
+            self.hdg[idx] = self.trackdata[7][i[0]: i[-1]+1]
+            self.gs[idx] = self.trackdata[8][i[0]: i[-1]+1]
 
             # Get the index and the SIM_TIME of the next data point
             self.i_next = i[-1]+1
             self.t_next = self.trackdata[0][self.i_next]
             # Store the current data point
-            self.trackdata_prev = (self.trackdata[2][i[0]: i[-1]+1], self.trackdata[3][i[0]: i[-1]+1],
-                                   self.trackdata[4][i[0]: i[-1]+1], self.trackdata[5][i[0]: i[-1]+1],
-                                   self.trackdata[6][i[0]: i[-1]+1], self.trackdata[7][i[0]: i[-1]+1])
+            self.trackdata_prev = (self.trackdata[2][i[0]: i[-1]+1], self.trackdata[4][i[0]: i[-1]+1],
+                                   self.trackdata[5][i[0]: i[-1]+1], self.trackdata[6][i[0]: i[-1]+1],
+                                   self.trackdata[7][i[0]: i[-1]+1], self.trackdata[8][i[0]: i[-1]+1])
 
         else:
             # Get the indices for the traffic arrays
@@ -625,12 +627,14 @@ class Traffic(Entity):
             print("ADSB FILE")
             """ When there are no waypoints, the sim is running on a scn-file made from radar or ADSB"""
             bs.stack.stackbase.manual_del()
+            self.fromfile[idx] = False
         else:
             """" There are waypoints, so the ac has a route to follow"""
             if flag:
                 """ Manual Mode on """
                 print("MANUAL ON")
                 bs.traf.swlnav[idx] = False
+                self.fromfile[idx] = False
 
             elif not flag:
                 """ Manual Mode off """
