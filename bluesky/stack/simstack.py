@@ -179,7 +179,7 @@ def readscn(fname):
                 if not (len(line.strip()) > 0 and line.strip()[0] == "#"):
                     print("except this:" + line)
 
-def read_trackdata(folder, time0):
+def read_trackdata(folder, time0, i=None):
     path = os.getcwd()+"\\scenario\\"+folder.lower()
 
     if os.path.isdir(path):
@@ -195,15 +195,26 @@ def read_trackdata(folder, time0):
         bs.scr.echo('Preparing data from '+path+' ...')
         vemmisdata = vemmisread.VEMMISRead(path, time0)
 
-        bs.scr.echo('Loading initial commands ...')
-        cmds, cmdst = vemmisdata.get_commands()
-
         bs.scr.echo('Loading track data ...')
         bs.traf.trackdata = vemmisdata.get_trackdata()
 
         bs.scr.echo('Initialize simulation ...')
-        Stack.scencmd = cmds
-        Stack.scentime = cmdst
+        # Create first aircraft
+        i = bs.traf.trackdata[1][0]
+        acid = bs.traf.trackdata[2][i[0]: i[-1]+1]
+        actype = ['B738']*len(i)
+        lat = bs.traf.trackdata[3][i]
+        lon = bs.traf.trackdata[4][i]
+        hdg = bs.traf.trackdata[5][i]
+        alt = bs.traf.trackdata[6][i]
+        spd = bs.traf.trackdata[7][i]
+        bs.traf.cre(acid, actype, lat, lon, hdg, alt, spd, True)
+        # Initialize previous data point
+        bs.traf.trackdata_prev = (bs.traf.trackdata[2][i[0]: i[-1]+1], bs.traf.trackdata[3][i[0]: i[-1]+1],
+                                  bs.traf.trackdata[4][i[0]: i[-1]+1], bs.traf.trackdata[5][i[0]: i[-1]+1],
+                                  bs.traf.trackdata[6][i[0]: i[-1]+1], bs.traf.trackdata[7][i[0]: i[-1]+1])
+        bs.traf.i_next = i[-1]+1
+        bs.traf.t_next = bs.traf.trackdata[0][bs.traf.i_next]
 
         bs.scr.echo('Done')
     else:

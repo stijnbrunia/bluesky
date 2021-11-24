@@ -85,6 +85,7 @@ class Traffic(Entity):
         # Take state from data file
         self.trackdata = ()
         self.trackdata_prev = ()
+        self.nfromfile = 0
         self.i_next = 0
         self.t_next = 0.0
 
@@ -248,18 +249,20 @@ class Traffic(Entity):
         self.lon[-n:]  = aclon
         self.alt[-n:]  = acalt
 
-        if achdg.upper() in bs.navdb.wpid:
-            index = bs.navdb.wpid.index(achdg.upper())
-            templat_hdg = bs.navdb.wplat[index]
-            templon_hdg = bs.navdb.wplon[index]
-            templat_ac = aclat
-            templon_ac = aclon
+        if isinstance(achdg, str):
+            if achdg.upper() in bs.navdb.wpid:
+                index = bs.navdb.wpid.index(achdg.upper())
+                templat_hdg = bs.navdb.wplat[index]
+                templon_hdg = bs.navdb.wplon[index]
+                templat_ac = aclat
+                templon_ac = aclon
 
-            achdg = angleFromCoordinate(templat_ac, templon_ac, templat_hdg, templon_hdg)
+                achdg = angleFromCoordinate(templat_ac, templon_ac, templat_hdg, templon_hdg)
 
-        else:
-            achdg = float(achdg)
-
+            else:
+                achdg = float(achdg)
+        elif isinstance(achdg, (int, float)):
+            achdg = np.array(n * [achdg])
 
         self.hdg[-n:]  = achdg
         self.trk[-n:]  = achdg
@@ -310,6 +313,7 @@ class Traffic(Entity):
             self.swvnavspd[-n:] = False
             self.swhdgsel[-n:] = False
             self.swats[-n:] = False
+            self.nfromfile += n
 
         # Record as individual CRE commands for repeatability
         #print(self.ntraf-n,self.ntraf)
@@ -531,35 +535,61 @@ class Traffic(Entity):
     def update_fromfile(self):
         # Check if the next data point is reached
         if self.t_next <= bs.sim.simt:
+            #print(self.t_next, '<=', bs.sim.simt, 'Update from file')
             # Get all indices with this SIM_TIME
             i = self.trackdata[1][self.i_next]
+
+            # Check if aircraft needs to be created/deleted
+            if True in self.trackdata[8][i[0]: i[-1]+1]:
+                i_cre = np.where(self.trackdata[8][i[0]: i[-1]+1])[0]
+
+                acid_cre = list(np.array(self.trackdata[2])[i_cre])
+                actype = ['B738']*len(i_cre)
+                lat = self.trackdata[3][i_cre]
+                lon = self.trackdata[4][i_cre]
+                hdg = self.trackdata[5][i_cre]
+                alt = self.trackdata[6][i_cre]
+                spd = self.trackdata[7][i_cre]
+
+                self.cre(acid_cre, actype, lat, lon, hdg, alt, spd, True)
+
+            if True in self.trackdata[9][i[0]: i[-1]+1]:
+                i_del = np.where(self.trackdata[9][i[0]: i[-1]+1])[0]
+                idx_del = np.nonzero(np.array(self.trackdata[2][i_del])[:, None] == self.id)[1]
+                self.delete(idx_del)
+
+            # Check if there is traffic
+            if self.nfromfile == 0:
+                return
+
             # Get the indices for the traffic arrays
-            idx = np.nonzero(np.array(self.trackdata[2])[i][:, None] == self.id)[1]
+            idx = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1]+1])[:, None] == self.id)[1]
 
             # Update the traffic arrays with the data from the data point
-            self.lat[idx] = self.trackdata[3][i]
-            self.lon[idx] = self.trackdata[4][i]
-            self.alt[idx] = self.trackdata[5][i]
-            self.hdg[idx] = self.trackdata[6][i]
-            self.gs[idx] = self.trackdata[7][i]
+            self.lat[idx] = self.trackdata[3][i[0]: i[-1]+1]
+            self.lon[idx] = self.trackdata[4][i[0]: i[-1]+1]
+            self.alt[idx] = self.trackdata[5][i[0]: i[-1]+1]
+            self.hdg[idx] = self.trackdata[6][i[0]: i[-1]+1]
+            self.gs[idx] = self.trackdata[7][i[0]: i[-1]+1]
 
             # Get the index and the SIM_TIME of the next data point
             self.i_next = i[-1]+1
             self.t_next = self.trackdata[0][self.i_next]
             # Store the current data point
-            self.trackdata_prev = (self.trackdata[2][i], self.trackdata[3][i], self.trackdata[4][i],
-                                   self.trackdata[5][i], self.trackdata[6][i], self.trackdata[7][i])
+            self.trackdata_prev = (self.trackdata[2][i[0]: i[-1]+1], self.trackdata[3][i[0]: i[-1]+1],
+                                   self.trackdata[4][i[0]: i[-1]+1], self.trackdata[5][i[0]: i[-1]+1],
+                                   self.trackdata[6][i[0]: i[-1]+1], self.trackdata[7][i[0]: i[-1]+1])
 
         else:
             # Get the indices for the traffic arrays
-            idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)
+            idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)[1]
 
             # Update the traffic arrays with the data from the previous data point
-            self.lat[idx] = self.trackdata[1]
-            self.lon[idx] = self.trackdata[2]
-            self.alt[idx] = self.trackdata[3]
-            self.hdg[idx] = self.trackdata[4]
-            self.gs[idx] = self.trackdata[5]
+            self.lat[idx] = self.trackdata_prev[1]
+            self.lon[idx] = self.trackdata_prev[2]
+            self.alt[idx] = self.trackdata_prev[3]
+            self.hdg[idx] = self.trackdata_prev[4]
+            self.gs[idx] = self.trackdata_prev[5]
 
         # Determine other speed types
         self.tas[idx] = self.gs[idx]

@@ -38,6 +38,8 @@ class VEMMISRead:
 
         self.sort_data()
 
+        self.add_createdelete()
+
     def read_data(self):
         for root, dirs, files in os.walk(self.data_path):
             self.flights = pd.read_csv(self.data_path+'\\'+files[1], sep=';')
@@ -60,6 +62,9 @@ class VEMMISRead:
         columns_tracks_merge.remove('REGISTRATION')
 
         self.tracks_merged = pd.merge(self.tracks[columns_tracks_merge], self.flights[columns_flights_merge])
+
+        self.tracks_merged['CREATE'] = [False]*len(self.tracks_merged)
+        self.tracks_merged['DELETE'] = [False]*len(self.tracks_merged)
 
     def get_coordinates(self):
         self.tracks_merged['X'] = self.tracks_merged['X'].str.replace(',', '.').astype('float')
@@ -98,9 +103,20 @@ class VEMMISRead:
     def sort_data(self):
         self.tracks_merged = self.tracks_merged.sort_values(by=['SIM_TIME'])
         self.tracks_merged = self.tracks_merged[self.tracks_merged['SIM_TIME'] >= self.time0]
+        self.tracks_merged['SIM_TIME'] = self.tracks_merged['SIM_TIME'] - self.tracks_merged['SIM_TIME'].iloc[0]
 
-        columns = ['SIM_TIME', 'CALLSIGN', 'LATITUDE', 'LONGITUDE', 'ALTITUDE', 'HEADING', 'SPEED']
+        columns = ['SIM_TIME', 'CALLSIGN', 'LATITUDE', 'LONGITUDE', 'ALTITUDE', 'HEADING', 'SPEED', 'CREATE', 'DELETE']
         self.trackdata = self.tracks_merged[columns]
+        self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
+
+    def add_createdelete(self):
+        for acid in self.trackdata['CALLSIGN'].unique():
+            track = self.trackdata[self.trackdata['CALLSIGN'] == acid]
+
+            i_cre = track.index[0]
+            i_del = track.index[-1]
+            self.trackdata.loc[i_cre, 'CREATE'] = True
+            self.trackdata.loc[i_del, 'DELETE'] = True
 
     def get_commands(self):
         command = []
@@ -131,7 +147,9 @@ class VEMMISRead:
 
             i_cre = track.index[0]
             i_del = track.index[-1]
-            self.trackdata = self.trackdata.drop([i_cre, i_del])
+            self.trackdata.loc[i_cre, 'CREATE'] = True
+            self.trackdata.loc[i_del, 'DELETE'] = True
+            # self.trackdata = self.trackdata.drop([i_cre, i_del])
 
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
@@ -152,4 +170,6 @@ class VEMMISRead:
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         hdg = np.array(self.trackdata['HEADING'])
         spd = np.array(self.trackdata['SPEED'])*kts
-        return simt, simt_i, id, lat, lon, alt, hdg, spd
+        create = np.array(self.trackdata['CREATE'], dtype=np.bool)
+        delete = np.array(self.trackdata['DELETE'], dtype=np.bool)
+        return simt, simt_i, id, lat, lon, alt, hdg, spd, create, delete
