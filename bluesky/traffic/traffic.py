@@ -542,7 +542,7 @@ class Traffic(Entity):
             # Delete aircraft which have already reached the last data point
             i = self.trackdata[1][self.i_next-1]
             if True in self.trackdata[10][i[0]: i[-1] + 1]:
-                bool_del = np.where(self.trackdata[10][i[0]: i[-1] + 1])[0]
+                bool_del = self.trackdata[10][i[0]: i[-1] + 1]
                 idx_del = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1] + 1])[bool_del][:, None] == self.id)[1]
                 self.delete(idx_del)
 

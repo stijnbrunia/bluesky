@@ -199,6 +199,9 @@ def read_trackdata(folder, time0, i=None):
         bs.traf.trackdata = vemmisdata.get_trackdata()
 
         bs.scr.echo('Initialize simulation ...')
+        # Set date and time
+        simday, simmonth, simyear, simtime = vemmisdata.get_datetime()
+        bs.sim.setutc(simday, simmonth, simyear, simtime)
         # Create first aircraft
         i = bs.traf.trackdata[1][0]
         acid = bs.traf.trackdata[2][i[0]: i[-1]+1]

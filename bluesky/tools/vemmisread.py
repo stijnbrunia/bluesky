@@ -1,11 +1,41 @@
-import bluesky as bs
+"""
+This python file is used for reading and preparing the VEMMIS data
+
+Created by: Bob van Dillen
+Date: 22-11-2021
+"""
+
 import pandas as pd
 import numpy as np
+import datetime
 import os
 from .geo import qdrpos
 from .aero import kts, ft
 
+
 class VEMMISRead:
+    """
+    Class definition: Read and prepare the VEMMIS data
+    Methods:
+            read_data():        Read vemmis csv files
+            relevant_data():    Select relevant flights
+            merge_data():       Merge flights data into the other data, to get e.g. callsign
+            get_coordinates():  Calculate coordinates from x and y position
+            get_altitude():     Determine altitude from MODE_C
+            get_time():         Determine the actual time
+            get_starttime():    Get the time of the first data point
+            get_simtime():      Determine the simulation time and optionally apply the fixed update rate
+            delete_nan():       Delete data points with NaN in the relevant columns
+            sort_data():        Sort the data by time and take the relevant columns for the track data
+            add_createdelete(): Determine at which data point the aircraft need to be created and deleted
+            get_datetime():     Get the date and time for the simulation
+            get_commands():     Get the commands that need to be executed in the simulation
+            get_trackdata():    Get the track data for the simulation
+
+    Created by: Bob van Dillen
+    Date: 22-11-2021
+    """
+
     def __init__(self, data_path, time0, fixed_rate=True, deltat=5.):
         self.data_path = data_path
 
@@ -42,17 +72,41 @@ class VEMMISRead:
         self.add_createdelete()
 
     def read_data(self):
+        """
+        Function: Read vemmis csv files
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 22-11-2021
+        """
         for root, dirs, files in os.walk(self.data_path):
             self.flights = pd.read_csv(self.data_path+'\\'+files[1], sep=';')
             self.flighttimes = pd.read_csv(self.data_path+'\\'+files[2], sep=';')
             self.tracks = pd.read_csv(self.data_path+'\\'+files[5], sep=';')
 
     def relevant_data(self):
+        """
+        Function: Select relevant flights
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 22-11-2021
+        """
         i_delete = list(self.flights.index[self.flights['ICAO_ACTYPE'].isna()]) + \
                    list(self.flights.index[self.flights['STATUS'].isin(['CANCELLED'])])
         self.flights = self.flights.drop(list(set(i_delete)))
 
     def merge_data(self):
+        """
+        Function: Merge flights data into the other data, to get e.g. callsign
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         columns_flights = self.flights.columns.values
         columns_tracks = self.tracks.columns.values
 
@@ -68,6 +122,14 @@ class VEMMISRead:
         self.tracks_merged['DELETE'] = [False]*len(self.tracks_merged)
 
     def get_coordinates(self):
+        """
+        Function: Calculate coordinates from x and y position
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         self.tracks_merged['X'] = self.tracks_merged['X'].str.replace(',', '.').astype('float')
         self.tracks_merged['Y'] = self.tracks_merged['Y'].str.replace(',', '.').astype('float')
 
@@ -82,30 +144,78 @@ class VEMMISRead:
         self.tracks_merged = self.tracks_merged.rename(columns={'X': 'LATITUDE', 'Y': 'LONGITUDE'})
 
     def get_altitude(self):
+        """
+        Function: Determine altitude from MODE_C
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         self.tracks_merged['MODE_C'] = self.tracks_merged['MODE_C'].str.replace(',', '.').astype('float')*100
         self.tracks_merged = self.tracks_merged.rename(columns={'MODE_C': 'ALTITUDE'})
 
     def get_time(self):
+        """
+        Function: Determine the actual time
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         self.tracks_merged['T0'] = pd.to_datetime(self.tracks_merged['T0'])
         self.tracks_merged['TIME'] = pd.to_timedelta(self.tracks_merged['TIME']/100, unit='seconds')
 
         self.tracks_merged['ACTUAL_TIME'] = self.tracks_merged['T0'] + self.tracks_merged['TIME']
 
     def get_starttime(self):
+        """
+        Function: Get the time of the first data point
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         self.datetime0 = min(self.tracks_merged['ACTUAL_TIME'])
 
     def get_simtime(self):
+        """
+        Function: Determine the simulation time and optionally apply the fixed update rate
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         self.tracks_merged['SIM_TIME'] = self.tracks_merged['ACTUAL_TIME'] - self.datetime0
         self.tracks_merged['SIM_TIME'] = self.tracks_merged['SIM_TIME'].dt.total_seconds()
         if self.fixed_rate:
-            self.tracks_merged['SIM_TIME'] = (self.tracks_merged['SIM_TIME']/self.deltat).astype(int)*self.deltat
+            self.tracks_merged['SIM_TIME'] = (self.tracks_merged['SIM_TIME']/self.deltat).apply(np.ceil)*self.deltat
             self.tracks_merged = self.tracks_merged.drop_duplicates(subset=['SIM_TIME', 'CALLSIGN'], keep='last')
 
     def delete_nan(self):
+        """
+        Function: Delete data points with NaN in the relevant columns
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 25-11-2021
+        """
         self.tracks_merged = self.tracks_merged.dropna(subset=['CALLSIGN', 'ICAO_ACTYPE', 'LATITUDE', 'LONGITUDE',
                                                                'HEADING', 'ALTITUDE', 'SPEED'])
 
     def sort_data(self):
+        """
+        Function: Sort the data by time and take the relevant columns for the track data
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         self.tracks_merged = self.tracks_merged.sort_values(by=['SIM_TIME'])
         self.tracks_merged = self.tracks_merged[self.tracks_merged['SIM_TIME'] >= self.time0]
         self.tracks_merged['SIM_TIME'] = self.tracks_merged['SIM_TIME'] - self.tracks_merged['SIM_TIME'].iloc[0]
@@ -116,6 +226,14 @@ class VEMMISRead:
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
 
     def add_createdelete(self):
+        """
+        Function: Determine at which data point the aircraft need to be created and deleted
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 24-11-2021
+        """
         for acid in self.trackdata['CALLSIGN'].unique():
             track = self.trackdata[self.trackdata['CALLSIGN'] == acid]
 
@@ -124,7 +242,37 @@ class VEMMISRead:
             self.trackdata.loc[i_cre, 'CREATE'] = True
             self.trackdata.loc[i_del, 'DELETE'] = True
 
+    def get_datetime(self):
+        """
+        Function: Get the date and time for the simulation
+        Args: -
+        Returns:
+            day:    day of the simulation [int]
+            month:  month of the simulation [int]
+            year:   year of the simulation [int]
+            time:   time of the simulation [str]
+
+        Created by: Bob van Dillen
+        Date = 25-11-2021
+        """
+        datetime_start = self.datetime0 + datetime.timedelta(seconds=self.time0)
+        day = datetime_start.day
+        month = datetime_start.month
+        year = datetime_start.year
+        time = datetime_start.strftime("%H:%M:%S")
+        return day, month, year, time
+
     def get_commands(self):
+        """
+        Function: Get the commands that need to be executed in the simulation
+        Args: -
+        Returns:
+            command:        the commands [lst(str)]
+            commandtime:    the time when the command needs to be executed [lst(float)]
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         command = []
         commandtime = []
         for acid in self.tracks_merged['CALLSIGN'].unique():
@@ -163,6 +311,25 @@ class VEMMISRead:
         return list(command_df['COMMAND']), list(command_df['TIME'])
 
     def get_trackdata(self):
+        """
+        Function: Get the track data for the simulation
+        Args: -
+        Returns:
+            simt:   simulation time [array(float)]
+            simt_i: indices with the same simulation time [lst(lst(int))]
+            id:     callsign [lst(str)]
+            actype: aircraft type [lst(str)]
+            lat:    latitude [array(float)]
+            lon:    longitude [array(float)]
+            hdg:    heading [array(float)]
+            alt:    altitude [array(float)]
+            spd:    ground speed [array(float)]
+            create: if an aircraft needs to be created [array(bool)]
+            delete: if an aircraft needs to be deleted [array(bool)]
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
         simt = np.array(self.trackdata['SIM_TIME'])
         unique, i, count = np.unique(simt, return_index=True, return_counts=True)
         simt_i = []
@@ -174,8 +341,8 @@ class VEMMISRead:
         actype = list(self.trackdata['ICAO_ACTYPE'])
         lat = np.array(self.trackdata['LATITUDE'])
         lon = np.array(self.trackdata['LONGITUDE'])
-        alt = np.array(self.trackdata['ALTITUDE'])*ft
         hdg = np.array(self.trackdata['HEADING'])
+        alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
         create = np.array(self.trackdata['CREATE'], dtype=np.bool)
         delete = np.array(self.trackdata['DELETE'], dtype=np.bool)
