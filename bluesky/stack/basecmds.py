@@ -291,6 +291,12 @@ def initbasecmds():
             bs.traf.mcre,
             "Multiple random create of n aircraft in current view",
         ],
+        "METEO": [
+            "METEO [ON/OFF]",
+            "[onoff]",
+            bs.traf.meteo,
+            "Access the Highres meteo demo and (de)activate it",
+        ],
         "MOVE": [
             "MOVE acid,lat,lon,[alt,hdg,spd,vspd]",
             "acid,latlon,[alt,hdg,spd,vspd]",

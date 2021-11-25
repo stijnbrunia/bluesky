@@ -84,12 +84,13 @@ class Traffic(Entity):
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
 
-        self.HighRes = False
+        self.HighRes = True
         self.Wind_DB = ""
 
         self.df_1 = ""
         self.df_2 = ""
         self.HR_Loaded = False
+        self.activate_HR = False
 
         with self.settrafarrays():
             # Aircraft Info
@@ -282,13 +283,17 @@ class Traffic(Entity):
 
         # Wind
         if self.wind.winddim > 0:
-            applywind         = self.alt[-n:]> 50.*ft
-            self.windnorth[-n:], self.windeast[-n:]  = self.wind.getdata(self.lat[-n:], self.lon[-n:], self.alt[-n:])
-            self.gsnorth[-n:] = self.gsnorth[-n:] + self.windnorth[-n:]*applywind
-            self.gseast[-n:]  = self.gseast[-n:]  + self.windeast[-n:]*applywind
-            self.trk[-n:]     = np.logical_not(applywind)*achdg + \
-                                applywind*np.degrees(np.arctan2(self.gseast[-n:], self.gsnorth[-n:]))
-            self.gs[-n:]      = np.sqrt(self.gsnorth[-n:]**2 + self.gseast[-n:]**2)
+            if self.HighRes:
+                self.windnorth[-n:] = 0.0
+                self.windeast[-n:] = 0.0
+            else:
+                applywind         = self.alt[-n:]> 50.*ft
+                self.windnorth[-n:], self.windeast[-n:]  = self.wind.getdata(self.lat[-n:], self.lon[-n:], self.alt[-n:])
+                self.gsnorth[-n:] = self.gsnorth[-n:] + self.windnorth[-n:]*applywind
+                self.gseast[-n:]  = self.gseast[-n:]  + self.windeast[-n:]*applywind
+                self.trk[-n:]     = np.logical_not(applywind)*achdg + \
+                                    applywind*np.degrees(np.arctan2(self.gseast[-n:], self.gsnorth[-n:]))
+                self.gs[-n:]      = np.sqrt(self.gsnorth[-n:]**2 + self.gseast[-n:]**2)
         else:
             self.windnorth[-n:] = 0.0
             self.windeast[-n:]  = 0.0
@@ -421,12 +426,14 @@ class Traffic(Entity):
             """ Only goes here when the High resolution data is enabled. """
             if len(str(bs.sim.utc)) == 19:
                 """ Only goes here when one whole second has past. """
-                if str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0":
+                if (str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0") or self.activate_HR == True:
                     """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
                     self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
-                    self.df_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(self.prev_timestamp))
-                    self.df_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + "_top WHERE timestamp_data = " + str(self.next_timestamp))
+                    print(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.prev_timestamp))
+                    self.df_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.prev_timestamp))
+                    self.df_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.next_timestamp))
                     self.HR_Loaded = True
+                    self.activate_HR = False
 
                 if self.HR_Loaded:
                     for idx in range(len(self.lat)):
@@ -440,7 +447,6 @@ class Traffic(Entity):
                         else:
                             self.windnorth[idx] = 0
                             self.windeast[idx] = 0
-                        #print(self.windnorth[idx], self.lat[idx], self.lon[idx])
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
@@ -585,12 +591,18 @@ class Traffic(Entity):
                 print("MANUAL OFF")
                 bs.traf.swlnav[idx] = True
 
+    def meteo(self, flag):
+        self.activate_HighRes("bluesky_demo", True)
+        bs.sim.setutc(1, 10, 2021, "00:30:00")
+
     def activate_HighRes(self, name,  flag=None):
         """ Function for meteo data """
+        print("HighResolution Meteo mode has been initialised.")
         self.HighRes = flag
         self.Wind_DB = name
         if self.HighRes:
             self.wind.winddim = 1
+            self.activate_HR = True
         else:
             self.wind.winddim = 0
 

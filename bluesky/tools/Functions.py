@@ -38,6 +38,7 @@ def find_height_levels(df, point, lat, lon):
     " Function that finds the closest height levels above and below the actual height, needed for interpolation "
     df_t = df.query('lat == ' + str(lat) + ' and lon ==' + str(lon))
     layer_min = layer_plus = -1
+    value_m = value_p = -1
     for i in range(len(df_t)):
         if point[1] > df_t.iloc[i][4]:
             if i - 1 >= 0:
@@ -51,15 +52,19 @@ def find_height_levels(df, point, lat, lon):
 
 def interpolation(value_mmm, value_mmp, value_mpm, value_mpp, value_pmm, value_pmp, value_ppm, value_ppp, alt, lat, lon): #values are [time,alt,lat,lon, uwind, vwind]
     """ Function with the interpolation structure over first alt, second lat and finally lon """
-    value_mm = [value_mmm[0], value_mmm[1], lon, interpolate(lon, value_mmm[2], value_mmp[2], value_mmm[3], value_mmp[3]), interpolate(lon, value_mmm[2], value_mmp[2], value_mmm[4], value_mmp[4])]
-    value_mp = [value_mpm[0], value_mpm[1], lon, interpolate(lon, value_mpm[2], value_mpp[2], value_mpm[3], value_mpp[3]), interpolate(lon, value_mpm[2], value_mpp[2], value_mpm[4], value_mpp[4])]
-    value_pm = [value_pmm[0], value_pmm[1], lon, interpolate(lon, value_pmm[2], value_pmp[2], value_pmm[3], value_pmp[3]), interpolate(lon, value_pmm[2], value_pmp[2], value_pmm[4], value_pmp[4])]
-    value_pp = [value_ppm[0], value_ppm[1], lon, interpolate(lon, value_ppm[2], value_ppp[2], value_ppm[3], value_ppp[3]), interpolate(lon, value_ppm[2], value_ppp[2], value_ppm[4], value_ppp[4])]
+    if value_mmm != -1 and value_mmp != -1 and value_mpm != -1 and value_mpp != -1 and value_pmm != -1 and value_pmp != -1 and value_ppm != -1 and value_ppp != -1:
+        value_mm = [value_mmm[0], value_mmm[1], lon, interpolate(lon, value_mmm[2], value_mmp[2], value_mmm[3], value_mmp[3]), interpolate(lon, value_mmm[2], value_mmp[2], value_mmm[4], value_mmp[4])]
+        value_mp = [value_mpm[0], value_mpm[1], lon, interpolate(lon, value_mpm[2], value_mpp[2], value_mpm[3], value_mpp[3]), interpolate(lon, value_mpm[2], value_mpp[2], value_mpm[4], value_mpp[4])]
+        value_pm = [value_pmm[0], value_pmm[1], lon, interpolate(lon, value_pmm[2], value_pmp[2], value_pmm[3], value_pmp[3]), interpolate(lon, value_pmm[2], value_pmp[2], value_pmm[4], value_pmp[4])]
+        value_pp = [value_ppm[0], value_ppm[1], lon, interpolate(lon, value_ppm[2], value_ppp[2], value_ppm[3], value_ppp[3]), interpolate(lon, value_ppm[2], value_ppp[2], value_ppm[4], value_ppp[4])]
 
-    value_m  = [value_mm[0], lat, lon, interpolate(lat, value_mm[1], value_mp[1], value_mm[3], value_mp[3]), interpolate(lat, value_mm[1], value_mp[1], value_mm[4], value_mp[4])]
-    value_p  = [value_pm[0], lat, lon, interpolate(lat, value_pm[1], value_pp[1], value_pm[3], value_pp[3]), interpolate(lat, value_pm[1], value_pp[1], value_pm[4], value_pp[4])]
+        value_m  = [value_mm[0], lat, lon, interpolate(lat, value_mm[1], value_mp[1], value_mm[3], value_mp[3]), interpolate(lat, value_mm[1], value_mp[1], value_mm[4], value_mp[4])]
+        value_p  = [value_pm[0], lat, lon, interpolate(lat, value_pm[1], value_pp[1], value_pm[3], value_pp[3]), interpolate(lat, value_pm[1], value_pp[1], value_pm[4], value_pp[4])]
 
-    value    = [alt, lat, lon, round(interpolate(alt, value_m[0], value_p[0], value_m[3], value_p[3]),4), round(interpolate(alt, value_m[0], value_p[0], value_m[4], value_p[4]),4)]
+        value    = [alt, lat, lon, round(interpolate(alt, value_m[0], value_p[0], value_m[3], value_p[3]),4), round(interpolate(alt, value_m[0], value_p[0], value_m[4], value_p[4]),4)]
+
+    else:
+        value = [alt, lat, lon, 0, 0]
     return value
 
 def interpolate(value , value_a , value_b, answer_a , answer_b):
