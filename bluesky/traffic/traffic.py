@@ -17,7 +17,6 @@ from bluesky.tools import geo
 from bluesky.tools.misc import latlon2txt, angleFromCoordinate
 from bluesky.tools.aero import cas2tas, casormach2tas, fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
-from bluesky.traffic.vemmis import update_radardata
 
 
 from bluesky.traffic.asas import ConflictDetection, ConflictResolution
@@ -574,8 +573,8 @@ class Traffic(Entity):
             # Update the traffic arrays with the data from the data point
             self.lat[idx] = self.trackdata[4][i[0]: i[-1]+1]
             self.lon[idx] = self.trackdata[5][i[0]: i[-1]+1]
-            self.alt[idx] = self.trackdata[6][i[0]: i[-1]+1]
-            self.hdg[idx] = self.trackdata[7][i[0]: i[-1]+1]
+            self.hdg[idx] = self.trackdata[6][i[0]: i[-1]+1]
+            self.alt[idx] = self.trackdata[7][i[0]: i[-1]+1]
             self.gs[idx] = self.trackdata[8][i[0]: i[-1]+1]
 
             # Get the index and the SIM_TIME of the next data point
@@ -597,8 +596,8 @@ class Traffic(Entity):
             # Update the traffic arrays with the data from the previous data point
             self.lat[idx] = self.trackdata_prev[1]
             self.lon[idx] = self.trackdata_prev[2]
-            self.alt[idx] = self.trackdata_prev[3]
-            self.hdg[idx] = self.trackdata_prev[4]
+            self.hdg[idx] = self.trackdata_prev[3]
+            self.alt[idx] = self.trackdata_prev[4]
             self.gs[idx] = self.trackdata_prev[5]
 
         # Determine other speed types

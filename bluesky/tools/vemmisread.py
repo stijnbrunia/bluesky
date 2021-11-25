@@ -36,6 +36,7 @@ class VEMMISRead:
         self.get_starttime()
         self.get_simtime()
 
+        self.delete_nan()
         self.sort_data()
 
         self.add_createdelete()
@@ -100,12 +101,17 @@ class VEMMISRead:
             self.tracks_merged['SIM_TIME'] = (self.tracks_merged['SIM_TIME']/self.deltat).astype(int)*self.deltat
             self.tracks_merged = self.tracks_merged.drop_duplicates(subset=['SIM_TIME', 'CALLSIGN'], keep='last')
 
+    def delete_nan(self):
+        self.tracks_merged = self.tracks_merged.dropna(subset=['CALLSIGN', 'ICAO_ACTYPE', 'LATITUDE', 'LONGITUDE',
+                                                               'HEADING', 'ALTITUDE', 'SPEED'])
+
     def sort_data(self):
         self.tracks_merged = self.tracks_merged.sort_values(by=['SIM_TIME'])
         self.tracks_merged = self.tracks_merged[self.tracks_merged['SIM_TIME'] >= self.time0]
         self.tracks_merged['SIM_TIME'] = self.tracks_merged['SIM_TIME'] - self.tracks_merged['SIM_TIME'].iloc[0]
 
-        columns = ['SIM_TIME', 'CALLSIGN', 'ICAO_ACTYPE', 'LATITUDE', 'LONGITUDE', 'ALTITUDE', 'HEADING', 'SPEED', 'CREATE', 'DELETE']
+        columns = ['SIM_TIME', 'CALLSIGN', 'ICAO_ACTYPE', 'LATITUDE', 'LONGITUDE',
+                   'ALTITUDE', 'HEADING', 'SPEED', 'CREATE', 'DELETE']
         self.trackdata = self.tracks_merged[columns]
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
 
@@ -173,4 +179,4 @@ class VEMMISRead:
         spd = np.array(self.trackdata['SPEED'])*kts
         create = np.array(self.trackdata['CREATE'], dtype=np.bool)
         delete = np.array(self.trackdata['DELETE'], dtype=np.bool)
-        return simt, simt_i, id, actype, lat, lon, alt, hdg, spd, create, delete
+        return simt, simt_i, id, actype, lat, lon, hdg, alt, spd, create, delete
