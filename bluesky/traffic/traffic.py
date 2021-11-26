@@ -84,7 +84,7 @@ class Traffic(Entity):
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
 
-        self.HighRes = True
+        self.HighRes = False
         self.Wind_DB = ""
 
         self.df_1 = ""
@@ -423,30 +423,7 @@ class Traffic(Entity):
 
         #---------- HighRes Meteo -----------------------------
         if self.HighRes == True:
-            """ Only goes here when the High resolution data is enabled. """
-            if len(str(bs.sim.utc)) == 19:
-                """ Only goes here when one whole second has past. """
-                if (str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0") or self.activate_HR == True:
-                    """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
-                    self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
-                    print(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.prev_timestamp))
-                    self.df_1 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.prev_timestamp))
-                    self.df_2 = Functions.query_DB_to_DF(self.Wind_DB, "SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.next_timestamp))
-                    self.HR_Loaded = True
-                    self.activate_HR = False
-
-                if self.HR_Loaded:
-                    for idx in range(len(self.lat)):
-                        """ Fill the uwind and vwind variables. """
-                        timefrac = Functions.utc2frac(bs.sim.utc , self.prev_timestamp)
-                        if self.lat[idx] >= 49 and self.lat[idx] <= 55.9 and self.lon[idx] >= -1 and self.lon[idx] <= 9.9:
-                            value1 = Functions.find_datapoint_timeframe(self.df_1, [self.prev_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
-                            value2 = Functions.find_datapoint_timeframe(self.df_2, [self.next_timestamp, self.alt[idx]/0.3048, self.lat[idx], self.lon[idx]])
-                            self.windnorth[idx] = Functions.time_interpolation(timefrac, value1[4], value2[4])
-                            self.windeast[idx]  = Functions.time_interpolation(timefrac, value1[5], value2[5])
-                        else:
-                            self.windnorth[idx] = 0
-                            self.windeast[idx] = 0
+            self.updateHighRes()
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
@@ -537,7 +514,6 @@ class Traffic(Entity):
             self.windnorth[:], self.windeast[:] = vnwnd,vewnd
             self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
             self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind
-
             self.gs  = np.logical_not(applywind)*self.tas + \
                        applywind*np.sqrt(self.gsnorth**2 + self.gseast**2)
 
@@ -572,7 +548,18 @@ class Traffic(Entity):
                 return -1
 
     def mnual(self, idx, flag=None):
-        """ This function is entered when an aircraft goes into manual (usefull when using ADSB data scenarios)"""
+        """
+            Function:   Manual function in which an aircraft can be put in manual mode, this can be used when
+                        having a scenario file, the function then deletes all aircraft specific instructions
+            Args:
+                - self
+                - idx: aircraft index number
+                - flag: the on/off switch
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 14-09-2021
+        """
         self.manual[idx] = flag
         route = self.ap.route[idx]
         if len(route.wpname) == 0:
@@ -592,11 +579,31 @@ class Traffic(Entity):
                 bs.traf.swlnav[idx] = True
 
     def meteo(self, flag):
+        """
+            Function:   Meteo function that activates a high resolution meteo data demo with data of 1-10-2021
+            Args:
+                - self
+                - flag: the on/off switch
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 16-11-2021
+        """
         self.activate_HighRes("bluesky_demo", True)
         bs.sim.setutc(1, 10, 2021, "00:30:00")
 
     def activate_HighRes(self, name,  flag=None):
-        """ Function for meteo data """
+        """
+            Function:   Function that activates the high resolution meteo data mode.
+            Args:
+                - self
+                - name: the name of the database in which the meteo data is stored
+                - flag: the on/off switch
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 03-11-2021
+        """
         print("HighResolution Meteo mode has been initialised.")
         self.HighRes = flag
         self.Wind_DB = name
@@ -605,6 +612,42 @@ class Traffic(Entity):
             self.activate_HR = True
         else:
             self.wind.winddim = 0
+
+    def updateHighRes(self):
+        """
+            Function:   Updates the highres meteo data every second, and loads the new data every 10 minutes
+            Args:
+                - self
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 24-11-2021
+        """
+
+        """ Only goes here when the High resolution data is enabled. """
+        if len(str(bs.sim.utc)) == 19 and (str(bs.sim.utc)[18] == "0" or str(bs.sim.utc)[18] == "5"):
+            print(bs.sim.utc)
+            """ Only goes here when one whole second has past. """
+            if (str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0") or self.activate_HR == True:
+                """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
+                self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
+                self.df_1 = Functions.query_DB_to_DF(self.Wind_DB,"SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.prev_timestamp))
+                self.df_2 = Functions.query_DB_to_DF(self.Wind_DB,"SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.next_timestamp))
+                self.HR_Loaded = True
+                self.activate_HR = False
+
+            if self.HR_Loaded:
+                for idx in range(len(self.lat)):
+                    """ Fill the uwind and vwind variables. """
+                    timefrac = Functions.utc2frac(bs.sim.utc, self.prev_timestamp)
+                    if self.lat[idx] >= 49 and self.lat[idx] <= 55.9 and self.lon[idx] >= -1 and self.lon[idx] <= 9.9:
+                        value1 = Functions.find_datapoint_timeframe(self.df_1,[self.prev_timestamp, self.alt[idx] / 0.3048,self.lat[idx], self.lon[idx]])
+                        value2 = Functions.find_datapoint_timeframe(self.df_2,[self.next_timestamp, self.alt[idx] / 0.3048,self.lat[idx], self.lon[idx]])
+                        self.windnorth[idx] = Functions.time_interpolation(timefrac, value1[4], value2[4])
+                        self.windeast[idx] = Functions.time_interpolation(timefrac, value1[5], value2[5])
+                    else:
+                        self.windnorth[idx] = 0
+                        self.windeast[idx] = 0
 
     def setnoise(self, noise=None):
         """Noise (turbulence, ADBS-transmission noise, ADSB-truncated effect)"""
@@ -896,3 +939,4 @@ class Traffic(Entity):
         if self.swats[idx]:
             return True,"ATS of "+self.id[idx]+" is ON"
         return True, "ATS of " + self.id[idx] + " is OFF. THR is "+str(self.thr[idx])
+
