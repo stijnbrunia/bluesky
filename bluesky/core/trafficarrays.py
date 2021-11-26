@@ -91,6 +91,21 @@ class TrafficArrays:
             vartype = ''.join(c for c in str(self.__dict__[v].dtype) if c.isalpha())
             self.__dict__[v] = np.append(self.__dict__[v], [defaults.get(vartype, 0)] * n)
 
+    # def split_traffic(self):
+    #     """
+    #     Function: Split the traffic arrays in simulated flights and flights that are updated from data
+    #     Args: -
+    #     Returns: -
+    #
+    #     Created by: Bob van Dillen
+    #     Date: 26-11-2021
+    #     """
+    #     bool_fromdata = TrafficArrays.root.fromdata
+    #     for v in self._LstVars:  # Lists (mostly used for strings)
+    #         self.__dict__[v] = list(np.array(self.__dict__[v])[bool_fromdata])
+    #     for v in self._ArrVars:  # Numpy array
+    #         self.__dict__[v] = self.__dict__[v][bool_fromdata]
+
     def istrafarray(self, name):
         ''' Returns true if parameter 'name' is a traffic array. '''
         return name in self._LstVars or name in self._ArrVars

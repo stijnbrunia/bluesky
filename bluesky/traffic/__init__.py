@@ -1,5 +1,6 @@
 ''' Traffic-related classes. '''
 from .traffic import Traffic
+from .traffic_fromdata import TrafficFromData
 from .route import Route
 from .activewpdata import ActiveWaypoint
 from .adsbmodel import ADSB

@@ -13,11 +13,11 @@ try:
 except ImportError:
     # In python <3.3 collections.abc doesn't exist
     from collections import Collection
-from bluesky.core import Entity
 from bluesky.tools import aero, vemmisread
 from .autopilot import Autopilot
-from .asas import ConflictDetection
-from .performance.perfbase import PerfBase
+# from .asas import ConflictDetection
+# from .performance.perfbase import PerfBase
+# from .windsim import WindSim
 
 
 """
@@ -25,7 +25,7 @@ Classes
 """
 
 
-class TrafficFromData(Entity):
+class TrafficFromData:
     """
     Traffic class definition    : Traffic data
     Methods:
@@ -40,45 +40,56 @@ class TrafficFromData(Entity):
     Members: see create
     Created by  : Jacco M. Hoekstra
     """
+
     def __init__(self):
-        super().__init__()
+        # self.wind = WindSim()
 
+        # Aircraft count
         self.ntraf_fromdata = 0
-
+        # Parameters used for update
         self.trackdata = ()
         self.i_next = 0
         self.t_next = 0.0
 
-        with self.settrafarrays():
-            self.id = []
-            self.type = []
-            self.lat = np.array([])
-            self.lon = np.array([])
-            self.alt = np.array([])
-            self.selalt = np.array([])
-            self.hdg = np.array([])
-            self.selhdg = np.array([])
-            self.trk = np.array([])
-            self.tas = np.array([])
-            self.cas = np.array([])
-            self.gs = np.array([])
-            self.M = np.array([])
-            self.vs = np.array([])
+        # Aircraft Info
+        self.id = []
+        self.type = []
+        # Positions
+        self.lat = np.array([])
+        self.lon = np.array([])
+        self.alt = np.array([])
+        self.selalt = np.array([])
+        self.hdg = np.array([])
+        self.selhdg = np.array([])
+        self.trk = np.array([])
+        # Velocities
+        self.tas = np.array([])
+        self.cas = np.array([])
+        self.selspd = np.array([])
+        self.gs = np.array([])
+        self.gsnorth = np.array([])
+        self.gseast = np.array([])
+        self.M = np.array([])
+        self.vs = np.array([])
+        # Flight Models
+        # self.cd = ConflictDetection()
+        self.ap = Autopilot()
+        # self.perf = PerfBase()
+        # Miscellaneous
+        self.coslat = np.array([])
+        self.eps = np.array([])
 
-            self.ap = Autopilot()
-            self.cd = ConflictDetection()
-            self.perf = PerfBase()
+        # self. = bs.traf.groups.ingroup
+        # self. = bs.traf.cd.inconf
+        # self. = bs.traf.cd.tcpamax
+        # self. = bs.traf.cd.rpz
+        # self. = len(bs.traf.cd.confpairs_unique)
+        # self. = len(bs.traf.cd.confpairs_all)
+        # self. = len(bs.traf.cd.lospairs_unique)
+        # self. = len(bs.traf.cd.lospairs_all)
 
-            # self. = bs.traf.groups.ingroup
-            # self. = bs.traf.cd.inconf
-            # self. = bs.traf.cd.tcpamax
-            # self. = bs.traf.cd.rpz
-            # self. = len(bs.traf.cd.confpairs_unique)
-            # self. = len(bs.traf.cd.confpairs_all)
-            # self. = len(bs.traf.cd.lospairs_unique)
-            # self. = len(bs.traf.cd.lospairs_all)
-
-    def reset(self):
+    @staticmethod
+    def reset():
         """
         Function: Clear all traffic data upon simulation reset
         Args: -
@@ -87,11 +98,8 @@ class TrafficFromData(Entity):
         Created by: Bob van Dillen
         Date: 25-11-2021
         """
-        # Some child reset functions depend on a correct value of self.ntraf
-        self.ntraf_fromdata = 0
-        # This ensures that the traffic arrays (which size is dynamic)
-        # are all reset as well, so all lat,lon,sdp etc but also objects adsb
-        super().reset()
+
+        bs.traf_fd = TrafficFromData()
 
     def cre(self, acid, actype=None, aclat=52., aclon=4., achdg=0, acalt=0, acspd=0):
         """
@@ -113,36 +121,36 @@ class TrafficFromData(Entity):
         # Determine number of aircraft to create from array length of acid
         n = 1 if isinstance(acid, str) else len(acid)
 
-        # Adjust the size of all traffic arrays
-        super().create(n)
-
         self.ntraf_fromdata += n
 
         # Aircraft Info
-        self.id[-n:] = acid
-        self.type[-n:] = actype
+        if isinstance(acid, list):
+            self.id += acid
+            self.type += actype
+        else:
+            self.id += [acid]
+            self.type += [actype]
         # Positions
-        self.lat[-n:] = aclat
-        self.lon[-n:] = aclon
-        self.alt[-n:] = acalt
-        self.hdg[-n:] = achdg
-        self.trk[-n:] = achdg
+        self.lat = np.append(self.lat, aclat)
+        self.lon = np.append(self.lon, aclon)
+        self.alt = np.append(self.alt, acalt)
+        self.hdg = np.append(self.hdg, achdg)
+        self.trk = np.append(self.trk, achdg)
         # Velocities
-        self.tas[-n:], self.cas[-n:], self.M[-n:] = aero.vcasormach(acspd, acalt)
-        self.gs[-n:] = self.tas[-n:]
+        self.gs = np.append(self.gs, acspd)
+        self.gsnorth = np.append(self.gsnorth, acspd*np.cos(np.radians(achdg)))
+        self.gseast = np.append(self.gseast, acspd*np.sin(np.radians(achdg)))
+        self.tas = np.append(self.tas, self.gs[-n:])
+        self.cas = np.append(self.cas, aero.vtas2cas(self.tas[-n:], acalt))
+        self.M = np.append(self.M, aero.vtas2mach(self.tas[-n:], acalt))
         # Traffic autopilot settings
-        # self.selspd[-n:] = self.cas[-n:]
-        # self.aptas[-n:]  = self.tas[-n:]
-        # self.selalt[-n:] = self.alt[-n:]
-        # Miscallaneous
-        # self.coslat[-n:] = np.cos(np.radians(aclat))  # Cosine of latitude for flat-earth aproximations
-        # self.eps[-n:] = 0.01
+        self.selspd = np.append(self.selspd, self.cas[-n:])
+        self.selalt = np.append(self.selalt, acalt)
+        # Miscellaneous
+        self.coslat = np.append(self.coslat, np.cos(np.radians(aclat)))  # Cosine of latitude for flat-earth aproximations
+        self.eps = np.append(self.eps, 0.01)
 
-        # Finally call create for child TrafficArrays. This only needs to be done
-        # manually in Traffic.
-        self.create_children(n)
-
-    def delete(self, idx):
+    def delete(self, acid):
         """
         Function: Delete an aircraft
         Args:
@@ -153,16 +161,35 @@ class TrafficFromData(Entity):
         Created by: Bob van Dillen
         Date: 25-11-2021
         """
-        # If this is a multiple delete, sort first for list delete
-        # (which will use list in reverse order to avoid index confusion)
-        if isinstance(idx, Collection):
-            idx = np.sort(idx)
+        # Get index
+        idx = (np.array(self.id)[:, None] == np.array(acid)).argmax(axis=0)
 
-        # Call the actual delete function
-        super().delete(idx)
+        # Delete from arrays
+        # Aircraft Info
+        self.id = list(np.delete(np.array(self.id), idx))
+        self.type = list(np.delete(np.array(self.type), idx))
+        # Positions
+        self.lat = np.delete(self.lat, idx)
+        self.lon = np.delete(self.lon, idx)
+        self.alt = np.delete(self.alt, idx)
+        self.hdg = np.delete(self.hdg, idx)
+        self.trk = np.delete(self.trk, idx)
+        # Velocities
+        self.gs = np.delete(self.gs, idx)
+        self.gsnorth = np.delete(self.gsnorth, idx)
+        self.gseast = np.delete(self.gseast, idx)
+        self.tas = np.delete(self.tas, idx)
+        self.cas = np.delete(self.cas, idx)
+        self.M = np.delete(self.M, idx)
+        # Traffic autopilot settings
+        self.selspd = np.delete(self.selspd, idx)
+        self.selalt = np.delete(self.selalt, idx)
+        # Miscellaneous
+        self.coslat = np.delete(np.coslat, idx)  # Cosine of latitude for flat-earth aproximations
+        self.eps = np.delete(np.eps, idx)
 
-        # Update number of aircraft
-        self.ntraf_fromdata = len(self.lat)
+        # Update aircraft count
+        self.ntraf_fromdata = len(self.id)
 
         return True
 
@@ -213,10 +240,10 @@ class TrafficFromData(Entity):
             # Check if aircraft have to be deleted
             delete = self.trackdata[10][i[0]: i[-1]]
             if True in delete:
-                # Get indices for traffic arrays
-                idx_del = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1] + 1])[delete][:, None] == self.id)[1]
+                # Get id for traffic arrays
+                acid_del = np.array(self.trackdata[2][i[0]: i[-1]+1])[delete]
                 # Delete the aircraft
-                self.delete(idx_del)
+                self.delete(acid_del)
 
             # Get the index and the SIM_TIME of the next data point
             self.i_next = i[-1]+1
@@ -261,7 +288,7 @@ def read_trackdata(folder, time0):
 
         # Load track data
         bs.scr.echo('Loading track data ...')
-        bs.traf.trackdata = vemmisdata.get_trackdata()
+        bs.traf_fd.trackdata = vemmisdata.get_trackdata()
 
         # Initialize simulation
         bs.scr.echo('Initialize simulation ...')
@@ -269,22 +296,20 @@ def read_trackdata(folder, time0):
         simday, simmonth, simyear, simtime = vemmisdata.get_datetime()
         bs.sim.setutc(simday, simmonth, simyear, simtime)
         # Create first aircraft
-        i = bs.traf.trackdata[1][0]
-        acid = bs.traf.trackdata[2][i[0]: i[-1]+1]
-        actype = bs.traf.trackdata[3][i[0]: i[-1]+1]
-        lat = bs.traf.trackdata[4][i[0]: i[-1]+1]
-        lon = bs.traf.trackdata[5][i[0]: i[-1]+1]
-        hdg = bs.traf.trackdata[6][i[0]: i[-1]+1]
-        alt = bs.traf.trackdata[7][i[0]: i[-1]+1]
-        spd = bs.traf.trackdata[8][i[0]: i[-1]+1]
-        bs.traf.cre(acid, actype, lat, lon, hdg, alt, spd, True)
-        # Initialize previous data point
-        bs.traf.trackdata_prev = (bs.traf.trackdata[2][i[0]: i[-1]+1], bs.traf.trackdata[4][i[0]: i[-1]+1],
-                                  bs.traf.trackdata[5][i[0]: i[-1]+1], bs.traf.trackdata[6][i[0]: i[-1]+1],
-                                  bs.traf.trackdata[7][i[0]: i[-1]+1], bs.traf.trackdata[8][i[0]: i[-1]+1])
-        bs.traf.i_next = i[-1]+1
-        bs.traf.t_next = bs.traf.trackdata[0][bs.traf.i_next]
+        i = bs.traf_fd.trackdata[1][0]
+        acid = bs.traf_fd.trackdata[2][i[0]: i[-1]+1]
+        actype = bs.traf_fd.trackdata[3][i[0]: i[-1]+1]
+        lat = bs.traf_fd.trackdata[4][i[0]: i[-1]+1]
+        lon = bs.traf_fd.trackdata[5][i[0]: i[-1]+1]
+        hdg = bs.traf_fd.trackdata[6][i[0]: i[-1]+1]
+        alt = bs.traf_fd.trackdata[7][i[0]: i[-1]+1]
+        spd = bs.traf_fd.trackdata[8][i[0]: i[-1]+1]
+        bs.traf_fd.cre(acid, actype, lat, lon, hdg, alt, spd)
+        # Get the index and the SIM_TIME of the next data point
+        bs.traf_fd.i_next = i[-1]+1
+        bs.traf_fd.t_next = bs.traf_fd.trackdata[0][bs.traf_fd.i_next]
 
         bs.scr.echo('Done')
     else:
         return False, f"TRACKDATA: Folder does not exist"
+

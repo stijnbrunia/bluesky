@@ -57,7 +57,7 @@ class Simulation:
             if self.syst < 0.0:
                 self.syst = time.time()
 
-            if bs.traf.ntraf > 0 or len(bs.stack.get_scendata()[0]) > 0:
+            if bs.traf.ntraf > 0 or len(bs.stack.get_scendata()[0]) > 0 or bs.traf_fd.ntraf_fromdata:
                 self.op()
                 if self.benchdt > 0.0:
                     self.fastforward(self.benchdt)
@@ -93,6 +93,7 @@ class Simulation:
 
             # Update traffic and other update functions for the next timestep
             bs.traf.update()
+            bs.traf_fd.update()
             simtime.update()
 
         # Always update syst
