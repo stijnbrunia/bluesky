@@ -7,6 +7,7 @@ from bluesky import settings
 from bluesky.core import select_implementation, simtime, varexplorer as ve
 from bluesky.tools import geo, aero, areafilter, plotter
 from bluesky.tools.calculator import calculator
+from bluesky.traffic import trafficfromdata
 from bluesky.stack.cmdparser import append_commands
 from bluesky.stack import simstack
 
@@ -143,7 +144,7 @@ def initbasecmds():
             "Set a custom color for an aircraft or shape",
         ],
         "CRE": [
-            "CRE acid,type,lat,lon,hdg,alt,spd,fromfile",
+            "CRE acid,type,lat,lon,hdg,alt,spd",
             "txt,txt,latlon,[hdg,alt,spd,onoff]",
             bs.traf.cre,
             "Create an aircraft",
@@ -390,7 +391,7 @@ def initbasecmds():
         "TRACKDATA": [
             "TRACKDATA folder, time0 (s)",
             "[txt], [float]",
-            simstack.read_trackdata,
+            trafficfromdata.read_trackdata,
             "Load track data (e.g. VEMMIS data) and provide the name of the folder in the scenario folder & start time"
         ],
         "TRAIL": [

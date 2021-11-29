@@ -52,6 +52,12 @@ class TrafficArrays:
         self._ArrVars  = []
         self._LstVars  = []
 
+        # Variables for splitting the traffic arrays in simulation and from data
+        self.bool_fromdata = np.array([], dtype=np.bool)
+        self.idx_fromdata = np.array([])
+        self.trafficarrays_copy = dict()
+
+
     def reparent(self, newparent):
         ''' Give TrafficArrays object a new parent. '''
         # Remove myself from the parent list of children, and add to new parent
@@ -91,20 +97,72 @@ class TrafficArrays:
             vartype = ''.join(c for c in str(self.__dict__[v].dtype) if c.isalpha())
             self.__dict__[v] = np.append(self.__dict__[v], [defaults.get(vartype, 0)] * n)
 
-    # def split_traffic(self):
-    #     """
-    #     Function: Split the traffic arrays in simulated flights and flights that are updated from data
-    #     Args: -
-    #     Returns: -
-    #
-    #     Created by: Bob van Dillen
-    #     Date: 26-11-2021
-    #     """
-    #     bool_fromdata = TrafficArrays.root.fromdata
-    #     for v in self._LstVars:  # Lists (mostly used for strings)
-    #         self.__dict__[v] = list(np.array(self.__dict__[v])[bool_fromdata])
-    #     for v in self._ArrVars:  # Numpy array
-    #         self.__dict__[v] = self.__dict__[v][bool_fromdata]
+    def split_traffic(self):
+        """
+        Function: Split the traffic arrays in simulated flights and flights that are updated from data
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 26-11-2021
+        """
+
+        # Simulated aircraft or from data (radar)
+        self.bool_fromdata = TrafficArrays.root.fromdata
+
+        # Copy of the original data
+        self.trafficarrays_copy = self.__dict__.copy()
+
+        # Lists
+        for v in self._LstVars:
+            # Variables used in TrafficFromData
+            if v in TrafficArrays.root.traffromdata_vars:
+                TrafficArrays.root.traffromdata.__dict__[v] = (np.array(self.__dict__[v])[self.bool_fromdata]).tolist()
+            # Other variables
+            else:
+                self.__dict__[v] = (np.array(self.__dict__[v])[~self.bool_fromdata]).tolist()
+
+        # Arrays
+        for v in self._ArrVars:
+            # Variables used in TrafficFromData
+            if v in TrafficArrays.root.traffromdata_vars:
+                print('v:\t', v)
+                print('dict:\t', self.__dict__[v])
+                print('bool:\t', self.bool_fromdata)
+                TrafficArrays.root.traffromdata.__dict__[v] = self.__dict__[v][self.bool_fromdata]
+            # Other variables
+            else:
+                self.__dict__[v] = self.__dict__[v][~self.bool_fromdata]
+
+    def merge_traffic(self):
+        """
+        Function: Merge the traffic arrays of the simulated flights and flights that are updated from data
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 29-11-2021
+        """
+
+        # Lists
+        for v in self._LstVars:
+            # Variables used in TrafficFromData
+            if v in TrafficArrays.root.traffromdata_vars:
+                self.__dict__[v] = self.__dict__[v] + TrafficArrays.root.traffromdata.__dict__[v]
+            # Other variables
+            else:
+                self.__dict__[v] = self.__dict__[v] + np.array(self.trafficarrays_copy[v])[self.bool_fromdata].tolist()
+
+        # Arrays
+        for v in self._ArrVars:
+            # Variables used in TrafficFromData
+            if v in TrafficArrays.root.traffromdata_vars:
+                self.__dict__[v] = np.array(self.__dict__[v].tolist() +
+                                            TrafficArrays.root.traffromdata.__dict__[v].tolist())
+            # Other variables
+            else:
+                self.__dict__[v] = np.array(self.__dict__[v].tolist() +
+                                            self.trafficarrays_copy[v][self.bool_fromdata].tolist())
 
     def istrafarray(self, name):
         ''' Returns true if parameter 'name' is a traffic array. '''

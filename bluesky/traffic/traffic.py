@@ -28,6 +28,7 @@ from .aporasas import APorASAS
 from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
 from .turbulence import Turbulence
+from .trafficfromdata import TrafficFromData
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
 
@@ -79,6 +80,8 @@ class Traffic(Entity):
         self.cond = Condition()  # Conditional commands list
         self.wind = WindSim()
         self.turbulence = Turbulence()
+        self.traffromdata = TrafficFromData()
+        self.traffromdata_vars = self.traffromdata.__dict__.keys()
         self.translvl = 5000.*ft # [m] Default transition level
 
         # Take state from data file
@@ -136,7 +139,7 @@ class Traffic(Entity):
             self.swvnav    = np.array([], dtype=np.bool)
             self.swvnavspd = np.array([], dtype=np.bool)
             self.manual = np.array([], dtype=np.bool)
-            self.fromfile = np.array([], dtype=np.bool)  # Take state from data file
+            self.fromdata = np.array([], dtype=np.bool)  # Take aircraft state from data/file
 
             # Flight Models
             self.cd       = ConflictDetection()
@@ -159,7 +162,7 @@ class Traffic(Entity):
             self.thr      = np.array([])        # Thottle seeting (0.0-1.0), negative = non-valid/auto
 
             # Display information on label
-            self.label       = []  # Text and bitmap of traffic label
+            # self.label       = []  # Text and bitmap of traffic label
 
             # Miscallaneous
             self.coslat = np.array([])  # Cosine of latitude for computations
@@ -210,7 +213,7 @@ class Traffic(Entity):
         self.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
 
 
-    def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0, fromfile=False):
+    def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0, acfromdata=False):
         """ Create one or more aircraft. """
         # Determine number of aircraft to create from array length of acid
         n = 1 if isinstance(acid, str) else len(acid)
@@ -294,9 +297,10 @@ class Traffic(Entity):
         self.selspd[-n:] = self.cas[-n:]
         self.aptas[-n:]  = self.tas[-n:]
         self.selalt[-n:] = self.alt[-n:]
+        self.fromdata[-n:] = acfromdata
 
         # Display information on label
-        self.label[-n:] = n*[['', '', '', 0]]
+        # self.label[-n:] = n*[['', '', '', 0]]
 
         # Miscallaneous
         self.coslat[-n:] = np.cos(np.radians(aclat))  # Cosine of latitude for flat-earth aproximations
@@ -305,15 +309,6 @@ class Traffic(Entity):
         # Finally call create for child TrafficArrays. This only needs to be done
         # manually in Traffic.
         self.create_children(n)
-
-        if fromfile:
-            self.fromfile[-n:] = True
-            self.swlnav[-n:] = False
-            self.swvnav[-n:] = False
-            self.swvnavspd[-n:] = False
-            self.swhdgsel[-n:] = False
-            self.swats[-n:] = False
-            self.nfromfile += n
 
         # Record as individual CRE commands for repeatability
         #print(self.ntraf-n,self.ntraf)
@@ -423,33 +418,42 @@ class Traffic(Entity):
         #---------- Atmosphere --------------------------------
         self.p, self.rho, self.Temp = vatmos(self.alt)
 
-        #---------- ADSB Update -------------------------------
-        self.adsb.update()
+        # --------- Split Traffic -----------------------------
+        self.split_traffic()
 
-        #---------- Fly the Aircraft --------------------------
-        self.ap.update()  # Autopilot logic
-        self.update_asas()  # Airborne Separation Assurance
-        self.aporasas.update()   # Decide to use autopilot or ASAS for commands
+        # Check if aircraft need to be simulated
+        if len(self.lat) != 0:
+            #---------- ADSB Update -------------------------------
+            self.adsb.update()
 
-        #---------- Performance Update ------------------------
-        self.perf.update()
+            #---------- Fly the Aircraft --------------------------
+            self.ap.update()  # Autopilot logic
+            self.update_asas()  # Airborne Separation Assurance
+            self.aporasas.update()   # Decide to use autopilot or ASAS for commands
 
-        #---------- Limit commanded speeds based on performance ------------------------------
-        self.aporasas.tas, self.aporasas.vs, self.aporasas.alt = \
-            self.perf.limits(self.aporasas.tas, self.aporasas.vs,
-                             self.aporasas.alt, self.ax)
+            #---------- Performance Update ------------------------
+            self.perf.update()
 
-        #---------- Kinematics --------------------------------
-        self.update_airspeed()
-        self.update_groundspeed()
-        self.update_pos()
-        self.update_fromfile()
+            #---------- Limit commanded speeds based on performance ------------------------------
+            self.aporasas.tas, self.aporasas.vs, self.aporasas.alt = \
+                self.perf.limits(self.aporasas.tas, self.aporasas.vs,
+                                 self.aporasas.alt, self.ax)
 
-        #---------- Simulate Turbulence -----------------------
-        self.turbulence.update()
+            #---------- Kinematics --------------------------------
+            self.update_airspeed()
+            self.update_groundspeed()
+            self.update_pos()
 
-        # Check whether new traffic state triggers conditional commands
-        self.cond.update()
+            #---------- Simulate Turbulence -----------------------
+            self.turbulence.update()
+
+            # Check whether new traffic state triggers conditional commands
+            self.cond.update()
+
+        self.traffromdata.update()
+
+        # --------- Merge traffic ------------------------------
+        self.merge_traffic()
 
         #---------- Aftermath ---------------------------------
         self.trails.update()

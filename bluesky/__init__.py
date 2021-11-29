@@ -21,7 +21,6 @@ startup_scnfile = ''
 # Main singleton objects in BlueSky
 net = None
 traf = None
-traf_fd = None
 navdb = None
 sim = None
 scr = None
@@ -68,7 +67,7 @@ def init(mode='sim', pygame=False, discovery=False, cfgfile='', scnfile=''):
     if mode[:3] == 'sim':
         # Check whether simulation node should run detached
         detached = (mode[-8:] == 'detached')
-        from bluesky.traffic import Traffic, TrafficFromData
+        from bluesky.traffic import Traffic
         from bluesky.simulation import Simulation
         if pygame:
             from bluesky.ui.pygame import Screen
@@ -83,9 +82,8 @@ def init(mode='sim', pygame=False, discovery=False, cfgfile='', scnfile=''):
         from bluesky.core import varexplorer
 
         # Initialize singletons
-        global traf, traf_fd, sim, scr, net
+        global traf, sim, scr, net
         traf = Traffic()
-        traf_fd = TrafficFromData()
         sim = Simulation()
         scr = Screen()
         net = Node(settings.simevent_port,
