@@ -624,10 +624,8 @@ class Traffic(Entity):
             Date: 24-11-2021
         """
 
-        """ Only goes here when the High resolution data is enabled. """
-        if len(str(bs.sim.utc)) == 19 and (str(bs.sim.utc)[18] == "0" or str(bs.sim.utc)[18] == "5"):
-            print(bs.sim.utc)
-            """ Only goes here when 5 whole seconds have past. """
+        if len(str(bs.sim.utc)) == 19 and str(bs.sim.utc)[18] == "0":
+            """ Only goes here when 1 whole minute has past. """
             if (str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0") or self.activate_HR == True:
                 """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
                 self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
@@ -637,17 +635,21 @@ class Traffic(Entity):
                 self.activate_HR = False
 
             if self.HR_Loaded:
-                for idx in range(len(self.lat)):
+                base = floor(len(self.lat) * int(str(bs.sim.utc)[17:])/60)
+                top  = ceil(len(self.lat) * int(str(bs.sim.utc)[17:])/60) + ceil(len(self.lat) * 10/60)
+                if top >= len(self.lat):
+                    top -= 1
+                for idx in range(top - base):
                     """ Fill the uwind and vwind variables. """
                     timefrac = Functions.utc2frac(bs.sim.utc, self.prev_timestamp)
-                    if self.lat[idx] >= 49 and self.lat[idx] <= 55.9 and self.lon[idx] >= -1 and self.lon[idx] <= 9.9:
-                        value1 = Functions.find_datapoint_timeframe(self.df_1,[self.prev_timestamp, self.alt[idx] / 0.3048,self.lat[idx], self.lon[idx]])
-                        value2 = Functions.find_datapoint_timeframe(self.df_2,[self.next_timestamp, self.alt[idx] / 0.3048,self.lat[idx], self.lon[idx]])
-                        self.windnorth[idx] = Functions.time_interpolation(timefrac, value1[4], value2[4])
-                        self.windeast[idx] = Functions.time_interpolation(timefrac, value1[5], value2[5])
+                    if self.lat[idx + base] >= 49 and self.lat[idx + base] <= 55.9 and self.lon[idx + base] >= -1 and self.lon[idx + base] <= 9.9:
+                        value1 = Functions.find_datapoint_timeframe(self.df_1,[self.prev_timestamp, self.alt[idx + base] / 0.3048,self.lat[idx + base], self.lon[idx + base]])
+                        value2 = Functions.find_datapoint_timeframe(self.df_2,[self.next_timestamp, self.alt[idx + base] / 0.3048,self.lat[idx + base], self.lon[idx + base]])
+                        self.windnorth[idx + base] = Functions.time_interpolation(timefrac, value1[4], value2[4])
+                        self.windeast[idx + base] = Functions.time_interpolation(timefrac, value1[5], value2[5])
                     else:
-                        self.windnorth[idx] = 0
-                        self.windeast[idx] = 0
+                        self.windnorth[idx + base] = 0
+                        self.windeast[idx + base] = 0
 
     def setnoise(self, noise=None):
         """Noise (turbulence, ADBS-transmission noise, ADSB-truncated effect)"""
