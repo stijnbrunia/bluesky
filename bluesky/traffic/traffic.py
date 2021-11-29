@@ -627,7 +627,7 @@ class Traffic(Entity):
         """ Only goes here when the High resolution data is enabled. """
         if len(str(bs.sim.utc)) == 19 and (str(bs.sim.utc)[18] == "0" or str(bs.sim.utc)[18] == "5"):
             print(bs.sim.utc)
-            """ Only goes here when one whole second has past. """
+            """ Only goes here when 5 whole seconds have past. """
             if (str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0") or self.activate_HR == True:
                 """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
                 self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
