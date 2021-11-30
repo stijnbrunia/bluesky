@@ -159,7 +159,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
-        self.trackdata['T_START'] = pd.to_datetime(self.trackdata['T_START'])
+        self.trackdata['T_START'] = pd.to_datetime(self.trackdata['T_START'], format="%d-%m-%Y %H:%M:%S")
         self.trackdata['TIME'] = pd.to_timedelta(self.trackdata['TIME']/100, unit='seconds')
 
         self.trackdata['ACTUAL_TIME'] = self.trackdata['T_START'] + self.trackdata['TIME']
