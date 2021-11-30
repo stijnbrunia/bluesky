@@ -159,10 +159,10 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
-        self.trackdata['T0'] = pd.to_datetime(self.trackdata['T0'])
+        self.trackdata['T_START'] = pd.to_datetime(self.trackdata['T_START'])
         self.trackdata['TIME'] = pd.to_timedelta(self.trackdata['TIME']/100, unit='seconds')
 
-        self.trackdata['ACTUAL_TIME'] = self.trackdata['T0'] + self.trackdata['TIME']
+        self.trackdata['ACTUAL_TIME'] = self.trackdata['T_START'] + self.trackdata['TIME']
 
     def get_starttime(self):
         """
@@ -213,7 +213,7 @@ class VEMMISRead:
         """
 
         self.trackdata = self.trackdata.sort_values(by=['SIM_TIME'])
-        self.trackdata = self.trackdata[self.trackdata['SIM_TIME'] >= self.time0]
+        self.trackdata = self.trackdata.loc[self.trackdata['SIM_TIME'] >= self.time0]
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
 
     def get_datetime(self):
@@ -229,7 +229,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 25-11-2021
         """
-        datetime_start = self.datetime0 + datetime.timedelta(seconds=self.time0)
+        datetime_start = min(self.trackdata['ACTUAL_TIME'])
         day = datetime_start.day
         month = datetime_start.month
         year = datetime_start.year
@@ -257,7 +257,7 @@ class VEMMISRead:
 
         for acid in self.trackdata['CALLSIGN'].unique():
             flight = self.flights.loc[self.flights['CALLSIGN'] == acid].iloc[0]
-            track = self.trackdata[self.trackdata['CALLSIGN'] == acid]
+            track = self.trackdata.loc[self.trackdata['CALLSIGN'] == acid]
 
             t_cre = track['SIM_TIME'].iloc[0]
             t_del = track['SIM_TIME'].iloc[-1]
