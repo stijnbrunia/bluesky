@@ -216,25 +216,6 @@ class VEMMISRead:
         self.trackdata = self.trackdata[self.trackdata['SIM_TIME'] >= self.time0]
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
 
-    # def add_createdelete(self):
-    #     """
-    #     Function: Determine at which data point the aircraft need to be created and deleted
-    #     Args: -
-    #     Returns: -
-    #
-    #     Created by: Bob van Dillen
-    #     Date = 24-11-2021
-    #     """
-    #
-    #     for acid in self.trackdata['CALLSIGN'].unique():
-    #         track = self.trackdata[self.trackdata['CALLSIGN'] == acid]
-    #
-    #         i_cre = track.index[0]
-    #         i_del = track.index[-1]
-    #         self.trackdata.loc[i_cre, 'CREATE'] = True
-    #         self.trackdata.loc[i_del, 'DELETE'] = True
-    #         self.trackdata = self.trackdata.drop([i_cre, i_del])
-
     def get_datetime(self):
         """
         Function: Get the date and time for the simulation
@@ -269,8 +250,10 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
-        command = []
-        commandtime = []
+        simday, simmonth, simyear, simtime = self.get_datetime()
+
+        command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
+        commandtime = [0.]
 
         for acid in self.trackdata['CALLSIGN'].unique():
             flight = self.flights.loc[self.flights['CALLSIGN'] == acid].iloc[0]
@@ -279,6 +262,7 @@ class VEMMISRead:
             t_cre = track['SIM_TIME'].iloc[0]
             t_del = track['SIM_TIME'].iloc[-1]
 
+            acflightid = str(flight['FLIGHT_ID'])
             actype = flight['ICAO_ACTYPE']
             orig = flight['ADEP']
             dest = flight['DEST']
@@ -289,12 +273,13 @@ class VEMMISRead:
             alt = str(track['ALTITUDE'].iloc[0])
             spd = str(track['SPEED'].iloc[0])
 
-            str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd+", ON"
-            #str_orig = "ORIG "+acid+" "+orig
-            #str_dest = "DEST "+acid+" "+dest
-            str_del = "DEL "+acid
-            command += [str_cre, str_del]
-            commandtime += [t_cre]*1 + [t_del]
+            str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
+            str_crefromdata = "CREFROMDATA "+acid+", "+acflightid
+            str_orig = "ORIG "+acid+" "+orig
+            str_dest = "DEST "+acid+" "+dest
+            str_del = "DELFROMDATA "+acid
+            command += [str_cre, str_crefromdata, str_orig, str_dest, str_del]
+            commandtime += [t_cre]*4 + [t_del]
 
             i_cre = track.index[0]
             i_del = track.index[-1]
@@ -323,6 +308,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
         simt = np.array(self.trackdata['SIM_TIME'])
         unique, i, count = np.unique(simt, return_index=True, return_counts=True)
         simt_i = []
@@ -330,6 +316,7 @@ class VEMMISRead:
             for c in range(count[j]):
                 simt_i.append(list(range(i[j], i[j] + count[j])))
 
+        flightid = np.array(self.trackdata['FLIGHT_ID'])
         id = list(self.trackdata['CALLSIGN'])
         actype = list(self.trackdata['ICAO_ACTYPE'])
         lat = np.array(self.trackdata['LATITUDE'])
@@ -337,4 +324,4 @@ class VEMMISRead:
         hdg = np.array(self.trackdata['HEADING'])
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
-        return simt, simt_i, id, actype, lat, lon, hdg, alt, spd
+        return simt, simt_i, flightid, id, actype, lat, lon, hdg, alt, spd

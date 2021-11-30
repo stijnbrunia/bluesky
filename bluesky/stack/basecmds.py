@@ -145,7 +145,7 @@ def initbasecmds():
         ],
         "CRE": [
             "CRE acid,type,lat,lon,hdg,alt,spd",
-            "txt,txt,latlon,[hdg,alt,spd,onoff]",
+            "txt,txt,latlon,[hdg,alt,spd]",
             bs.traf.cre,
             "Create an aircraft",
         ],
@@ -389,8 +389,8 @@ def initbasecmds():
             "Set simulated clock time",
         ],
         "TRACKDATA": [
-            "TRACKDATA folder, time0 (s)",
-            "[txt], [float]",
+            "TRACKDATA folder, (time0 [s])",
+            "txt, [float]",
             trafficfromdata.read_trackdata,
             "Load track data (e.g. VEMMIS data) and provide the name of the folder in the scenario folder & start time"
         ],

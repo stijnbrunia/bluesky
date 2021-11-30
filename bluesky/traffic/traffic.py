@@ -80,17 +80,7 @@ class Traffic(Entity):
         self.cond = Condition()  # Conditional commands list
         self.wind = WindSim()
         self.turbulence = Turbulence()
-        self.traffromdata = TrafficFromData()
-        self.traffromdata_vars = self.traffromdata.__dict__.keys()
         self.translvl = 5000.*ft # [m] Default transition level
-
-        # Take state from data file
-        self.trackdata = ()
-        self.trackdata_prev = ()
-        self.nfromfile = 0
-        self.nfromfile_prev = 0
-        self.i_next = 0
-        self.t_next = 0.0
 
         with self.settrafarrays():
             # Aircraft Info
@@ -139,7 +129,6 @@ class Traffic(Entity):
             self.swvnav    = np.array([], dtype=np.bool)
             self.swvnavspd = np.array([], dtype=np.bool)
             self.manual = np.array([], dtype=np.bool)
-            self.fromdata = np.array([], dtype=np.bool)  # Take aircraft state from data/file
 
             # Flight Models
             self.cd       = ConflictDetection()
@@ -162,12 +151,15 @@ class Traffic(Entity):
             self.thr      = np.array([])        # Thottle seeting (0.0-1.0), negative = non-valid/auto
 
             # Display information on label
-            # self.label       = []  # Text and bitmap of traffic label
+            self.label       = []  # Text and bitmap of traffic label
 
             # Miscallaneous
             self.coslat = np.array([])  # Cosine of latitude for computations
             self.eps    = np.array([])  # Small nonzero numbers
             self.work   = np.array([])  # Work done throughout the flight
+
+            # Traffic that is updated from data
+            self.traffromdata = TrafficFromData()
 
         # Default bank angles per flight phase
         self.bphase = np.deg2rad(np.array([15, 35, 35, 35, 15, 45]))
@@ -213,7 +205,7 @@ class Traffic(Entity):
         self.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
 
 
-    def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0, acfromdata=False):
+    def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0):
         """ Create one or more aircraft. """
         # Determine number of aircraft to create from array length of acid
         n = 1 if isinstance(acid, str) else len(acid)
@@ -297,10 +289,9 @@ class Traffic(Entity):
         self.selspd[-n:] = self.cas[-n:]
         self.aptas[-n:]  = self.tas[-n:]
         self.selalt[-n:] = self.alt[-n:]
-        self.fromdata[-n:] = acfromdata
 
         # Display information on label
-        # self.label[-n:] = n*[['', '', '', 0]]
+        self.label[-n:] = n*[['', '', '', 0]]
 
         # Miscallaneous
         self.coslat[-n:] = np.cos(np.radians(aclat))  # Cosine of latitude for flat-earth aproximations
@@ -418,42 +409,35 @@ class Traffic(Entity):
         #---------- Atmosphere --------------------------------
         self.p, self.rho, self.Temp = vatmos(self.alt)
 
-        # --------- Split Traffic -----------------------------
-        self.split_traffic()
+        #---------- ADSB Update -------------------------------
+        self.adsb.update()
 
-        # Check if aircraft need to be simulated
-        if len(self.lat) != 0:
-            #---------- ADSB Update -------------------------------
-            self.adsb.update()
+        #---------- Fly the Aircraft --------------------------
+        self.ap.update()  # Autopilot logic
+        self.update_asas()  # Airborne Separation Assurance
+        self.aporasas.update()   # Decide to use autopilot or ASAS for commands
 
-            #---------- Fly the Aircraft --------------------------
-            self.ap.update()  # Autopilot logic
-            self.update_asas()  # Airborne Separation Assurance
-            self.aporasas.update()   # Decide to use autopilot or ASAS for commands
+        #---------- Performance Update ------------------------
+        self.perf.update()
 
-            #---------- Performance Update ------------------------
-            self.perf.update()
+        #---------- Limit commanded speeds based on performance ------------------------------
+        self.aporasas.tas, self.aporasas.vs, self.aporasas.alt = \
+            self.perf.limits(self.aporasas.tas, self.aporasas.vs,
+                             self.aporasas.alt, self.ax)
 
-            #---------- Limit commanded speeds based on performance ------------------------------
-            self.aporasas.tas, self.aporasas.vs, self.aporasas.alt = \
-                self.perf.limits(self.aporasas.tas, self.aporasas.vs,
-                                 self.aporasas.alt, self.ax)
+        #---------- Kinematics --------------------------------
+        self.update_airspeed()
+        self.update_groundspeed()
+        self.update_pos()
 
-            #---------- Kinematics --------------------------------
-            self.update_airspeed()
-            self.update_groundspeed()
-            self.update_pos()
-
-            #---------- Simulate Turbulence -----------------------
-            self.turbulence.update()
-
-            # Check whether new traffic state triggers conditional commands
-            self.cond.update()
-
+        # --------- Update from data --------------------------
         self.traffromdata.update()
 
-        # --------- Merge traffic ------------------------------
-        self.merge_traffic()
+        #---------- Simulate Turbulence -----------------------
+        self.turbulence.update()
+
+        # Check whether new traffic state triggers conditional commands
+        self.cond.update()
 
         #---------- Aftermath ---------------------------------
         self.trails.update()
@@ -527,7 +511,6 @@ class Traffic(Entity):
 
         self.work += (self.perf.thrust * bs.sim.simdt * np.sqrt(self.gs * self.gs + self.vs * self.vs))
 
-
     def update_pos(self):
         # Update position
         self.alt = np.where(self.swaltsel, np.round(self.alt + self.vs * bs.sim.simdt, 6), self.aporasas.alt)
@@ -535,86 +518,6 @@ class Traffic(Entity):
         self.coslat = np.cos(np.deg2rad(self.lat))
         self.lon = self.lon + np.degrees(bs.sim.simdt * self.gseast / self.coslat / Rearth)
         self.distflown += self.gs * bs.sim.simdt
-
-    def update_fromfile(self):
-        # Check if there is traffic
-        if self.nfromfile == 0:
-            return
-
-        # Check if the next data point is reached
-        if self.t_next <= bs.sim.simt:
-            # Delete aircraft which have already reached the last data point
-            i = self.trackdata[1][self.i_next-1]
-            if True in self.trackdata[10][i[0]: i[-1] + 1]:
-                bool_del = self.trackdata[10][i[0]: i[-1] + 1]
-                idx_del = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1] + 1])[bool_del][:, None] == self.id)[1]
-                self.delete(idx_del)
-
-            # Get all indices with this SIM_TIME
-            i = self.trackdata[1][self.i_next]
-
-            # Check if aircraft needs to be created/deleted
-            if True in self.trackdata[9][i[0]: i[-1]+1]:
-                bool_cre = self.trackdata[9][i[0]: i[-1]+1]
-
-                acid_cre = list(np.array(self.trackdata[2][i[0]: i[-1]+1])[bool_cre])
-                actype = list(np.array(self.trackdata[3][i[0]: i[-1]+1])[bool_cre])
-                lat = self.trackdata[4][i[0]: i[-1]+1][bool_cre]
-                lon = self.trackdata[5][i[0]: i[-1]+1][bool_cre]
-                hdg = self.trackdata[6][i[0]: i[-1]+1][bool_cre]
-                alt = self.trackdata[7][i[0]: i[-1]+1][bool_cre]
-                spd = self.trackdata[8][i[0]: i[-1]+1][bool_cre]
-
-                self.cre(acid_cre, actype, lat, lon, hdg, alt, spd, True)
-
-            # Check if UCO command has been given for some aircraft and get the indices for the traffic arrays
-            if self.nfromfile < self.nfromfile_prev:
-                idx_fromfile = np.where(self.fromfile)[0]
-                idx = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1]+1])[:, None] == self.id)[1]
-            else:
-                idx = np.nonzero(np.array(self.trackdata[2][i[0]: i[-1]+1])[:, None] == self.id)[1]
-
-            # Update the traffic arrays with the data from the data point
-            self.lat[idx] = self.trackdata[4][i[0]: i[-1]+1]
-            self.lon[idx] = self.trackdata[5][i[0]: i[-1]+1]
-            self.hdg[idx] = self.trackdata[6][i[0]: i[-1]+1]
-            self.alt[idx] = self.trackdata[7][i[0]: i[-1]+1]
-            self.gs[idx] = self.trackdata[8][i[0]: i[-1]+1]
-
-            # Get the index and the SIM_TIME of the next data point
-            self.i_next = i[-1]+1
-            self.t_next = self.trackdata[0][self.i_next]
-            # Store the current data point
-            self.trackdata_prev = (self.trackdata[2][i[0]: i[-1]+1], self.trackdata[4][i[0]: i[-1]+1],
-                                   self.trackdata[5][i[0]: i[-1]+1], self.trackdata[6][i[0]: i[-1]+1],
-                                   self.trackdata[7][i[0]: i[-1]+1], self.trackdata[8][i[0]: i[-1]+1])
-
-        else:
-            # Check if UCO command has been given for some aircraft and get the indices for the traffic arrays
-            if self.nfromfile < self.nfromfile_prev:
-                idx_fromfile = np.where(self.fromfile)[0]
-                idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)[1]
-            else:
-                idx = np.nonzero(np.array(self.trackdata_prev[0])[:, None] == self.id)[1]
-
-            # Update the traffic arrays with the data from the previous data point
-            self.lat[idx] = self.trackdata_prev[1]
-            self.lon[idx] = self.trackdata_prev[2]
-            self.hdg[idx] = self.trackdata_prev[3]
-            self.alt[idx] = self.trackdata_prev[4]
-            self.gs[idx] = self.trackdata_prev[5]
-
-        # Determine other speed types
-        self.tas[idx] = self.gs[idx]
-        self.cas[idx] = vtas2cas(self.tas[idx], self.alt[idx])
-        self.M[idx] = vtas2mach(self.tas[idx], self.alt[idx])
-        self.gsnorth[idx] = self.gs[idx]*np.cos(np.radians(self.hdg[idx]))
-        self.gseast[idx] = self.gs[idx]*np.sin(np.radians(self.hdg[idx]))
-
-        # Store number of fromfile aircraft
-        self.nfromfile_prev = self.nfromfile
-
-        # self.distflown[idx] += self.gs[idx]*(round(bs.sim.simt, 1) - self.t_prev)
 
     def id2idx(self, acid):
         """Find index of aircraft id"""
