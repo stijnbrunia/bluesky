@@ -234,7 +234,7 @@ class VEMMISRead:
         self.trackdata = self.trackdata.loc[self.trackdata['SIM_TIME'] >= self.time0]
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
 
-    def get_wpts(self, callsign, orig, dest):
+    def get_wpts(self, callsign, time_create, orig, dest):
         """
         Function: Get the commands string for adding the waypoints
         Args:
@@ -252,8 +252,8 @@ class VEMMISRead:
         strlst = []
         for wpt in range(len(route)):
             wptname = route['LOCATION_NAME'].iloc[wpt]
-            if wptname != orig and wptname != dest:
-                wpttime = route['TIME'].iloc[wpt]
+            wpttime = route['SIM_TIME'].iloc[wpt]
+            if wptname != orig and wptname != dest and wpttime > time_create:
                 strlst.append("ADDWPT "+callsign+", "+wptname)
 
         return strlst

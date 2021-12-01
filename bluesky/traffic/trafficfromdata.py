@@ -142,7 +142,6 @@ class TrafficFromData(Entity):
 
         # Check if the next data point is reached
         if self.t_next <= bs.sim.simt:
-            print(bs.traf.ap.route[0].wpname)
             # Track data index
             i = self.trackdata[self.isimt_i][self.i_next]
 
