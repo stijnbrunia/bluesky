@@ -11,7 +11,7 @@ import os
 import bluesky as bs
 from bluesky import stack
 from bluesky.core import Entity
-from bluesky.tools import cachefile, vemmisread
+from bluesky.tools import aero, cachefile, vemmisread
 from bluesky.stack import stackbase
 
 
@@ -22,17 +22,16 @@ Classes
 
 class TrafficFromData(Entity):
     """
-    Traffic class definition    : Traffic data
+    Class definition: Traffic updated from data/file
     Methods:
-        TrafficFromData()    : constructor
-        create()             : create aircraft
-        delete()             : delete an aircraft from traffic data
-        deletall()           : delete all traffic
-        update(sim)          : do a numerical integration step
-        id2idx(name)         : return index in traffic database of given call sign
-        engchange(i,engtype) : change engine type of an aircraft
-        setnoise(A)          : Add turbulence
-    Members: see create
+        crefromdata():      Create aircraft which are updated from data
+        delfromdata():      Delete aircraft which are updated from data
+        update():           Perform an update (step)
+        uco_fromdata():     Stop taking the aircraft state from data (simulate the aircraft)
+        store_prev():       Store the previous data point
+        indices_update():   Get the indices for the traffic arrays and the trackdata
+        get_indices():      Get indices of items in array/list
+
     Created by  : Bob van Dillen
     Date: 25-11-2021
     """
@@ -172,6 +171,58 @@ class TrafficFromData(Entity):
         bs.traf.alt[itraf_prev] = self.alt_prev[itraf_prev]
         bs.traf.gs[itraf_prev] = self.gs_prev[itraf_prev]
 
+        # Update other speeds (wind)
+        self.update_speed()
+
+    def update_speed(self):
+        """
+        Function: Calculate the different speeds
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 1-12-2021
+        """
+
+        # Get indices for traffic arrays
+        itraf = self.get_indices(self.flightid, self.flightid_fromdata)
+
+        # Check if there is no wind
+        if bs.traf.wind.winddim == 0:
+            bs.traf.gsnorth[itraf] = bs.traf.gs*np.cos(np.radians(bs.traf.hdg[itraf]))
+            bs.traf.gseast[itraf] = bs.traf.gs*np.cos(np.radians(bs.traf.hdg[itraf]))
+            bs.traf.tas[itraf] = bs.traf.gs[itraf]
+            bs.traf.trk[itraf] = bs.traf.hdg[itraf]
+
+        else:
+            applywind = bs.traf.alt[itraf] > 50.*aero.ft
+
+            bs.traf.windnorth[itraf], bs.traf.windeast[itraf] = bs.traf.wind.getdata(bs.traf.lat[itraf],
+                                                                                     bs.traf.lon[itraf],
+                                                                                     bs.traf.alt[itraf])
+            tasnorth = bs.traf.gsnorth[itraf] - bs.traf.windnorth[itraf]*applywind
+            taseast = bs.traf.gseast[itraf] - bs.traf.windnorth[itraf]*applywind
+            bs.traf.tas[itraf] = np.sqrt(tasnorth*tasnorth + taseast*taseast)
+
+            bs.traf.trk[itraf] = np.logical_not(applywind)*bs.traf.tas[itraf] +\
+                                 applywind*np.degrees(np.arctan2(bs.traf.gseast[itraf], bs.traf.gsnorth[itraf])) % 360
+
+    def uco_fromdata(self, idx):
+        """
+        Function: Stop taking the aircraft state from data (simulate the aircraft)
+        Args:
+            idx:    index for traffic arrays
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 1-12-2021
+        """
+
+        self.fromdata[idx] = False
+        acflightid = self.flightid[idx]
+        iacflightid = self.get_indices(self.flightid_fromdata, acflightid)
+        self.flightid_fromdata = np.delete(self.flightid_fromdata, iacflightid)
+
     def store_prev(self):
         """
         Function: Store the previous data point
@@ -230,11 +281,6 @@ class TrafficFromData(Entity):
         else:
             i = np.nonzero(np.array(items)[:, None] == arr)[1]
         return i
-
-    def uco_fromdata(self, idx):
-        acflightid = self.flightid[idx]
-        iacflightid = self.get_indices(self.flightid_fromdata, acflightid)
-        self.flightid_fromdata = np.delete(self.flightid_fromdata, iacflightid)
 
 
 """

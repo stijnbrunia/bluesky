@@ -540,7 +540,6 @@ class Traffic(Entity):
         """ This function is entered when an aircraft goes into manual (usefull when using ADSB data scenarios)"""
         self.manual[idx] = flag
         self.traffromdata.uco_fromdata(idx)
-        self.traffromdata.fromdata[idx] = flag
         route = self.ap.route[idx]
         if len(route.wpname) == 0:
             print("ADSB FILE")
