@@ -49,8 +49,7 @@ class VEMMISRead:
         self.flights = None
         self.flighttimes = None
         self.tracks = None
-        self.flighttimes_merged = None
-        self.trackdata = None
+        self.routedata = None
         self.trackdata = None
 
         self.read_data()
@@ -93,9 +92,11 @@ class VEMMISRead:
         Date: 22-11-2021
         """
 
-        i_delete = list(self.flights.index[self.flights['ICAO_ACTYPE'].isna()]) +\
-                   list(self.flights.index[self.flights['STATUS'].isin(['CANCELLED'])])
-        self.flights = self.flights.drop(list(set(i_delete)))
+        i_delete = list(self.flights.index[self.flights['ICAO_ACTYPE'].isna()])
+        self.flights = self.flights.drop(i_delete)
+
+        self.flighttimes = self.flighttimes.loc[self.flighttimes['TIME_TYPE'] == 'ACTUAL']
+        self.flighttimes = self.flighttimes.loc[self.flighttimes['LOCATION_TYPE'] == 'RP']
 
     def merge_data(self):
         """
@@ -116,6 +117,7 @@ class VEMMISRead:
         columns_tracks_merge = list(columns_tracks)
         columns_tracks_merge.remove('REGISTRATION')
 
+        self.routedata = pd.merge(self.flighttimes, self.flights[['FLIGHT_ID', 'CALLSIGN']])
         self.trackdata = pd.merge(self.tracks[columns_tracks_merge], self.flights[columns_flights_merge])
 
     def get_coordinates(self):
@@ -164,9 +166,10 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
+        self.routedata['TIME'] = pd.to_datetime(self.routedata['TIME'], format="%d-%m-%Y %H:%M:%S")
+
         self.trackdata['T_START'] = pd.to_datetime(self.trackdata['T_START'], format="%d-%m-%Y %H:%M:%S")
         self.trackdata['TIME'] = pd.to_timedelta(self.trackdata['TIME']/100, unit='seconds')
-
         self.trackdata['ACTUAL_TIME'] = self.trackdata['T_START'] + self.trackdata['TIME']
 
     def get_starttime(self):
@@ -190,6 +193,9 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
+        self.routedata['SIM_TIME'] = self.routedata['TIME'] - self.datetime0
+        self.routedata['SIM_TIME'] = self.routedata['SIM_TIME'].dt.total_seconds()
 
         self.trackdata['SIM_TIME'] = self.trackdata['ACTUAL_TIME'] - self.datetime0
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'].dt.total_seconds()
@@ -220,9 +226,37 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
+        self.routedata = self.routedata.sort_values(by=['SIM_TIME'])
+        self.routedata = self.routedata.loc[self.routedata['SIM_TIME'] >= self.time0]
+        self.routedata['SIM_TIME'] = self.routedata['SIM_TIME'] - self.routedata['SIM_TIME'].iloc[0]
+
         self.trackdata = self.trackdata.sort_values(by=['SIM_TIME'])
         self.trackdata = self.trackdata.loc[self.trackdata['SIM_TIME'] >= self.time0]
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
+
+    def get_wpts(self, callsign, orig, dest):
+        """
+        Function: Get the commands string for adding the waypoints
+        Args:
+            callsign:   callsign [str]
+            orig:       origin [str]
+            dest:       destination [str]
+        Returns:
+
+        Created: Bob van Dillen
+        Date: 1-12-2021
+        """
+
+        route = self.routedata.loc[self.routedata['CALLSIGN'] == callsign]
+
+        strlst = []
+        for wpt in range(len(route)):
+            wptname = route['LOCATION_NAME'].iloc[wpt]
+            if wptname != orig and wptname != dest:
+                wpttime = route['TIME'].iloc[wpt]
+                strlst.append("ADDWPT "+callsign+", "+wptname)
+
+        return strlst
 
     def get_datetime(self):
         """
@@ -275,6 +309,7 @@ class VEMMISRead:
             actype = flight['ICAO_ACTYPE']
             orig = flight['ADEP']
             dest = flight['DEST']
+            wpts = self.get_wpts(acid, orig, dest)
 
             lat = str(track['LATITUDE'].iloc[0])
             lon = str(track['LONGITUDE'].iloc[0])
@@ -288,8 +323,8 @@ class VEMMISRead:
             str_dest = "DEST "+acid+" "+dest
             # str_del = "DEL "+acid
             str_delfromdata = "DELFROMDATA "+acflightid+", "+acid
-            command += [str_crefromdata, str_orig, str_dest, str_delfromdata]
-            commandtime += [t_cre] + [t_cre+0.1]*2 + [t_del]
+            command += [str_crefromdata, str_orig, str_dest] + wpts + [str_delfromdata]
+            commandtime += [t_cre] + [t_cre+0.1]*(2+len(wpts)) + [t_del]
 
             i_cre = track.index[0]
             i_del = track.index[-1]
@@ -341,4 +376,3 @@ class VEMMISRead:
 if __name__ == '__main__':
     path = r"C:\Users\LVNL_ILAB3\PycharmProjects\bluesky\scenario\vemmis1209"
     vemmis1209 = VEMMISRead(path, 0)
-    print(vemmis1209.trackdata[['ACTUAL_TIME', 'SIM_TIME', 'CALLSIGN']])

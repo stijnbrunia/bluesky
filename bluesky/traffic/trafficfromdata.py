@@ -142,6 +142,7 @@ class TrafficFromData(Entity):
 
         # Check if the next data point is reached
         if self.t_next <= bs.sim.simt:
+            print(bs.traf.ap.route[0].wpname)
             # Track data index
             i = self.trackdata[self.isimt_i][self.i_next]
 
@@ -189,8 +190,8 @@ class TrafficFromData(Entity):
 
         # Check if there is no wind
         if bs.traf.wind.winddim == 0:
-            bs.traf.gsnorth[itraf] = bs.traf.gs*np.cos(np.radians(bs.traf.hdg[itraf]))
-            bs.traf.gseast[itraf] = bs.traf.gs*np.cos(np.radians(bs.traf.hdg[itraf]))
+            bs.traf.gsnorth[itraf] = bs.traf.gs[itraf]*np.cos(np.radians(bs.traf.hdg[itraf]))
+            bs.traf.gseast[itraf] = bs.traf.gs[itraf]*np.cos(np.radians(bs.traf.hdg[itraf]))
             bs.traf.tas[itraf] = bs.traf.gs[itraf]
             bs.traf.trk[itraf] = bs.traf.hdg[itraf]
 
