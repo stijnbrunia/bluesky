@@ -11,8 +11,8 @@ import os
 import bluesky as bs
 from bluesky import stack
 from bluesky.core import Entity
-from bluesky.tools import aero, cachefile, vemmisread
-from bluesky.stack import simstack, stackbase
+from bluesky.tools import cachefile, vemmisread
+from bluesky.stack import stackbase
 
 
 """
@@ -70,20 +70,29 @@ class TrafficFromData(Entity):
             self.fromdata = np.array([], dtype=np.bool)  # Take aircraft state from data/file
 
     @stack.command
-    def crefromdata(self, acid: str, acflightid: int):
+    def crefromdata(self, acflightid: int,
+                    acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float):
         """
         Function: Create aircraft which are updated from data
         Args:
-            acid:       callsign [str, list]
             acflightid: flight id [int, array]
+            acid:       callsign [str, list]
+            actype:     aircraft type [str, list]
+            aclat:      latitude [float, array]
+            aclon:      longitude [float, array]
+            achdg:      heading [float, array]
+            acalt:      altitude [float, array]
+            acspd:      calibrated airspeed [float, array]
         Returns: -
 
         Created by: Bob van Dillen
         Date: 30-11-2021
         """
 
+        bs.traf.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
+
         # Get index
-        idx = self.get_idx(acid)
+        idx = self.get_indices(bs.traf.id, acid)
         # Update flight data
         self.flightid[idx] = acflightid
         self.fromdata[idx] = True
@@ -92,11 +101,12 @@ class TrafficFromData(Entity):
         self.store_prev()
 
     @stack.command
-    def delfromdata(self, acid: str):
+    def delfromdata(self, acflightid: int, acid: str):
         """
         Function: Delete aircraft which are updated from data
         Args:
-            acid:   callsign [str, list]
+            acflightid: flightid [int, array]
+            acid:       callsign [str, list]
         Returns: -
 
         Created by: Bob van Dillen
@@ -104,14 +114,14 @@ class TrafficFromData(Entity):
         """
 
         # Get index
-        idx = self.get_idx(acid)
-        # Get flight id
-        flightid = self.flightid[idx]
-        # Delete from flighid_fromdata
-        delfromdata = np.nonzero(self.flightid_fromdata[:, None] == flightid)[0]
-        self.flightid_fromdata = np.delete(self.flightid_fromdata, delfromdata)
+        idx = self.get_indices(bs.traf.id, acid)
+
         # Delete aircraft
         bs.traf.delete(idx)
+
+        # Delete from flighid_fromdata
+        ifromdata = self.get_indices(self.flightid_fromdata, acflightid)
+        self.flightid_fromdata = np.delete(self.flightid_fromdata, ifromdata)
         # Update previous data point
         self.store_prev()
 
@@ -153,7 +163,7 @@ class TrafficFromData(Entity):
 
         else:
             # Get indices when there is no new data point
-            itraf_prev = self.indices_prev()
+            itraf_prev = self.get_indices(self.flightid, self.flightid_fromdata)
 
         # Other traffic
         bs.traf.lat[itraf_prev] = self.lat_prev[itraf_prev]
@@ -196,36 +206,35 @@ class TrafficFromData(Entity):
         flightid_update, ifromdata, itrackdata = np.intersect1d(self.flightid_fromdata,
                                                                 flightid_trackdata, return_indices=True)
         # Get index for traffic arrays
-        itraf_update = np.nonzero(self.flightid[:, None] == flightid_update)[0]
-        itraf_prev = np.nonzero(self.flightid[:, None] == np.delete(self.flightid_fromdata, ifromdata))[0]
+        itraf_update = self.get_indices(self.flightid, flightid_update)
+        itraf_prev = self.get_indices(self.flightid, np.delete(self.flightid_fromdata, ifromdata))
 
         return itraf_update, itraf_prev, itrackdata
 
-    def indices_prev(self):
-        itraf = np.nonzero(self.flightid[:, None] == self.flightid_fromdata)[0]
-        return itraf
-
-
-
     @staticmethod
-    def get_idx(acid):
+    def get_indices(arr, items):
         """
-        Function: Get the index for the traffic arrays
+        Function: Get indices of items in array/list
         Args:
-            acid:   callsign [str, lst]
+            arr:    array/list containing the items [array, list]
+            items:  get indices of items [int, float, str, list, array]
         Returns:
-            idx:    index [array]
+            i:      inices [array]
 
         Created by: Bob van Dillen
-        Date: 30-11-2021
+        Date: 1-12-2021
         """
 
-        if isinstance(acid, str):
-            idx = np.nonzero(np.array(bs.traf.id)[:, None] == np.array([acid]))[0]
+        if isinstance(items, (str, int, float)):
+            i = np.nonzero(np.array([items])[:, None] == arr)[1]
         else:
-            idx = np.nonzero(np.array(bs.traf.id)[:, None] == np.array(acid))[0]
+            i = np.nonzero(np.array(items)[:, None] == arr)[1]
+        return i
 
-        return idx
+    def uco_fromdata(self, idx):
+        acflightid = self.flightid[idx]
+        iacflightid = self.get_indices(self.flightid_fromdata, acflightid)
+        self.flightid_fromdata = np.delete(self.flightid_fromdata, iacflightid)
 
 
 """
@@ -245,11 +254,11 @@ def read_trackdata(folder, time0=0.):
     Date: 25-11-2021
     """
 
-    with cachefile.openfile(folder+'_'+str(time0)+'.p') as cache:
+    with cachefile.openfile(folder+'_'+str(time0)+'.p') as cacheload:
         try:
-            bs.traf.traffromdata.trackdata = cache.load()
-            commands = cache.load()
-            commandstime = cache.load()
+            bs.traf.traffromdata.trackdata = cacheload.load()
+            commands = cacheload.load()
+            commandstime = cacheload.load()
 
         except (pickle.PickleError, cachefile.CacheError):
             # Get path of the directory
@@ -278,17 +287,16 @@ def read_trackdata(folder, time0=0.):
                 bs.traf.traffromdata.trackdata = vemmisdata.get_trackdata()
 
                 # Save variables for fast reopen
-                with cachefile.openfile(folder+'_'+str(time0)+'.p') as cache:
-                    cache.dump(bs.traf.traffromdata.trackdata)
-                    cache.dump(commands)
-                    cache.dump(commandstime)
+                with cachefile.openfile(folder+'_'+str(time0)+'.p') as cachedump:
+                    cachedump.dump(bs.traf.traffromdata.trackdata)
+                    cachedump.dump(commands)
+                    cachedump.dump(commandstime)
             else:
                 return False, f"TRACKDATA: Folder does not exist"
 
     # Initialize simulation
     bs.scr.echo('Initialize simulation ...')
     # Create first aircraft
-    print(commands[:5])
     stackbase.Stack.scencmd = commands
     stackbase.Stack.scentime = commandstime
     # Get the index and the SIM_TIME of the next data point
@@ -296,4 +304,3 @@ def read_trackdata(folder, time0=0.):
     bs.traf.traffromdata.t_next = bs.traf.traffromdata.trackdata[0][bs.traf.traffromdata.i_next]
 
     bs.scr.echo('Done')
-

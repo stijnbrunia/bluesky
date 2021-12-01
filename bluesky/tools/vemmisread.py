@@ -7,10 +7,9 @@ Date: 22-11-2021
 
 import pandas as pd
 import numpy as np
-import datetime
 import os
-from .geo import qdrpos
-from .aero import kts, ft
+from bluesky.tools.geo import qdrpos
+from bluesky.tools.aero import kts, ft
 
 
 class VEMMISRead:
@@ -78,6 +77,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date: 22-11-2021
         """
+
         for root, dirs, files in os.walk(self.data_path):
             self.flights = pd.read_csv(self.data_path+'\\'+files[1], sep=';')
             self.flighttimes = pd.read_csv(self.data_path+'\\'+files[2], sep=';')
@@ -92,7 +92,8 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date: 22-11-2021
         """
-        i_delete = list(self.flights.index[self.flights['ICAO_ACTYPE'].isna()]) + \
+
+        i_delete = list(self.flights.index[self.flights['ICAO_ACTYPE'].isna()]) +\
                    list(self.flights.index[self.flights['STATUS'].isin(['CANCELLED'])])
         self.flights = self.flights.drop(list(set(i_delete)))
 
@@ -105,6 +106,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
         columns_flights = self.flights.columns.values
         columns_tracks = self.tracks.columns.values
 
@@ -125,6 +127,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
         self.trackdata['X'] = self.trackdata['X'].str.replace(',', '.').astype('float')
         self.trackdata['Y'] = self.trackdata['Y'].str.replace(',', '.').astype('float')
 
@@ -147,6 +150,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
         self.trackdata['MODE_C'] = self.trackdata['MODE_C'].str.replace(',', '.').astype('float')*100
         self.trackdata = self.trackdata.rename(columns={'MODE_C': 'ALTITUDE'})
 
@@ -159,6 +163,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
         self.trackdata['T_START'] = pd.to_datetime(self.trackdata['T_START'], format="%d-%m-%Y %H:%M:%S")
         self.trackdata['TIME'] = pd.to_timedelta(self.trackdata['TIME']/100, unit='seconds')
 
@@ -173,6 +178,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
         self.datetime0 = min(self.trackdata['ACTUAL_TIME'])
 
     def get_simtime(self):
@@ -184,6 +190,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 22-11-2021
         """
+
         self.trackdata['SIM_TIME'] = self.trackdata['ACTUAL_TIME'] - self.datetime0
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'].dt.total_seconds()
         if self.fixed_rate:
@@ -199,8 +206,9 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 25-11-2021
         """
+
         self.trackdata = self.trackdata.dropna(subset=['CALLSIGN', 'ICAO_ACTYPE', 'LATITUDE', 'LONGITUDE',
-                                                               'HEADING', 'ALTITUDE', 'SPEED'])
+                                                       'HEADING', 'ALTITUDE', 'SPEED'])
 
     def sort_data(self):
         """
@@ -229,6 +237,7 @@ class VEMMISRead:
         Created by: Bob van Dillen
         Date = 25-11-2021
         """
+
         datetime_start = min(self.trackdata['ACTUAL_TIME'])
         day = datetime_start.day
         month = datetime_start.month
@@ -273,13 +282,14 @@ class VEMMISRead:
             alt = str(track['ALTITUDE'].iloc[0])
             spd = str(track['SPEED'].iloc[0])
 
-            str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
-            str_crefromdata = "CREFROMDATA "+acid+", "+acflightid
+            # str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
+            str_crefromdata = "CREFROMDATA "+acflightid+", "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
             str_orig = "ORIG "+acid+" "+orig
             str_dest = "DEST "+acid+" "+dest
-            str_del = "DELFROMDATA "+acid
-            command += [str_cre, str_crefromdata, str_orig, str_dest, str_del]
-            commandtime += [t_cre]*4 + [t_del]
+            # str_del = "DEL "+acid
+            str_delfromdata = "DELFROMDATA "+acflightid+", "+acid
+            command += [str_crefromdata, str_orig, str_dest, str_delfromdata]
+            commandtime += [t_cre] + [t_cre+0.1]*2 + [t_del]
 
             i_cre = track.index[0]
             i_del = track.index[-1]
@@ -295,15 +305,16 @@ class VEMMISRead:
         Function: Get the track data for the simulation
         Args: -
         Returns:
-            simt:   simulation time [array(float)]
-            simt_i: indices with the same simulation time [lst(lst(int))]
-            id:     callsign [lst(str)]
-            actype: aircraft type [lst(str)]
-            lat:    latitude [array(float)]
-            lon:    longitude [array(float)]
-            hdg:    heading [array(float)]
-            alt:    altitude [array(float)]
-            spd:    ground speed [array(float)]
+            simt:       simulation time [array(float)]
+            simt_i:     indices with the same simulation time [lst(lst(int))]
+            flightid:   flight id [array(int/float)]
+            id:         callsign [lst(str)]
+            actype:     aircraft type [lst(str)]
+            lat:        latitude [array(float)]
+            lon:        longitude [array(float)]
+            hdg:        heading [array(float)]
+            alt:        altitude [array(float)]
+            spd:        ground speed [array(float)]
 
         Created by: Bob van Dillen
         Date = 22-11-2021
@@ -317,11 +328,17 @@ class VEMMISRead:
                 simt_i.append(list(range(i[j], i[j] + count[j])))
 
         flightid = np.array(self.trackdata['FLIGHT_ID'])
-        id = list(self.trackdata['CALLSIGN'])
+        acid = list(self.trackdata['CALLSIGN'])
         actype = list(self.trackdata['ICAO_ACTYPE'])
         lat = np.array(self.trackdata['LATITUDE'])
         lon = np.array(self.trackdata['LONGITUDE'])
         hdg = np.array(self.trackdata['HEADING'])
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
-        return simt, simt_i, flightid, id, actype, lat, lon, hdg, alt, spd
+        return simt, simt_i, flightid, acid, actype, lat, lon, hdg, alt, spd
+
+
+if __name__ == '__main__':
+    path = r"C:\Users\LVNL_ILAB3\PycharmProjects\bluesky\scenario\vemmis1209"
+    vemmis1209 = VEMMISRead(path, 0)
+    print(vemmis1209.trackdata[['ACTUAL_TIME', 'SIM_TIME', 'CALLSIGN']])

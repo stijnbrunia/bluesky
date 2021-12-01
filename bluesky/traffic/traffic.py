@@ -539,21 +539,19 @@ class Traffic(Entity):
     def mnual(self, idx, flag=None):
         """ This function is entered when an aircraft goes into manual (usefull when using ADSB data scenarios)"""
         self.manual[idx] = flag
+        self.traffromdata.uco_fromdata(idx)
+        self.traffromdata.fromdata[idx] = flag
         route = self.ap.route[idx]
         if len(route.wpname) == 0:
             print("ADSB FILE")
             """ When there are no waypoints, the sim is running on a scn-file made from radar or ADSB"""
             bs.stack.stackbase.manual_del()
-            self.fromfile[idx] = False
-            self.nfromfile -= 1
         else:
             """" There are waypoints, so the ac has a route to follow"""
             if flag:
                 """ Manual Mode on """
                 print("MANUAL ON")
                 bs.traf.swlnav[idx] = False
-                self.fromfile[idx] = False
-                self.nfromfile -= 1
 
             elif not flag:
                 """ Manual Mode off """
