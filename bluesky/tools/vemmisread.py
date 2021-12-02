@@ -35,7 +35,7 @@ class VEMMISRead:
     Date: 22-11-2021
     """
 
-    def __init__(self, data_path, time0, fixed_rate=True, deltat=5.):
+    def __init__(self, data_path, time0, fixed_rate=True, deltat=3.):
         self.data_path = data_path
 
         self.time0 = time0
@@ -252,13 +252,22 @@ class VEMMISRead:
         route = self.routedata.loc[self.routedata['CALLSIGN'] == callsign]
 
         strlst = []
+        tlst = []
+        wptstr = ""
         for wpt in range(len(route)):
             wptname = route['LOCATION_NAME'].iloc[wpt]
             wpttime = route['SIM_TIME'].iloc[wpt]
             if wpttime > time_create and wptname != orig and wptname != dest:
-                strlst.append("ADDWPT "+callsign+", "+wptname)
+                if len(strlst) == 0:
+                    strlst.append("ADDWPT "+callsign+", "+wptname)
+                    tlst.append(time_create+0.01)  # Add 0.01 to ensure the right order
+                    wptstr = callsign+" AFTER "+wptname+" ADDWPT "
+                else:
+                    strlst.append(wptstr+wptname)
+                    tlst.append(tlst[-1]+0.01)  # Add 0.01 to ensure the right order
+                    wptstr = callsign+" AFTER "+wptname+" ADDWPT "
 
-        return strlst
+        return strlst, tlst
 
     def get_datetime(self):
         """
@@ -311,7 +320,7 @@ class VEMMISRead:
             actype = flight['ICAO_ACTYPE']
             orig = flight['ADEP']
             dest = flight['DEST']
-            wpts = self.get_wpts(acid, t_cre, orig, dest)
+            wpts, wptst = self.get_wpts(acid, t_cre, orig, dest)
 
             lat = str(track['LATITUDE'].iloc[0])
             lon = str(track['LONGITUDE'].iloc[0])
@@ -326,7 +335,7 @@ class VEMMISRead:
             # str_del = "DEL "+acid
             str_delfromdata = "DELFROMDATA "+acflightid+", "+acid
             command += [str_crefromdata, str_orig, str_dest] + wpts + [str_delfromdata]
-            commandtime += [t_cre] + [t_cre+0.1]*(2+len(wpts)) + [t_del]
+            commandtime += [t_cre] + [t_cre+0.005]*2+wptst+ [t_del]
 
             i_cre = track.index[0]
             i_del = track.index[-1]

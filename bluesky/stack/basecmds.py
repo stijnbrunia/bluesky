@@ -5,7 +5,7 @@ import os
 import bluesky as bs
 from bluesky import settings
 from bluesky.core import select_implementation, simtime, varexplorer as ve
-from bluesky.tools import geo, aero, areafilter, plotter
+from bluesky.tools import geo, aero, areafilter, plotter, printer
 from bluesky.tools.calculator import calculator
 from bluesky.traffic import trafficfromdata
 from bluesky.stack.cmdparser import append_commands
@@ -349,6 +349,12 @@ def initbasecmds():
             "acid/wpt",
             bs.traf.poscommand,
             "Get info on aircraft, airport or waypoint",
+        ],
+        "PRINTER": [
+            "PRINTER",
+            "",
+            printer.printing,
+            "Print something"
         ],
         "QUIT": ["QUIT", "", bs.sim.stop, "Quit program/Stop simulation"],
         "REALTIME": [

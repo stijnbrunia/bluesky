@@ -24,6 +24,7 @@ class TrafficFromData(Entity):
     """
     Class definition: Traffic updated from data/file
     Methods:
+        reset():            Reset variables
         crefromdata():      Create aircraft which are updated from data
         delfromdata():      Delete aircraft which are updated from data
         update():           Perform an update (step)
@@ -67,6 +68,32 @@ class TrafficFromData(Entity):
         with self.settrafarrays():
             self.flightid = np.array([])                 # Flight ID
             self.fromdata = np.array([], dtype=np.bool)  # Take aircraft state from data/file
+
+    def reset(self):
+        """
+        Function: Reset variables
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 2-12-2021
+        """
+
+        super().reset()
+
+        # Flight and track data
+        self.trackdata = ()
+        # Array with flight ids which state is taken from data/file
+        self.flightid_fromdata = np.array([])
+        # Store parameters
+        self.lat_prev = None
+        self.lon_prev = None
+        self.hdg_prev = None
+        self.alt_prev = None
+        self.gs_prev = None
+        # Parameters used for update
+        self.i_next = 0
+        self.t_next = 0.0
 
     @stack.command
     def crefromdata(self, acflightid: int,
@@ -154,7 +181,7 @@ class TrafficFromData(Entity):
             bs.traf.hdg[itraf_up] = self.trackdata[self.ihdg][i[0]: i[-1]+1][itrackdata]
             bs.traf.alt[itraf_up] = self.trackdata[self.ialt][i[0]: i[-1]+1][itrackdata]
             bs.traf.gs[itraf_up] = self.trackdata[self.ispd][i[0]: i[-1]+1][itrackdata]
-            bs.traf.selalt[itraf_up] = 0
+            bs.traf.selalt[itraf_up] = self.trackdata[self.ialt][i[0]: i[-1]+1][itrackdata]
 
             # Update variables
             self.store_prev()
@@ -171,7 +198,7 @@ class TrafficFromData(Entity):
         bs.traf.hdg[itraf_prev] = self.hdg_prev[itraf_prev]
         bs.traf.alt[itraf_prev] = self.alt_prev[itraf_prev]
         bs.traf.gs[itraf_prev] = self.gs_prev[itraf_prev]
-        bs.traf.selalt[itraf_prev] = 0
+        bs.traf.selalt[itraf_prev] = self.alt_prev[itraf_prev]
 
         # Update other speeds (wind)
         self.update_speed()
