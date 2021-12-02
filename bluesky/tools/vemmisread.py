@@ -238,10 +238,12 @@ class VEMMISRead:
         """
         Function: Get the commands string for adding the waypoints
         Args:
-            callsign:   callsign [str]
-            orig:       origin [str]
-            dest:       destination [str]
+            callsign:       callsign [str]
+            time_create:    simulation time of aircraft create [float]
+            orig:           origin [str]
+            dest:           destination [str]
         Returns:
+            strlst:         list with strings for adding waypoints
 
         Created: Bob van Dillen
         Date: 1-12-2021
@@ -253,7 +255,7 @@ class VEMMISRead:
         for wpt in range(len(route)):
             wptname = route['LOCATION_NAME'].iloc[wpt]
             wpttime = route['SIM_TIME'].iloc[wpt]
-            if wptname != orig and wptname != dest and wpttime > time_create:
+            if wpttime > time_create and wptname != orig and wptname != dest:
                 strlst.append("ADDWPT "+callsign+", "+wptname)
 
         return strlst
@@ -309,7 +311,7 @@ class VEMMISRead:
             actype = flight['ICAO_ACTYPE']
             orig = flight['ADEP']
             dest = flight['DEST']
-            wpts = self.get_wpts(acid, orig, dest)
+            wpts = self.get_wpts(acid, t_cre, orig, dest)
 
             lat = str(track['LATITUDE'].iloc[0])
             lon = str(track['LONGITUDE'].iloc[0])

@@ -1,7 +1,7 @@
 aircraft=(0,255,0)
 aptlabel=(220, 250, 255)
 aptsymbol=(148, 178, 235)
-coastlines=(44,126,41)
+coastlines=(0, 0, 0)
 conflict=(255, 160, 0)
 pavement=(0,0,0)
 polys=(44,126,41)
