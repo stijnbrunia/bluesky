@@ -154,6 +154,7 @@ class TrafficFromData(Entity):
             bs.traf.hdg[itraf_up] = self.trackdata[self.ihdg][i[0]: i[-1]+1][itrackdata]
             bs.traf.alt[itraf_up] = self.trackdata[self.ialt][i[0]: i[-1]+1][itrackdata]
             bs.traf.gs[itraf_up] = self.trackdata[self.ispd][i[0]: i[-1]+1][itrackdata]
+            bs.traf.selalt[itraf_up] = 0
 
             # Update variables
             self.store_prev()
@@ -170,6 +171,7 @@ class TrafficFromData(Entity):
         bs.traf.hdg[itraf_prev] = self.hdg_prev[itraf_prev]
         bs.traf.alt[itraf_prev] = self.alt_prev[itraf_prev]
         bs.traf.gs[itraf_prev] = self.gs_prev[itraf_prev]
+        bs.traf.selalt[itraf_prev] = 0
 
         # Update other speeds (wind)
         self.update_speed()

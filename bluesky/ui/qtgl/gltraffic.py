@@ -327,7 +327,7 @@ class Traffic(glh.RenderObject, layer=100):
                         else:
                             rawlabel += 'FL%-6s' % int(alt / ft / 100. + 0.5)  # Line 2.2: flight level
                             rawlabel += 'FL%-3s' % int(selalt / ft / 100. + 0.5)  # Line 2.2: flight level
-                        rawlabel += '%-8s' % '..' #int(hdg)  # Line 3.1:
+                        rawlabel += '%-8s' % '..  ' #int(hdg)  # Line 3.1:
                         if selhdg == 0:
                             rawlabel += '%-5s' % int(trk)  # Line 3.2: Heading
                         else:
