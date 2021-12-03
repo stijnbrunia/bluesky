@@ -1,5 +1,8 @@
 """ BlueSky traffic implementation."""
 from __future__ import print_function
+
+import pandas as pd
+
 try:
     from collections.abc import Collection
 except ImportError:
@@ -13,7 +16,7 @@ import bluesky as bs
 from bluesky.core import Entity, timed_function
 from bluesky.stack import refdata
 from bluesky.stack.recorder import savecmd
-from bluesky.tools import geo
+from bluesky.tools import geo, Functions
 from bluesky.tools.misc import latlon2txt, angleFromCoordinate
 from bluesky.tools.aero import cas2tas, casormach2tas, fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
@@ -81,6 +84,14 @@ class Traffic(Entity):
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
 
+        self.HighRes = False
+        self.Wind_DB = ""
+
+        self.df_1 = ""
+        self.df_2 = ""
+        self.HR_Loaded = False
+        self.activate_HR = False
+
         with self.settrafarrays():
             # Aircraft Info
             self.id      = []  # identifier (string)
@@ -93,6 +104,10 @@ class Traffic(Entity):
             self.alt     = np.array([])  # altitude [m]
             self.hdg     = np.array([])  # traffic heading [deg]
             self.trk     = np.array([])  # track angle [deg]
+
+            #Timestamps
+            self.prev_timestamp = 0
+            self.next_timestamp = 0
 
             # Velocities
             self.tas     = np.array([])  # true airspeed [m/s]
@@ -111,6 +126,7 @@ class Traffic(Entity):
             self.rho     = np.array([])  # air density [kg/m3]
             self.Temp    = np.array([])  # air temperature [K]
             self.dtemp   = np.array([])  # delta t for non-ISA conditions
+            self.topwind = pd.DataFrame  # dataframe for the wind on
 
             # Wind speeds
             self.windnorth = np.array([])  # wind speed north component a/c pos [m/s]
@@ -200,7 +216,6 @@ class Traffic(Entity):
 
         self.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
 
-
     def cre(self, acid, actype="B744", aclat=52., aclon=4., achdg=None, acalt=0, acspd=0):
         """ Create one or more aircraft. """
         # Determine number of aircraft to create from array length of acid
@@ -268,13 +283,17 @@ class Traffic(Entity):
 
         # Wind
         if self.wind.winddim > 0:
-            applywind         = self.alt[-n:]> 50.*ft
-            self.windnorth[-n:], self.windeast[-n:]  = self.wind.getdata(self.lat[-n:], self.lon[-n:], self.alt[-n:])
-            self.gsnorth[-n:] = self.gsnorth[-n:] + self.windnorth[-n:]*applywind
-            self.gseast[-n:]  = self.gseast[-n:]  + self.windeast[-n:]*applywind
-            self.trk[-n:]     = np.logical_not(applywind)*achdg + \
-                                applywind*np.degrees(np.arctan2(self.gseast[-n:], self.gsnorth[-n:]))
-            self.gs[-n:]      = np.sqrt(self.gsnorth[-n:]**2 + self.gseast[-n:]**2)
+            if self.HighRes:
+                self.windnorth[-n:] = 0.0
+                self.windeast[-n:] = 0.0
+            else:
+                applywind         = self.alt[-n:]> 50.*ft
+                self.windnorth[-n:], self.windeast[-n:]  = self.wind.getdata(self.lat[-n:], self.lon[-n:], self.alt[-n:])
+                self.gsnorth[-n:] = self.gsnorth[-n:] + self.windnorth[-n:]*applywind
+                self.gseast[-n:]  = self.gseast[-n:]  + self.windeast[-n:]*applywind
+                self.trk[-n:]     = np.logical_not(applywind)*achdg + \
+                                    applywind*np.degrees(np.arctan2(self.gseast[-n:], self.gsnorth[-n:]))
+                self.gs[-n:]      = np.sqrt(self.gsnorth[-n:]**2 + self.gseast[-n:]**2)
         else:
             self.windnorth[-n:] = 0.0
             self.windeast[-n:]  = 0.0
@@ -399,9 +418,12 @@ class Traffic(Entity):
         # Update only if there is traffic ---------------------
         if self.ntraf == 0:
             return
-
         #---------- Atmosphere --------------------------------
         self.p, self.rho, self.Temp = vatmos(self.alt)
+
+        #---------- HighRes Meteo -----------------------------
+        if self.HighRes == True:
+            self.updateHighRes()
 
         #---------- ADSB Update -------------------------------
         self.adsb.update()
@@ -485,7 +507,6 @@ class Traffic(Entity):
             self.gs  = self.tas
             self.trk = self.hdg
             self.windnorth[:], self.windeast[:] = 0.0,0.0
-
         else:
             applywind = self.alt>50.*ft # Only apply wind when airborne
 
@@ -493,7 +514,6 @@ class Traffic(Entity):
             self.windnorth[:], self.windeast[:] = vnwnd,vewnd
             self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
             self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind
-
             self.gs  = np.logical_not(applywind)*self.tas + \
                        applywind*np.sqrt(self.gsnorth**2 + self.gseast**2)
 
@@ -501,7 +521,6 @@ class Traffic(Entity):
                        applywind*np.degrees(np.arctan2(self.gseast, self.gsnorth)) % 360.
 
         self.work += (self.perf.thrust * bs.sim.simdt * np.sqrt(self.gs * self.gs + self.vs * self.vs))
-
 
     def update_pos(self):
         # Update position
@@ -529,7 +548,18 @@ class Traffic(Entity):
                 return -1
 
     def mnual(self, idx, flag=None):
-        """ This function is entered when an aircraft goes into manual (usefull when using ADSB data scenarios)"""
+        """
+            Function:   Manual function in which an aircraft can be put in manual mode, this can be used when
+                        having a scenario file, the function then deletes all aircraft specific instructions
+            Args:
+                - self
+                - idx: aircraft index number
+                - flag: the on/off switch
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 14-09-2021
+        """
         self.manual[idx] = flag
         route = self.ap.route[idx]
         if len(route.wpname) == 0:
@@ -547,6 +577,81 @@ class Traffic(Entity):
                 """ Manual Mode off """
                 print("MANUAL OFF")
                 bs.traf.swlnav[idx] = True
+
+    def meteo(self, flag):
+        """
+            Function:   Meteo function that activates a high resolution meteo data demo with data of 1-10-2021
+            Args:
+                - self
+                - flag: the on/off switch
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 16-11-2021
+        """
+        if flag:
+            self.activate_HighRes("bluesky_demo", True)
+            bs.sim.setutc(1, 10, 2021, "00:30:00")
+        else:
+            self.activate_HighRes("bluesky_demo", False)
+
+    def activate_HighRes(self, name,  flag=None):
+        """
+            Function:   Function that activates the high resolution meteo data mode.
+            Args:
+                - self
+                - name: the name of the database in which the meteo data is stored
+                - flag: the on/off switch
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 03-11-2021
+        """
+
+        self.HighRes = flag
+        self.Wind_DB = name
+        if self.HighRes:
+            print("HighResolution Meteo mode has been initialised.")
+            self.wind.winddim = 1
+            self.activate_HR = True
+        else:
+            print("HighResolution Meteo mode has been disabled.")
+            self.wind.winddim = 0
+
+    def updateHighRes(self):
+        """
+            Function:   Updates the highres meteo data every minute, and loads the new data every 10 minutes
+            Args:
+                - self
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 29-11-2021
+        """
+        if len(str(bs.sim.utc)) == 19 and str(bs.sim.utc)[18] == "0":
+            """ Only goes here when 10 seconds have past. """
+            if (str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0") or self.activate_HR == True:
+                """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
+                self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
+                self.df_1 = Functions.query_DB_to_DF(self.Wind_DB,"SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.prev_timestamp))
+                self.df_2 = Functions.query_DB_to_DF(self.Wind_DB,"SELECT * FROM " + self.Wind_DB + " WHERE timestamp_data = " + str(self.next_timestamp))
+                self.HR_Loaded = True
+                self.activate_HR = False
+
+            if self.HR_Loaded:
+                base = floor(len(self.lat) * int(str(bs.sim.utc)[17:])/60)
+                top  = ceil(len(self.lat) * int(str(bs.sim.utc)[17:])/60) + ceil(len(self.lat) * 10/60)
+                if top >= len(self.lat):
+                    top -= 1
+                for idx in range(top - base):
+                    """ Fill the uwind and vwind variables. """
+                    timefrac = Functions.utc2frac(bs.sim.utc, self.prev_timestamp)
+                    if self.lat[idx + base] >= 49 and self.lat[idx + base] <= 55.9 and self.lon[idx + base] >= -1 and self.lon[idx + base] <= 9.9:
+                        value1 = Functions.find_datapoint_timeframe(self.df_1,[self.prev_timestamp, self.alt[idx + base] / 0.3048,self.lat[idx + base], self.lon[idx + base]])
+                        value2 = Functions.find_datapoint_timeframe(self.df_2,[self.next_timestamp, self.alt[idx + base] / 0.3048,self.lat[idx + base], self.lon[idx + base]])
+                        self.windnorth[idx + base] = Functions.time_interpolation(timefrac, value1[4], value2[4])
+                        self.windeast[idx + base] = Functions.time_interpolation(timefrac, value1[5], value2[5])
+
 
     def setnoise(self, noise=None):
         """Noise (turbulence, ADBS-transmission noise, ADSB-truncated effect)"""
@@ -838,3 +943,4 @@ class Traffic(Entity):
         if self.swats[idx]:
             return True,"ATS of "+self.id[idx]+" is ON"
         return True, "ATS of " + self.id[idx] + " is OFF. THR is "+str(self.thr[idx])
+

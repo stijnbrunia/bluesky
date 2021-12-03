@@ -14,7 +14,7 @@ class WindSim(Entity, Windfield, replaceable=True):
 
             Arguments:
             - lat/lon: Horizonal position to define wind vector(s)
-            - winddata: 
+            - winddata:
               - If the wind at this location is independent of altitude
                 winddata has two elements:
                 - direction [degrees]
@@ -54,8 +54,8 @@ class WindSim(Entity, Windfield, replaceable=True):
 
     @command(name='GETWIND')
     def get(self, lat: 'lat', lon: 'lon', alt: 'alt'=None):
-        """ Get wind at a specified position (and optionally at altitude) 
-        
+        """ Get wind at a specified position (and optionally at altitude)
+
             Arguments:
             - lat, lon: Horizontal position where wind should be determined [deg]
             - alt: Altitude at which wind should be determined [ft]

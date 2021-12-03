@@ -143,7 +143,6 @@ class Simulation:
         self.ffmode = False
         self.ffstop = None
 
-
     def reset(self):
         ''' Reset all simulation objects. '''
         self.state = bs.INIT
