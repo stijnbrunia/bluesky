@@ -7,7 +7,7 @@ from bluesky import settings
 from bluesky.core import select_implementation, simtime, varexplorer as ve
 from bluesky.tools import geo, aero, areafilter, plotter, printer
 from bluesky.tools.calculator import calculator
-from bluesky.traffic import trafficfromdata
+from bluesky.traffic import trafficreplay
 from bluesky.stack.cmdparser import append_commands
 from bluesky.stack import simstack
 
@@ -382,6 +382,13 @@ def initbasecmds():
             "Switch on/off elements and background of map/radar view",
         ],
         "SYMBOL": ["SYMBOL", "", bs.scr.symbol, "Toggle aircraft symbol"],
+        "REPLAY": [
+            "REPLAY folder, (time0 [s])",
+            "txt, [float]",
+            trafficreplay.read_replay,
+            "Load replay scenario (e.g. VEMMIS data)" + \
+            "and provide the name of the folder in the scenario folder & start time"
+        ],
         "THR": [
             "THR acid, IDLE/0.0/throttlesetting/1.0/AUTO(default)",
             "acid[,txt]",
@@ -393,12 +400,6 @@ def initbasecmds():
             "[txt]",
             bs.sim.setutc,
             "Set simulated clock time",
-        ],
-        "TRACKDATA": [
-            "TRACKDATA folder, (time0 [s])",
-            "txt, [float]",
-            trafficfromdata.read_trackdata,
-            "Load track data (e.g. VEMMIS data) and provide the name of the folder in the scenario folder & start time"
         ],
         "TRAIL": [
             "TRAIL ON/OFF, [dt] OR TRAIL acid color",

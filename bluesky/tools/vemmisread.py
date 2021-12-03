@@ -306,8 +306,8 @@ class VEMMISRead:
 
         simday, simmonth, simyear, simtime = self.get_datetime()
 
-        command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
-        commandtime = [0.]
+        command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime, "MAP 252", "MAP 752"]
+        commandtime = [0., 0., 0.]
 
         for acid in self.trackdata['CALLSIGN'].unique():
             flight = self.flights.loc[self.flights['CALLSIGN'] == acid].iloc[0]
@@ -329,13 +329,12 @@ class VEMMISRead:
             spd = str(track['SPEED'].iloc[0])
 
             # str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
-            str_crefromdata = "CREFROMDATA "+acflightid+", "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
+            str_crereplay = "CREREPLAY "+acflightid+", "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
             str_orig = "ORIG "+acid+" "+orig
             str_dest = "DEST "+acid+" "+dest
-            # str_del = "DEL "+acid
-            str_delfromdata = "DELFROMDATA "+acflightid+", "+acid
-            command += [str_crefromdata, str_orig, str_dest] + wpts + [str_delfromdata]
-            commandtime += [t_cre] + [t_cre+0.005]*2+wptst+ [t_del]
+            str_del = "DEL "+acid
+            command += [str_crereplay, str_orig, str_dest] + wpts + [str_del]
+            commandtime += [t_cre] + [t_cre+0.005]*2+wptst + [t_del]
 
             i_cre = track.index[0]
             i_del = track.index[-1]

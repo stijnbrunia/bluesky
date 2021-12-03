@@ -52,11 +52,6 @@ class TrafficArrays:
         self._ArrVars  = []
         self._LstVars  = []
 
-        # Variables for splitting the traffic arrays in simulation and from data
-        self.bool_fromdata = np.array([], dtype=np.bool)
-        self.idx_fromdata = np.array([])
-        self.trafficarrays_copy = dict()
-
 
     def reparent(self, newparent):
         ''' Give TrafficArrays object a new parent. '''

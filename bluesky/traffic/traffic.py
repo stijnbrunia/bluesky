@@ -28,7 +28,7 @@ from .aporasas import APorASAS
 from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
 from .turbulence import Turbulence
-from .trafficfromdata import TrafficFromData
+from .trafficreplay import TrafficReplay, delreplay
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
 
@@ -159,7 +159,7 @@ class Traffic(Entity):
             self.work   = np.array([])  # Work done throughout the flight
 
             # Traffic that is updated from data
-            self.traffromdata = TrafficFromData()
+            self.trafreplay = TrafficReplay()
 
         # Default bank angles per flight phase
         self.bphase = np.deg2rad(np.array([15, 35, 35, 35, 15, 45]))
@@ -387,6 +387,7 @@ class Traffic(Entity):
         self.ap.selaltcmd(len(self.lat) - 1, altref, acvs)
         self.vs[-1] = acvs
 
+    @delreplay
     def delete(self, idx):
         """Delete an aircraft"""
         # If this is a multiple delete, sort first for list delete
@@ -431,7 +432,7 @@ class Traffic(Entity):
         self.update_pos()
 
         # --------- Update from data --------------------------
-        self.traffromdata.update()
+        self.trafreplay.update()
 
         #---------- Simulate Turbulence -----------------------
         self.turbulence.update()
@@ -539,7 +540,7 @@ class Traffic(Entity):
     def mnual(self, idx, flag=None):
         """ This function is entered when an aircraft goes into manual (usefull when using ADSB data scenarios)"""
         self.manual[idx] = flag
-        self.traffromdata.uco_fromdata(idx)
+        self.trafreplay.uco_replay(idx)
         route = self.ap.route[idx]
         if len(route.wpname) == 0:
             print("ADSB FILE")
