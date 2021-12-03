@@ -589,8 +589,11 @@ class Traffic(Entity):
             Created by: Stijn Brunia
             Date: 16-11-2021
         """
-        self.activate_HighRes("bluesky_demo", True)
-        bs.sim.setutc(1, 10, 2021, "00:30:00")
+        if flag:
+            self.activate_HighRes("bluesky_demo", True)
+            bs.sim.setutc(1, 10, 2021, "00:30:00")
+        else:
+            self.activate_HighRes("bluesky_demo", False)
 
     def activate_HighRes(self, name,  flag=None):
         """
@@ -604,28 +607,29 @@ class Traffic(Entity):
             Created by: Stijn Brunia
             Date: 03-11-2021
         """
-        print("HighResolution Meteo mode has been initialised.")
+
         self.HighRes = flag
         self.Wind_DB = name
         if self.HighRes:
+            print("HighResolution Meteo mode has been initialised.")
             self.wind.winddim = 1
             self.activate_HR = True
         else:
+            print("HighResolution Meteo mode has been disabled.")
             self.wind.winddim = 0
 
     def updateHighRes(self):
         """
-            Function:   Updates the highres meteo data every second, and loads the new data every 10 minutes
+            Function:   Updates the highres meteo data every minute, and loads the new data every 10 minutes
             Args:
                 - self
             Returns: -
 
             Created by: Stijn Brunia
-            Date: 24-11-2021
+            Date: 29-11-2021
         """
-
         if len(str(bs.sim.utc)) == 19 and str(bs.sim.utc)[18] == "0":
-            """ Only goes here when 1 whole minute has past. """
+            """ Only goes here when 10 seconds have past. """
             if (str(bs.sim.utc)[17:] == "00" and str(bs.sim.utc)[15] == "0") or self.activate_HR == True:
                 """ Only goes here every 10 minutes, which is when the new weather data must be loaded. """
                 self.prev_timestamp, self.next_timestamp = Functions.utc2stamps(bs.sim.utc)
@@ -647,9 +651,7 @@ class Traffic(Entity):
                         value2 = Functions.find_datapoint_timeframe(self.df_2,[self.next_timestamp, self.alt[idx + base] / 0.3048,self.lat[idx + base], self.lon[idx + base]])
                         self.windnorth[idx + base] = Functions.time_interpolation(timefrac, value1[4], value2[4])
                         self.windeast[idx + base] = Functions.time_interpolation(timefrac, value1[5], value2[5])
-                    else:
-                        self.windnorth[idx + base] = 0
-                        self.windeast[idx + base] = 0
+
 
     def setnoise(self, noise=None):
         """Noise (turbulence, ADBS-transmission noise, ADSB-truncated effect)"""
