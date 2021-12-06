@@ -25,7 +25,7 @@ class TrafficReplay(Entity):
     Class definition: Replay traffic based on data (VEMMIS)
     Methods:
         reset():            Reset variables
-        crereplay():      Create aircraft which are updated from data
+        crereplay():        Create aircraft which are updated from data
         update():           Perform an update (step)
         uco_replay():       Stop taking the aircraft state from data (simulate the aircraft)
         store_prev():       Store the previous data point
@@ -37,7 +37,7 @@ class TrafficReplay(Entity):
     """
 
     isimt = 0
-    isimt_i = 1
+    isimt_count = 1
     iflightid = 2
     iid = 3
     itype = 4
@@ -123,29 +123,13 @@ class TrafficReplay(Entity):
         # Update previous data point
         self.store_prev()
 
-    # def delete(self, idx):
-    #     print('Delete replay')
-    #     print(idx)
-    #     print(np.array(bs.traf.id)[idx])
-    #     print(self.replayflightid[idx])
-    #     print(self.replayflightid)
-    #     flightid = self.flightid[idx]
-    #     ireplay = self.get_indices(self.replayflightid, flightid)
-    #     self.replayflightid = np.delete(self.replayflightid, ireplay)
-    #     print(self.replayflightid)
-    #     print(bs.traf.id)
-    #     super().delete(idx)
-    #     print(bs.traf.id)
-
-        self.store_prev()
-
     def update(self):
         """
         Function: Perform an update (step)
         Args: -
         Returns: -
 
-        Remark: Slicing is used for accessing the track data ([i[0]: i[-1]])
+        Remark: Slicing is used for accessing the track data ([i0: i[-1]])
 
         Created by: Bob van Dillen
         Date: 30-11-2021
@@ -158,22 +142,24 @@ class TrafficReplay(Entity):
         # Check if the next data point is reached
         if self.t_next <= bs.sim.simt:
             # Track data index
-            i = self.trackdata[self.isimt_i][self.i_next]
+            ac_count = self.trackdata[self.isimt_count][self.i_next]
+            i0 = self.i_next  # First index
+            im = self.i_next+ac_count+1  # Last index + 1 for slicing
 
             # Get indices
-            itraf_up, itraf_prev, itrackdata = self.indices_update(self.trackdata[self.iflightid][i[0]: i[-1]+1])
+            itraf_up, itraf_prev, itrackdata = self.indices_update(self.trackdata[self.iflightid][i0: im])
 
             # Traffic with an update from the track data
-            bs.traf.lat[itraf_up] = self.trackdata[self.ilat][i[0]: i[-1]+1][itrackdata]
-            bs.traf.lon[itraf_up] = self.trackdata[self.ilon][i[0]: i[-1]+1][itrackdata]
-            bs.traf.hdg[itraf_up] = self.trackdata[self.ihdg][i[0]: i[-1]+1][itrackdata]
-            bs.traf.alt[itraf_up] = self.trackdata[self.ialt][i[0]: i[-1]+1][itrackdata]
-            bs.traf.gs[itraf_up] = self.trackdata[self.ispd][i[0]: i[-1]+1][itrackdata]
-            bs.traf.selalt[itraf_up] = self.trackdata[self.ialt][i[0]: i[-1]+1][itrackdata]
+            bs.traf.lat[itraf_up] = self.trackdata[self.ilat][i0: im][itrackdata]
+            bs.traf.lon[itraf_up] = self.trackdata[self.ilon][i0: im][itrackdata]
+            bs.traf.hdg[itraf_up] = self.trackdata[self.ihdg][i0: im][itrackdata]
+            bs.traf.alt[itraf_up] = self.trackdata[self.ialt][i0: im][itrackdata]
+            bs.traf.gs[itraf_up] = self.trackdata[self.ispd][i0: im][itrackdata]
+            bs.traf.selalt[itraf_up] = self.trackdata[self.ialt][i0: im][itrackdata]
 
             # Update variables
             self.store_prev()
-            self.i_next = i[-1]+1
+            self.i_next = im
             self.t_next = self.trackdata[self.isimt][self.i_next]
 
         else:
@@ -287,7 +273,7 @@ class TrafficReplay(Entity):
             arr:    array/list containing the items [array, list]
             items:  get indices of items [int, float, str, list, array]
         Returns:
-            i:      inices [int, array]
+            i:      indices [int, array]
 
         Created by: Bob van Dillen
         Date: 1-12-2021
@@ -368,7 +354,7 @@ def read_replay(folder, time0=0.):
 
                 # Prepare the data
                 bs.scr.echo('Preparing data from '+path+' ...')
-                vemmisdata = vemmisread.VEMMISRead(path, time0)
+                vemmisdata = vemmisread.VEMMISRead(path, time0, deltat=bs.sim.simdt)
                 # Load flight data
                 bs.scr.echo('Loading flight data ...')
                 commands, commandstime = vemmisdata.get_flightdata()

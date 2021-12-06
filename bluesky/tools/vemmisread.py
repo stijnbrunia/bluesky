@@ -35,12 +35,11 @@ class VEMMISRead:
     Date: 22-11-2021
     """
 
-    def __init__(self, data_path, time0, fixed_rate=True, deltat=3.):
+    def __init__(self, data_path, time0, deltat=None):
         self.data_path = data_path
 
         self.time0 = time0
 
-        self.fixed_rate = fixed_rate
         self.deltat = deltat
 
         self.lat0 = 52+18/60+29/3600
@@ -199,7 +198,7 @@ class VEMMISRead:
 
         self.trackdata['SIM_TIME'] = self.trackdata['ACTUAL_TIME'] - self.datetime0
         self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'].dt.total_seconds()
-        if self.fixed_rate:
+        if self.deltat:
             self.trackdata['SIM_TIME'] = (self.trackdata['SIM_TIME']/self.deltat).apply(np.ceil)*self.deltat
             self.trackdata = self.trackdata.drop_duplicates(subset=['SIM_TIME', 'CALLSIGN'], keep='last')
 
@@ -366,11 +365,9 @@ class VEMMISRead:
         """
 
         simt = np.array(self.trackdata['SIM_TIME'])
+        # Get the number of data points with the same time stamp
         unique, i, count = np.unique(simt, return_index=True, return_counts=True)
-        simt_i = []
-        for j in range(len(unique)):
-            for c in range(count[j]):
-                simt_i.append(list(range(i[j], i[j] + count[j])))
+        simt_count = np.repeat(count, count)
 
         flightid = np.array(self.trackdata['FLIGHT_ID'])
         acid = list(self.trackdata['CALLSIGN'])
@@ -380,9 +377,9 @@ class VEMMISRead:
         hdg = np.array(self.trackdata['HEADING'])
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
-        return simt, simt_i, flightid, acid, actype, lat, lon, hdg, alt, spd
+        return simt, simt_count, flightid, acid, actype, lat, lon, hdg, alt, spd
 
 
 if __name__ == '__main__':
-    path = r"C:\Users\LVNL_ILAB3\PycharmProjects\bluesky\scenario\vemmis1209"
+    path = os.path.expanduser("~") + r"\PycharmProjects\bluesky\scenario\vemmis1209"
     vemmis1209 = VEMMISRead(path, 0)

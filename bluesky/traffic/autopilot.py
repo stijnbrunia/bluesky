@@ -682,7 +682,7 @@ class Autopilot(Entity, replaceable=True):
                 lat = posobj.lat
                 lon = posobj.lon
             else:
-                return False, (cmd + ": Position " + wpname + " not found.")
+                return False, ("ORIG: Position " + wpname + " not found.")
 
         else:
             lat = bs.navdb.aptlat[apidx]
