@@ -366,7 +366,7 @@ class VEMMISRead:
 
         simt = np.array(self.trackdata['SIM_TIME'])
         # Get the number of data points with the same time stamp
-        unique, i, count = np.unique(simt, return_index=True, return_counts=True)
+        unique, count = np.unique(simt, return_counts=True)
         simt_count = np.repeat(count, count)
 
         flightid = np.array(self.trackdata['FLIGHT_ID'])
