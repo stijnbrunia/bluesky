@@ -5,13 +5,12 @@ Created by: Bob van Dillen
 Date: 25-11-2021
 """
 
-import pickle
 import numpy as np
 import os
 import bluesky as bs
 from bluesky import stack
 from bluesky.core import Entity
-from bluesky.tools import aero, cachefile, vemmisread
+from bluesky.tools import aero, vemmisread
 from bluesky.stack import stackbase
 
 
@@ -40,12 +39,11 @@ class TrafficReplay(Entity):
     isimt_count = 1
     iflightid = 2
     iid = 3
-    itype = 4
-    ilat = 5
-    ilon = 6
-    ihdg = 7
-    ialt = 8
-    ispd = 9
+    ilat = 4
+    ilon = 5
+    ihdg = 6
+    ialt = 7
+    ispd = 8
 
     def __init__(self):
         super().__init__()
@@ -94,7 +92,7 @@ class TrafficReplay(Entity):
 
     @stack.command
     def crereplay(self, acflightid: int,
-                    acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float):
+                  acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float):
         """
         Function: Create aircraft which are updated from data
         Args:
@@ -318,7 +316,7 @@ def delreplay(func):
     return inner
 
 
-def read_replay(folder, time0=0.):
+def read_replay(folder, time0=None):
     """
     Function: Read and process track data for trafficreplay
     Args:
@@ -330,45 +328,32 @@ def read_replay(folder, time0=0.):
     Date: 25-11-2021
     """
 
-    with cachefile.openfile(folder+'_'+str(time0)+'.p') as cacheload:
-        try:
-            bs.traf.trafreplay.trackdata = cacheload.load()
-            commands = cacheload.load()
-            commandstime = cacheload.load()
+    # Get path of the directory
+    path = os.getcwd()+"\\scenario\\"+folder.lower()
 
-        except (pickle.PickleError, cachefile.CacheError):
-            # Get path of the directory
-            path = os.getcwd()+"\\scenario\\"+folder.lower()
+    # Check if directory exists
+    if os.path.isdir(path):
+        # Reset the simulation
+        bs.sim.reset()
 
-            # Check if directory exists
-            if os.path.isdir(path):
-                # Reset the simulation
-                bs.sim.reset()
+        # Check if it contains the correct files
+        for root, dirs, files in os.walk(path):
+            if len(files) < 6:
+                return False, f"TRACKDATA: The folder does not contain all the (correct) files"
+            if len(files) > 6:
+                return False, f"TRACKDATA: The folder does contain too many files"
 
-                # Check if it contains the correct files
-                for root, dirs, files in os.walk(path):
-                    if len(files) < 6:
-                        return False, f"TRACKDATA: The folder does not contain all the (correct) files"
-                    if len(files) > 6:
-                        return False, f"TRACKDATA: The folder does contain too many files"
-
-                # Prepare the data
-                bs.scr.echo('Preparing data from '+path+' ...')
-                vemmisdata = vemmisread.VEMMISRead(path, time0, deltat=bs.sim.simdt)
-                # Load flight data
-                bs.scr.echo('Loading flight data ...')
-                commands, commandstime = vemmisdata.get_flightdata()
-                # Load track data
-                bs.scr.echo('Loading track data ...')
-                bs.traf.trafreplay.trackdata = vemmisdata.get_trackdata()
-
-                # Save variables for fast reopen
-                with cachefile.openfile(folder+'_'+str(time0)+'.p') as cachedump:
-                    cachedump.dump(bs.traf.trafreplay.trackdata)
-                    cachedump.dump(commands)
-                    cachedump.dump(commandstime)
-            else:
-                return False, f"TRACKDATA: Folder does not exist"
+        # Prepare the data
+        bs.scr.echo('Preparing data from '+path+' ...')
+        vemmisdata = vemmisread.VEMMISRead(path, time0, deltat=bs.sim.simdt)
+        # Load flight data
+        bs.scr.echo('Loading flight data ...')
+        commands, commandstime = vemmisdata.get_flightdata()
+        # Load track data
+        bs.scr.echo('Loading track data ...')
+        bs.traf.trafreplay.trackdata = vemmisdata.get_trackdata()
+    else:
+        return False, f"TRACKDATA: Folder does not exist"
 
     # Initialize simulation
     bs.scr.echo('Initialize simulation ...')

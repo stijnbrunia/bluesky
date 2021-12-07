@@ -362,6 +362,13 @@ def initbasecmds():
             "[bool]",
             bs.sim.realtime,
             "En-/disable realtime running allowing a variable timestep."],
+        "REPLAY": [
+            "REPLAY folder, (time0 (HH:MM:SS))",
+            "txt, [txt]",
+            trafficreplay.read_replay,
+            "Load replay scenario (e.g. VEMMIS data)" + \
+            "and provide the name of the folder in the scenario folder & start time"
+        ],
         "RESET": ["RESET", "", bs.sim.reset, "Reset simulation"],
         "SEED": [
             "SEED value",
@@ -382,13 +389,6 @@ def initbasecmds():
             "Switch on/off elements and background of map/radar view",
         ],
         "SYMBOL": ["SYMBOL", "", bs.scr.symbol, "Toggle aircraft symbol"],
-        "REPLAY": [
-            "REPLAY folder, (time0 [s])",
-            "txt, [float]",
-            trafficreplay.read_replay,
-            "Load replay scenario (e.g. VEMMIS data)" + \
-            "and provide the name of the folder in the scenario folder & start time"
-        ],
         "THR": [
             "THR acid, IDLE/0.0/throttlesetting/1.0/AUTO(default)",
             "acid[,txt]",

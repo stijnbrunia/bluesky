@@ -5,6 +5,7 @@ Created by: Bob van Dillen
 Date: 22-11-2021
 """
 
+import datetime
 import pandas as pd
 import numpy as np
 import os
@@ -35,7 +36,7 @@ class VEMMISRead:
     Date: 22-11-2021
     """
 
-    def __init__(self, data_path, time0, deltat=None):
+    def __init__(self, data_path, time0=None, deltat=None):
         self.data_path = data_path
 
         self.time0 = time0
@@ -48,22 +49,20 @@ class VEMMISRead:
         self.flights = None
         self.flighttimes = None
         self.tracks = None
+        self.flightdata = None
         self.routedata = None
         self.trackdata = None
 
-        self.read_data()
-        self.relevant_data()
-        self.merge_data()
-        self.get_coordinates()
-        self.get_altitude()
-        self.get_time()
-
         self.datetime0 = None
 
-        self.get_starttime()
-        self.get_simtime()
-
+        self.read_data()
         self.delete_nan()
+        self.get_time()
+        self.relevant_data()
+        self.get_coordinates()
+        self.get_altitude()
+        self.merge_data()
+        self.get_simtime()
         self.sort_data()
 
     def read_data(self):
@@ -81,79 +80,21 @@ class VEMMISRead:
             self.flighttimes = pd.read_csv(self.data_path+'\\'+files[2], sep=';')
             self.tracks = pd.read_csv(self.data_path+'\\'+files[5], sep=';')
 
-    def relevant_data(self):
+    def delete_nan(self):
         """
-        Function: Select relevant flights
+        Function: Delete data points with NaN in the relevant columns
         Args: -
         Returns: -
 
         Created by: Bob van Dillen
-        Date: 22-11-2021
+        Date = 25-11-2021
         """
 
-        i_delete = list(self.flights.index[self.flights['ICAO_ACTYPE'].isna()])
-        self.flights = self.flights.drop(i_delete)
-
-        self.flighttimes = self.flighttimes.loc[self.flighttimes['TIME_TYPE'] == 'ACTUAL']
-        self.flighttimes = self.flighttimes.loc[self.flighttimes['LOCATION_TYPE'] == 'RP']
-
-    def merge_data(self):
-        """
-        Function: Merge flights data into the other data, to get e.g. callsign
-        Args: -
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date = 22-11-2021
-        """
-
-        columns_flights = self.flights.columns.values
-        columns_tracks = self.tracks.columns.values
-
-        i_delete = np.where(np.isin(columns_flights, columns_tracks))
-        columns_flights_merge = list(np.delete(columns_flights, i_delete)) + ['FLIGHT_ID', 'REGISTRATION']
-
-        columns_tracks_merge = list(columns_tracks)
-        columns_tracks_merge.remove('REGISTRATION')
-
-        self.routedata = pd.merge(self.flighttimes, self.flights[['FLIGHT_ID', 'CALLSIGN']])
-        self.trackdata = pd.merge(self.tracks[columns_tracks_merge], self.flights[columns_flights_merge])
-
-    def get_coordinates(self):
-        """
-        Function: Calculate coordinates from x and y position
-        Args: -
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date = 22-11-2021
-        """
-
-        self.trackdata['X'] = self.trackdata['X'].str.replace(',', '.').astype('float')
-        self.trackdata['Y'] = self.trackdata['Y'].str.replace(',', '.').astype('float')
-
-        self.trackdata['X'] = self.trackdata['X']/128
-        self.trackdata['Y'] = self.trackdata['Y']/128
-
-        qdr = np.degrees(np.arctan2(self.trackdata['X'], self.trackdata['Y']))
-        qdr = np.where(qdr < 0, qdr+360, qdr)
-        d = np.array(np.sqrt(self.trackdata['X']**2 + self.trackdata['Y']**2))
-
-        self.trackdata['X'], self.trackdata['Y'] = qdrpos(self.lat0, self.lon0, qdr, d)
-        self.trackdata = self.trackdata.rename(columns={'X': 'LATITUDE', 'Y': 'LONGITUDE'})
-
-    def get_altitude(self):
-        """
-        Function: Determine altitude from MODE_C
-        Args: -
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date = 22-11-2021
-        """
-
-        self.trackdata['MODE_C'] = self.trackdata['MODE_C'].str.replace(',', '.').astype('float')*100
-        self.trackdata = self.trackdata.rename(columns={'MODE_C': 'ALTITUDE'})
+        self.flights = self.flights.dropna(subset=['FLIGHT_ID', 'CALLSIGN', 'ICAO_ACTYPE', 'ADEP', 'DEST', 'STATUS'])
+        self.tracks = self.tracks.dropna(subset=['TIME', 'X', 'Y', 'MODE_C', 'SPEED', 'HEADING',
+                                                 'FLIGHT_ID', 'T_START', 'T_END'])
+        self.flighttimes = self.flighttimes.dropna(subset=['FLIGHT_ID', 'LOCATION_TYPE',
+                                                           'LOCATION_NAME', 'TIME_TYPE', 'TIME'])
 
     def get_time(self):
         """
@@ -165,15 +106,40 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
-        self.routedata['TIME'] = pd.to_datetime(self.routedata['TIME'], format="%d-%m-%Y %H:%M:%S")
+        self.tracks['T_START'] = pd.to_datetime(self.tracks['T_START'], format="%d-%m-%Y %H:%M:%S")
+        self.tracks['T_END'] = pd.to_datetime(self.tracks['T_END'], format="%d-%m-%Y %H:%M:%S")
+        self.tracks['TIME'] = pd.to_timedelta(self.tracks['TIME']/100, unit='seconds')
 
-        self.trackdata['T_START'] = pd.to_datetime(self.trackdata['T_START'], format="%d-%m-%Y %H:%M:%S")
-        self.trackdata['TIME'] = pd.to_timedelta(self.trackdata['TIME']/100, unit='seconds')
-        self.trackdata['ACTUAL_TIME'] = self.trackdata['T_START'] + self.trackdata['TIME']
+        self.tracks['ACTUAL_TIME'] = self.tracks['T_START'] + self.tracks['TIME']
 
-    def get_starttime(self):
+    def relevant_data(self):
         """
-        Function: Get the time of the first data point
+        Function: Select relevant flights
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 22-11-2021
+        """
+
+        # Cancelled flights
+        indx_delete = self.flights.index[self.flights['STATUS'].str.contains('CANCELLED')]
+        self.flights = self.flights.drop(indx_delete)
+
+        # Waypoints
+        self.flighttimes = self.flighttimes.loc[self.flighttimes['TIME_TYPE'] == 'ACTUAL']
+        self.flighttimes = self.flighttimes.loc[self.flighttimes['LOCATION_TYPE'] == 'RP']
+
+        # Start time
+        if self.time0:
+            datetime0 = min(self.trackdata['ACTUAL_TIME'])
+            self.time0 = datetime.datetime.strptime(self.time0, '%H:%M:%S')
+            self.time0 = self.time0.replace(year=datetime0.year, month=datetime0.month, day=datetime0.day)
+            self.trackdata = self.trackdata.loc[self.trackdata['ACTUAL_TIME'] >= self.time0]
+
+    def get_coordinates(self):
+        """
+        Function: Calculate coordinates from x and y position
         Args: -
         Returns: -
 
@@ -181,7 +147,50 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
-        self.datetime0 = min(self.trackdata['ACTUAL_TIME'])
+        self.tracks['X'] = self.tracks['X'].str.replace(',', '.').astype('float')
+        self.tracks['Y'] = self.tracks['Y'].str.replace(',', '.').astype('float')
+
+        self.tracks['LATITUDE'] = self.tracks['X']/128
+        self.tracks['LONGITUDE'] = self.tracks['Y']/128
+
+        qdr = np.degrees(np.arctan2(self.tracks['LATITUDE'], self.tracks['LONGITUDE']))
+        qdr = np.where(qdr < 0, qdr+360, qdr)
+        d = np.array(np.sqrt(self.tracks['LATITUDE']**2 + self.tracks['LONGITUDE']**2))
+
+        self.tracks['LATITUDE'], self.tracks['LONGITUDE'] = qdrpos(self.lat0, self.lon0, qdr, d)
+
+    def get_altitude(self):
+        """
+        Function: Determine altitude from MODE_C
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
+
+        self.tracks['MODE_C'] = self.tracks['MODE_C'].str.replace(',', '.').astype('float')*100
+        self.tracks = self.tracks.rename(columns={'MODE_C': 'ALTITUDE'})
+
+    def merge_data(self):
+        """
+        Function: Merge flights data into the other data, to get e.g. callsign
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date = 22-11-2021
+        """
+
+        self.flightdata = pd.merge(self.flights, self.tracks[['FLIGHT_ID', 'ACTUAL_TIME', 'T_END', 'LATITUDE',
+                                                              'LONGITUDE', 'HEADING', 'ALTITUDE', 'SPEED']],
+                                   on='FLIGHT_ID')
+        self.flightdata = self.flightdata.sort_values(by=['ACTUAL_TIME'])
+        self.flightdata.drop_duplicates(subset='FLIGHT_ID', keep='first', inplace=True)
+
+        self.routedata = pd.merge(self.flighttimes, self.flights[['FLIGHT_ID', 'CALLSIGN']], on='FLIGHT_ID')
+
+        self.trackdata = pd.merge(self.tracks, self.flights[['FLIGHT_ID', 'CALLSIGN']], on='FLIGHT_ID')
 
     def get_simtime(self):
         """
@@ -193,31 +202,21 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
-        self.routedata['SIM_TIME'] = self.routedata['TIME'] - self.datetime0
-        self.routedata['SIM_TIME'] = self.routedata['SIM_TIME'].dt.total_seconds()
+        self.datetime0 = min(self.trackdata['ACTUAL_TIME'])
 
-        self.trackdata['SIM_TIME'] = self.trackdata['ACTUAL_TIME'] - self.datetime0
-        self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'].dt.total_seconds()
+        self.flightdata['SIM_START'] = (self.flightdata['ACTUAL_TIME'] - self.datetime0).dt.total_seconds()
+        self.flightdata['SIM_END'] = (self.flightdata['T_END'] - self.datetime0).dt.total_seconds()
+        self.trackdata['SIM_TIME'] = (self.trackdata['ACTUAL_TIME'] - self.datetime0).dt.total_seconds()
+
         if self.deltat:
+            self.flightdata['SIM_START'] = (self.flightdata['SIM_START']/self.deltat).apply(np.ceil)*self.deltat
+            self.flightdata['SIM_END'] = (self.flightdata['SIM_END'] / self.deltat).apply(np.ceil) * self.deltat
             self.trackdata['SIM_TIME'] = (self.trackdata['SIM_TIME']/self.deltat).apply(np.ceil)*self.deltat
-            self.trackdata = self.trackdata.drop_duplicates(subset=['SIM_TIME', 'CALLSIGN'], keep='last')
-
-    def delete_nan(self):
-        """
-        Function: Delete data points with NaN in the relevant columns
-        Args: -
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date = 25-11-2021
-        """
-
-        self.trackdata = self.trackdata.dropna(subset=['CALLSIGN', 'ICAO_ACTYPE', 'LATITUDE', 'LONGITUDE',
-                                                       'HEADING', 'ALTITUDE', 'SPEED'])
+            self.trackdata.drop_duplicates(subset=['SIM_TIME', 'CALLSIGN'], keep='last', inplace=True)
 
     def sort_data(self):
         """
-        Function: Sort the data by time and take the relevant columns for the track data
+        Function: Sort the data by time
         Args: -
         Returns: -
 
@@ -225,13 +224,11 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
-        self.routedata = self.routedata.sort_values(by=['SIM_TIME'])
-        self.routedata = self.routedata.loc[self.routedata['SIM_TIME'] >= self.time0]
-        self.routedata['SIM_TIME'] = self.routedata['SIM_TIME'] - self.routedata['SIM_TIME'].iloc[0]
-
+        self.flightdata = self.flightdata.sort_values(by=['SIM_START'])
         self.trackdata = self.trackdata.sort_values(by=['SIM_TIME'])
-        self.trackdata = self.trackdata.loc[self.trackdata['SIM_TIME'] >= self.time0]
-        self.trackdata['SIM_TIME'] = self.trackdata['SIM_TIME'] - self.trackdata['SIM_TIME'].iloc[0]
+        indx_first = list(self.trackdata.index[~self.trackdata.duplicated(subset='CALLSIGN', keep='first')])
+        indx_last = list(self.trackdata.index[~self.trackdata.duplicated(subset='CALLSIGN', keep='last')])
+        self.trackdata.drop(indx_first+indx_last, inplace=True)
 
     def get_wpts(self, callsign, time_create, orig, dest):
         """
@@ -282,7 +279,7 @@ class VEMMISRead:
         Date = 25-11-2021
         """
 
-        datetime_start = min(self.trackdata['ACTUAL_TIME'])
+        datetime_start = self.datetime0
         day = datetime_start.day
         month = datetime_start.month
         year = datetime_start.year
@@ -305,39 +302,59 @@ class VEMMISRead:
 
         simday, simmonth, simyear, simtime = self.get_datetime()
 
+        # Initial commands
         command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime, "MAP 252", "MAP 752"]
         commandtime = [0., 0., 0.]
 
-        for acid in self.trackdata['CALLSIGN'].unique():
-            flight = self.flights.loc[self.flights['CALLSIGN'] == acid].iloc[0]
-            track = self.trackdata.loc[self.trackdata['CALLSIGN'] == acid]
+        # Create and delete commands
+        acflightid = self.flightdata['FLIGHT_ID'].astype(str)
+        acid = self.flightdata['CALLSIGN']
+        actype = self.flightdata['ICAO_ACTYPE']
+        aclat = self.flightdata['LATITUDE'].astype(str)
+        aclon = self.flightdata['LONGITUDE'].astype(str)
+        achdg = self.flightdata['HEADING'].astype(str)
+        acalt = self.flightdata['ALTITUDE'].astype(str)
+        acspd = self.flightdata['SPEED'].astype(str)
 
-            t_cre = track['SIM_TIME'].iloc[0]
-            t_del = track['SIM_TIME'].iloc[-1]
+        create = list("CREREPLAY "+acflightid+", "+acid+", "+actype+", " +
+                      aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        delete = list("DEL "+acid)
+        tcreate = list(self.flightdata['SIM_START'])
+        tdelete = list(self.flightdata['SIM_END'])
 
-            acflightid = str(flight['FLIGHT_ID'])
-            actype = flight['ICAO_ACTYPE']
-            orig = flight['ADEP']
-            dest = flight['DEST']
-            wpts, wptst = self.get_wpts(acid, t_cre, orig, dest)
+        command += create + delete
+        commandtime += tcreate + tdelete
 
-            lat = str(track['LATITUDE'].iloc[0])
-            lon = str(track['LONGITUDE'].iloc[0])
-            hdg = str(track['HEADING'].iloc[0])
-            alt = str(track['ALTITUDE'].iloc[0])
-            spd = str(track['SPEED'].iloc[0])
-
-            # str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
-            str_crereplay = "CREREPLAY "+acflightid+", "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
-            str_orig = "ORIG "+acid+" "+orig
-            str_dest = "DEST "+acid+" "+dest
-            str_del = "DEL "+acid
-            command += [str_crereplay, str_orig, str_dest] + wpts + [str_del]
-            commandtime += [t_cre] + [t_cre+0.005]*2+wptst + [t_del]
-
-            i_cre = track.index[0]
-            i_del = track.index[-1]
-            self.trackdata = self.trackdata.drop([i_cre, i_del])
+        # for acid in self.trackdata['CALLSIGN'].unique():
+        #     flight = self.flights.loc[self.flights['CALLSIGN'] == acid].iloc[0]
+        #     track = self.trackdata.loc[self.trackdata['CALLSIGN'] == acid]
+        #
+        #     t_cre = track['SIM_TIME'].iloc[0]
+        #     t_del = track['SIM_TIME'].iloc[-1]
+        #
+        #     acflightid = str(flight['FLIGHT_ID'])
+        #     actype = flight['ICAO_ACTYPE']
+        #     orig = flight['ADEP']
+        #     dest = flight['DEST']
+        #     wpts, wptst = self.get_wpts(acid, t_cre, orig, dest)
+        #
+        #     lat = str(track['LATITUDE'].iloc[0])
+        #     lon = str(track['LONGITUDE'].iloc[0])
+        #     hdg = str(track['HEADING'].iloc[0])
+        #     alt = str(track['ALTITUDE'].iloc[0])
+        #     spd = str(track['SPEED'].iloc[0])
+        #
+        #     # str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
+        #     str_crereplay = "CREREPLAY "+acflightid+", "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
+        #     str_orig = "ORIG "+acid+" "+orig
+        #     str_dest = "DEST "+acid+" "+dest
+        #     str_del = "DEL "+acid
+        #     command += [str_crereplay, str_orig, str_dest] + wpts + [str_del]
+        #     commandtime += [t_cre] + [t_cre+0.005]*2+wptst + [t_del]
+        #
+        #     i_cre = track.index[0]
+        #     i_del = track.index[-1]
+        #     self.trackdata = self.trackdata.drop([i_cre, i_del])
 
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
@@ -371,15 +388,14 @@ class VEMMISRead:
 
         flightid = np.array(self.trackdata['FLIGHT_ID'])
         acid = list(self.trackdata['CALLSIGN'])
-        actype = list(self.trackdata['ICAO_ACTYPE'])
         lat = np.array(self.trackdata['LATITUDE'])
         lon = np.array(self.trackdata['LONGITUDE'])
         hdg = np.array(self.trackdata['HEADING'])
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
-        return simt, simt_count, flightid, acid, actype, lat, lon, hdg, alt, spd
+        return simt, simt_count, flightid, acid, lat, lon, hdg, alt, spd
 
 
 if __name__ == '__main__':
     path = os.path.expanduser("~") + r"\PycharmProjects\bluesky\scenario\vemmis1209"
-    vemmis1209 = VEMMISRead(path, 0)
+    v = VEMMISRead(path, deltat=0.05)
