@@ -302,7 +302,7 @@ def delreplay(func):
 
     def inner(*args, **kwargs):
         # Get flight id
-        acflightid = bs.traf.trafreplay.replayflightid[args[1]]
+        acflightid = bs.traf.trafreplay.flightid[args[1]]
         # Delete from replay flightid
         if acflightid in bs.traf.trafreplay.replayflightid:
             ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayflightid, acflightid)

@@ -70,7 +70,7 @@ wpts =  [ ['a1',    'RIVER',        'lambda:  tidclose(console.process_cmdline("
 
 maps =  [ ['a1',    '751',        'lambda:  tidclose(console.process_cmdline("map 751"), "maps")'],
           ['a2',    '752',        'lambda:  tidclose(console.process_cmdline("map 752"), "maps")'],
-          ['a3',    '',        None],
+          ['a3',    '252',        'lambda:  tidclose(console.process_cmdline("map 252"), "maps")'],
           ['a4',    '',        None],
 
           ['b1',    '',        None],
