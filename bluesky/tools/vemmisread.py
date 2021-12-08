@@ -316,8 +316,8 @@ class VEMMISRead:
         simday, simmonth, simyear, simtime = self.get_datetime()
 
         # Initial commands
-        command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime, "MAP 252", "MAP 752"]
-        commandtime = [0., 0., 0.]
+        command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
+        commandtime = [0.]
 
         # Create commands
         acflightid = self.flightdata['FLIGHT_ID'].astype(str)
