@@ -319,7 +319,7 @@ class VEMMISRead:
         command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime, "MAP 252", "MAP 752"]
         commandtime = [0., 0., 0.]
 
-        # Create and delete commands
+        # Create commands
         acflightid = self.flightdata['FLIGHT_ID'].astype(str)
         acid = self.flightdata['CALLSIGN']
         actype = self.flightdata['ICAO_ACTYPE']
@@ -331,12 +331,17 @@ class VEMMISRead:
 
         create = list("CREREPLAY "+acflightid+", "+acid+", "+actype+", " +
                       aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        origin = list("ORIG "+acid+", "+self.flightdata['ADEP'])
+        destination = list("DEST "+acid+", "+self.flightdata['DEST'])
         delete = list("DEL "+acid)
+
         tcreate = list(self.flightdata['SIM_START'])
+        torigin = list(self.flightdata['SIM_START']+0.01)
+        tdestination = list(self.flightdata['SIM_START']+0.01)
         tdelete = list(self.flightdata['SIM_END'])
 
-        command += create + delete
-        commandtime += tcreate + tdelete
+        command += create + origin + destination + delete
+        commandtime += tcreate + torigin + tdestination + tdelete
 
         # for acid in self.trackdata['CALLSIGN'].unique():
         #     flight = self.flights.loc[self.flights['CALLSIGN'] == acid].iloc[0]
