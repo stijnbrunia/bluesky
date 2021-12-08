@@ -106,6 +106,7 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
+        self.flights['T0'] = pd.to_datetime(self.flights['T0'], format="%d-%m-%Y %H:%M:%S")
         self.tracks['T_START'] = pd.to_datetime(self.tracks['T_START'], format="%d-%m-%Y %H:%M:%S")
         self.tracks['T_END'] = pd.to_datetime(self.tracks['T_END'], format="%d-%m-%Y %H:%M:%S")
         self.tracks['TIME'] = pd.to_timedelta(self.tracks['TIME']/100, unit='seconds')
@@ -132,10 +133,10 @@ class VEMMISRead:
 
         # Start time
         if self.time0:
-            datetime0 = min(self.trackdata['ACTUAL_TIME'])
+            datetime0 = min(self.flights['T0'])
             self.time0 = datetime.datetime.strptime(self.time0, '%H:%M:%S')
             self.time0 = self.time0.replace(year=datetime0.year, month=datetime0.month, day=datetime0.day)
-            self.trackdata = self.trackdata.loc[self.trackdata['ACTUAL_TIME'] >= self.time0]
+            self.tracks = self.tracks.loc[self.tracks['ACTUAL_TIME'] >= self.time0]
 
     def get_coordinates(self):
         """
@@ -396,6 +397,6 @@ class VEMMISRead:
         return simt, simt_count, flightid, acid, lat, lon, hdg, alt, spd
 
 
-if __name__ == '__main__':
-    path = os.path.expanduser("~") + r"\PycharmProjects\bluesky\scenario\vemmis1209"
-    v = VEMMISRead(path, deltat=0.05)
+# if __name__ == '__main__':
+#     path = os.path.expanduser("~") + r"\PycharmProjects\bluesky\scenario\vemmis1209"
+#     v = VEMMISRead(path, time0='08:47:00', deltat=0.05)
