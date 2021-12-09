@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QTextEdit
 
 import bluesky as bs
 from bluesky.tools import cachefile
-from bluesky.tools.misc import cmdsplit
+from bluesky.tools.misc import cmdacid, cmdsplit
 from bluesky.core.signal import Signal
 from . import autocomplete
 
@@ -57,6 +57,7 @@ class Console(QWidget):
                 self.command_history = cache.load()
             except:
                 self.command_history = []
+        self.id_history = ['']
         self.cmd = ''
         self.args = []
         self.history_pos = 0
@@ -94,6 +95,13 @@ class Console(QWidget):
     def stack(self, text):
         # Add command to the command history
         self.command_history.append(text)
+        # Add id to id history
+        acdata = bs.net.get_nodedata()
+        trafids = acdata.acdata.id
+        acid = cmdacid(text.upper(), trafids)
+        if acid and acid != self.id_history[-1]:
+            self.id_history.append(acid)
+
         self.echo(text)
         bs.stack.stack(text)
         cmdline_stacked.emit(self.cmd, self.args)

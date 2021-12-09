@@ -277,6 +277,46 @@ def cmdsplit(cmdline, trafids=None):
     return cmdargs[0], cmdargs[1:]
 
 
+def cmdacid(cmdline, trafids):
+    """
+    Function: Get the flight id from a command line
+    Args:
+        cmdline:    command line [str]
+        trafids:    flight ids [lst]
+    Returns:
+        arg/None:   flight id if there is a flight id in the command line, else None
+
+    Created by: Bob van Dillen
+    Date: 9-12-2021
+    """
+
+    cmdline = cmdline.strip()
+    if len(cmdline) == 0:
+        return None
+
+    # Use both comma and space as a separator: two commas mean an empty argument
+    while cmdline.find(",,") >= 0:
+        cmdline = cmdline.replace(",,", ",@,")  # Mark empty arguments
+
+    # Replace comma's by space
+    cmdline = cmdline.replace(",", " ")
+
+    # Split using spaces
+    cmdargs = cmdline.split()  # Make list of cmd arguments
+
+    # Adjust for empty arguments
+    for i in range(len(cmdargs)):
+        if cmdargs[i] == "@":
+            cmdargs[i] = ""
+
+    # Get ac id
+    for arg in cmdargs:
+        if arg in trafids:
+            return arg
+
+    return None
+
+
 def txt2lat(lattxt):
     """txt2lat: input txt: N52'14'13.5 or N52 or N52' """
     txt = lattxt.upper().replace("N", "").replace("S", "-")  # North positive, South negative
