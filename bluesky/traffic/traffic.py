@@ -747,7 +747,11 @@ class Traffic(Entity):
 
             # Show a/c info and highlight route of aircraft in radar window
             # and pan to a/c (to show route)
-            bs.scr.showroute(acid)
+            #bs.scr.showroute(acid)
+
+            # Select aircraft for acidprev commands
+            self.id_prev = acid
+
             return True, lines
 
         # Waypoint: airport, navaid or fix
