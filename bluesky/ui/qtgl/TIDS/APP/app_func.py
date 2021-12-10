@@ -1,16 +1,10 @@
-from bluesky.ui.qtgl import console
+"""
+This python file contains the button definitions for the Approach functional tid
 
-'''
-APPROACH
-'''
+Created by: Bob van Dillen
+Date: 9-12-2021
+"""
 
-def getid():
-    if len(console.Console._instance.command_line) == 0:
-        console.process_cmdline(console.Console._instance.id_history[-1])
-        return
-    else:
-        console.process_cmdline("")
-        return
 
 appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO ")'],
            ['a2', '36',             'lambda: None'],
@@ -42,7 +36,8 @@ appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO ")'],
 
            ['f1', 'COR',            'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
            ['f2', 'MAIN 2',         'lambda: None'],
-           ['f3', 'APP\nMAPS',      'lambda: show_basetid("appmaps", "appmaps")'],
+           ['f3', 'APP\nMAPS',      'lambda: appmain.close()|'
+                                    'lambda: show_basetid("appmaps", "appmaps")'],
            ['f4', 'EXQ',            'lambda: console.Console._instance.stack(console.Console._instance.command_line)']]
 
 
@@ -158,4 +153,3 @@ appspd = [['a1', '250',     'lambda: console.process_cmdline("250 ")'],
                             'lambda: show_basetid("appefl", "appefl")'],
           ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
                             'lambda: appspd.close()']]
-
