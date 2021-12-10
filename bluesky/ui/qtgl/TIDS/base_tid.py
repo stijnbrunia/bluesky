@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog
 from PyQt5 import uic
 from bluesky.ui.qtgl import console
-
+from bluesky.ui.qtgl.TIDS.APP import *
 import platform
 import os
 
@@ -20,7 +20,11 @@ def show_basetid(name, layout):
         loop_button = 'pushButton_'+str(dlgbuttons[i][0])
         exec(name+'.'+ loop_button+'.setText(dlgbuttons[i][1])')
         if dlgbuttons[i][2] != None:
-            exec(name+'.' + loop_button + '.clicked.connect(' + dlgbuttons[i][2] + ')')
+            if "|" in dlgbuttons[i][2]:
+                for func in dlgbuttons[i][2].split('|'):
+                    exec(name + '.' + loop_button + '.clicked.connect(' + func + ')')
+            else:
+                exec(name+'.' + loop_button + '.clicked.connect(' + dlgbuttons[i][2] + ')')
         else:
             exec(name+'.' + loop_button + '.setStyleSheet("border: 0px solid red;")')
 
@@ -37,3 +41,6 @@ def tidclose(command, dialogname):
     bs.ui.qtgl.console.Console._instance.stack(bs.ui.qtgl.console.Console._instance.command_line)
 
 
+def open_map(command, mapid):
+    console.Console._instance.stack("MAP "+str(mapid))
+    lambda: command

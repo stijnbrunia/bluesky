@@ -92,6 +92,8 @@ class Traffic(Entity):
         self.HR_Loaded = False
         self.activate_HR = False
 
+        self.id_prev = ''  # aircraft that previously received a command
+
         with self.settrafarrays():
             # Aircraft Info
             self.id      = []  # identifier (string)
@@ -546,6 +548,15 @@ class Traffic(Entity):
                 return self.id.index(acid.upper())
             except:
                 return -1
+
+    def idprev2idx(self):
+        if self.id_prev != '':
+            try:
+                return self.id.index(self.id_prev.upper())
+            except:
+                return -1
+        else:
+            return -1
 
     def mnual(self, idx, flag=None):
         """

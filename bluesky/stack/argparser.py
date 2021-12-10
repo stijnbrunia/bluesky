@@ -46,7 +46,6 @@ class Parameter:
         self.optional = (self.hasdefault() or param.kind == param.VAR_POSITIONAL) if isopt is None else isopt
         self.gobble = param.kind == param.VAR_POSITIONAL and not annotation
         self.annotation = annotation or param.annotation
-
         # Make list of parsers
         if self.annotation is inspect._empty:
             # Without annotation the argument is passed on unchanged as string
@@ -156,6 +155,47 @@ class AcidArg(Parser):
             refdata.acidx = idx
         return idx, argstring
 
+
+class AcidprevArg(Parser):
+    """
+    Class definition: Argument parser for aircraft callsigns, with possibility to get previous callsign
+    Methods:
+        parse():    parse the argument string
+
+    Created by: Bob van Dillen
+    Date: 10-12-2021
+    """
+
+    def parse(self, argstring):
+        """
+        Function: parse the argument string
+        Args:
+            argstring:  argument string [str]
+        Returns:
+            idx:        aircraft index for traffic arrays [int]
+            argstring:  argument string without aircraft callsign [str]
+
+        Created by: Bob van Dillen
+        Date: 10-12-2021
+        """
+
+        arg, argstring = re_getarg.match(argstring).groups()
+        acid = arg.upper()
+        idx = bs.traf.id2idx(acid)
+        if idx < 0:
+            # Check for previous id that received a command and take this idx
+            idx = bs.traf.idprev2idx()
+            if idx < 0:
+                raise ArgumentError(f'Aircraft with callsign {acid} not found')
+            argstring = arg + argstring  # in this case no id is given, so arg is part of argstring
+        else:
+            bs.traf.id_prev = acid
+
+        # Update ref position for navdb lookup
+        refdata.lat = bs.traf.lat[idx]
+        refdata.lon = bs.traf.lon[idx]
+        refdata.acidx = idx
+        return idx, argstring
 
 class WpinrouteArg(Parser):
     ''' Argument parser for waypoints in an aircraft route. '''
@@ -285,6 +325,7 @@ argparsers = {
     'onoff': Parser(txt2bool),
     'bool': Parser(txt2bool),
     'acid': AcidArg(),
+    'acidprev': AcidprevArg(),
     'wpinroute': WpinrouteArg(),
     'wpt': WptArg(),
     'latlon': PosArg(),
