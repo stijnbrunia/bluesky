@@ -540,7 +540,6 @@ class Traffic(Entity):
     def mnual(self, idx, flag=None):
         """ This function is entered when an aircraft goes into manual (usefull when using ADSB data scenarios)"""
         self.manual[idx] = flag
-        self.trafreplay.uco_replay(idx)
         route = self.ap.route[idx]
         if len(route.wpname) == 0:
             print("ADSB FILE")

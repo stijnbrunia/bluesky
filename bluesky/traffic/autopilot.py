@@ -606,12 +606,15 @@ class Autopilot(Entity, replaceable=True):
         return True
 
     @stack.command(name='UCO')
-    def selucocmd(self, idx: 'acid', efl: 'alt', hdg: 'hdg', spd: 'spd'):  # UCO command
-        bs.traf.ap.selaltcmd(idx, efl)
-        bs.traf.ap.selhdgcmd(idx, hdg)
-        bs.traf.ap.selspdcmd(idx, spd)
+    def selucocmd(self, idx: 'acid', efl: 'alt'=None, hdg: 'hdg'=None, spd: 'spd'=None):  # UCO command
+        if efl:
+            bs.traf.ap.selaltcmd(idx, efl)
+        if hdg:
+            bs.traf.ap.selhdgcmd(idx, hdg)
+        if spd:
+            bs.traf.ap.selspdcmd(idx, spd)
         bs.traf.mnual(idx, 'ON')
-        bs.scr.echo('UCO ')
+        bs.traf.trafreplay.uco_replay(idx)
 
     @stack.command(name='DEST')
     def setdest(self, acidx: 'acid', wpname:'wpt' = None):
