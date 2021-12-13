@@ -9,7 +9,6 @@ from bluesky.tools import cachefile
 from bluesky.tools.misc import cmdacid, cmdsplit
 from bluesky.core.signal import Signal
 from . import autocomplete
-import re
 
 
 cmdline_stacked = Signal('cmdline_stacked')
@@ -109,13 +108,9 @@ class Console(QWidget):
         self.history_pos = 0
         # Select aircraft
         actdata = bs.net.get_nodedata()
-        cmd, args = cmdsplit(text, actdata.acdata.id)
-        if actdata.acdata.id.count(cmd.upper()) > 0:
-            self.id_select = cmd.upper()
-        else:
-            for arg in args:
-                if actdata.acdata.id.count(arg.upper()) > 0:
-                    self.id_select = arg.upper()
+        acid = cmdacid(text, actdata.acdata.id)
+        if acid:
+            self.id_select = acid
 
     def echo(self, text):
         actdata = bs.net.get_nodedata()
