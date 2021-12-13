@@ -153,6 +153,7 @@ class TrafficReplay(Entity):
             bs.traf.hdg[itraf_up] = self.trackdata[self.ihdg][i0: im][itrackdata]
             bs.traf.alt[itraf_up] = self.trackdata[self.ialt][i0: im][itrackdata]
             bs.traf.gs[itraf_up] = self.trackdata[self.ispd][i0: im][itrackdata]
+            bs.traf.selhdg[itraf_up] = self.trackdata[self.ihdg][i0: im][itrackdata]
             bs.traf.selalt[itraf_up] = self.trackdata[self.ialt][i0: im][itrackdata]
 
             # Update variables
@@ -170,6 +171,7 @@ class TrafficReplay(Entity):
         bs.traf.hdg[itraf_prev] = self.hdg_prev[itraf_prev]
         bs.traf.alt[itraf_prev] = self.alt_prev[itraf_prev]
         bs.traf.gs[itraf_prev] = self.gs_prev[itraf_prev]
+        bs.traf.selhdg[itraf_prev] = self.hdg_prev[itraf_prev]
         bs.traf.selalt[itraf_prev] = self.alt_prev[itraf_prev]
 
         # Update other speeds (wind)
@@ -223,6 +225,8 @@ class TrafficReplay(Entity):
         acflightid = self.flightid[idx]
         iacflightid = self.get_indices(self.replayflightid, acflightid)
         self.replayflightid = np.delete(self.replayflightid, iacflightid)
+        bs.stack.stackbase.del_scencmds(idx)
+
 
     def store_prev(self):
         """
