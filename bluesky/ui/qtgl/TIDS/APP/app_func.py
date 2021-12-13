@@ -6,24 +6,27 @@ Date: 9-12-2021
 """
 
 
-appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO ")'],
+appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
            ['a2', '36',             'lambda: None'],
            ['a3', '18',             'lambda: None'],
            ['a4', 'REL',            'lambda: None'],
 
-           ['b1', 'HDG',            'lambda: console.process_cmdline(" HDG ")|'
+           ['b1', 'HDG',            'lambda: console.process_cmdline(" ; ")|'
+                                    'lambda: console.process_cmdline("HDG ")|'
                                     'lambda: show_basetid("apphdg", "apphdg")'],
            ['b2', 'POS',            'lambda: None'],
            ['b3', '',               None],
            ['b4', 'ACM',            'lambda: None'],
 
-           ['c1', 'EFL',            'lambda: console.process_cmdline(" ALT FL")|'
+           ['c1', 'EFL',            'lambda: console.process_cmdline(" ; ")|'
+                                    'lambda: console.process_cmdline("ALT FL")|'
                                     'lambda: show_basetid("appefl", "appefl")'],
            ['c2', 'TFL',            'lambda: None'],
            ['c3', 'LBL',            'lambda: None'],
            ['c4', 'ERA',            'lambda: None'],
 
-           ['d1', 'SPD',            'lambda: console.process_cmdline(" SPD ")|'
+           ['d1', 'SPD',            'lambda: console.process_cmdline(" ; ")|'
+                                    'lambda: console.process_cmdline("SPD ")|'
                                     'lambda: show_basetid("appspd", "appspd")'],
            ['d2', 'DPL',            'lambda: None'],
            ['d3', '',               None],
@@ -32,13 +35,14 @@ appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO ")'],
            ['e1', 'REL',            'lambda: None'],
            ['e2', '',               None],
            ['e3', 'ATTN',           'lambda: None'],
-           ['e4', 'UCO',            'lambda: console.process_cmdline(" UCO ")'],
+           ['e4', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
 
            ['f1', 'COR',            'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
            ['f2', 'MAIN 2',         'lambda: None'],
            ['f3', 'APP\nMAPS',      'lambda: appmain.close()|'
                                     'lambda: show_basetid("appmaps", "appmaps")'],
-           ['f4', 'EXQ',            'lambda: console.Console._instance.stack(console.Console._instance.command_line)']]
+           ['f4', 'EXQ',            'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
+                                    'lambda: console.selected_ac()']]
 
 
 apphdg = [['a1', 'ARTIP',       'lambda: console.process_cmdline("RIVER ")'],
@@ -67,15 +71,16 @@ apphdg = [['a1', 'ARTIP',       'lambda: console.process_cmdline("RIVER ")'],
           ['e4', '',        None],
 
           ['f1', 'COR',     'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
-          ['f2', 'EFL',     'lambda: console.process_cmdline(";")|'
+          ['f2', 'EFL',     'lambda: console.process_cmdline(" ; ")|'
                             'lambda: console.process_cmdline("ALT FL")|'
                             'lambda: apphdg.close()|'
                             'lambda: show_basetid("appefl", "appefl")'],
-          ['f3', 'SPD',     'lambda: console.process_cmdline(";")|'
-                            'lambda: console.process_cmdline("SPD")|'
+          ['f3', 'SPD',     'lambda: console.process_cmdline(" ; ")|'
+                            'lambda: console.process_cmdline("SPD ")|'
                             'lambda: apphdg.close()|'
                             'lambda: show_basetid("appspd", "appspd")'],
           ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
+                            'lambda: console.selected_ac()|'
                             'lambda: apphdg.close()']]
 
 
@@ -114,6 +119,7 @@ appefl = [['a1', '',        None],
                             'lambda: appefl.close()|'
                             'lambda: show_basetid("appspd", "appspd")'],
           ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
+                            'lambda: console.selected_ac()|'
                             'lambda: appefl.close()']]
 
 
@@ -152,4 +158,5 @@ appspd = [['a1', '250',     'lambda: console.process_cmdline("250 ")'],
                             'lambda: appspd.close()|'
                             'lambda: show_basetid("appefl", "appefl")'],
           ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
+                            'lambda: console.selected_ac()|'
                             'lambda: appspd.close()']]

@@ -156,7 +156,7 @@ class AcidArg(Parser):
         return idx, argstring
 
 
-class AcidprevArg(Parser):
+class AcidselectArg(Parser):
     """
     Class definition: Argument parser for aircraft callsigns, with possibility to get previous callsign
     Methods:
@@ -184,12 +184,12 @@ class AcidprevArg(Parser):
         idx = bs.traf.id2idx(acid)
         if idx < 0:
             # Check for previous id that received a command and take this idx
-            idx = bs.traf.idprev2idx()
+            idx = bs.traf.idselect2idx()
             if idx < 0:
                 raise ArgumentError(f'Aircraft with callsign {acid} not found')
             argstring = arg + argstring  # in this case no id is given, so arg is part of argstring
         else:
-            bs.traf.id_prev = acid
+            bs.traf.id_select = acid
 
         # Update ref position for navdb lookup
         refdata.lat = bs.traf.lat[idx]
@@ -325,7 +325,7 @@ argparsers = {
     'onoff': Parser(txt2bool),
     'bool': Parser(txt2bool),
     'acid': AcidArg(),
-    'acidprev': AcidprevArg(),
+    'acidselect': AcidselectArg(),
     'wpinroute': WpinrouteArg(),
     'wpt': WptArg(),
     'latlon': PosArg(),

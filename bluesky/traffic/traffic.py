@@ -92,7 +92,7 @@ class Traffic(Entity):
         self.HR_Loaded = False
         self.activate_HR = False
 
-        self.id_prev = ''  # aircraft that previously received a command
+        self.id_select = ''  # aircraft that previously received a command
 
         with self.settrafarrays():
             # Aircraft Info
@@ -549,10 +549,10 @@ class Traffic(Entity):
             except:
                 return -1
 
-    def idprev2idx(self):
-        if self.id_prev != '':
+    def idselect2idx(self):
+        if self.id_select != '':
             try:
-                return self.id.index(self.id_prev.upper())
+                return self.id.index(self.id_select.upper())
             except:
                 return -1
         else:
@@ -749,8 +749,8 @@ class Traffic(Entity):
             # and pan to a/c (to show route)
             #bs.scr.showroute(acid)
 
-            # Select aircraft for acidprev commands
-            self.id_prev = acid
+            # Select aircraft for acidselect commands
+            self.id_select = acid
 
             return True, lines
 
