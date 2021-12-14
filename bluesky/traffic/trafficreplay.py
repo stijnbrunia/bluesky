@@ -37,22 +37,22 @@ class TrafficReplay(Entity):
 
     isimt = 0
     isimt_count = 1
-    iflightid = 2
-    iid = 3
-    ilat = 4
-    ilon = 5
-    ihdg = 6
-    ialt = 7
-    ispd = 8
+    iid = 2
+    ilat = 3
+    ilon = 4
+    ihdg = 5
+    ialt = 6
+    ispd = 7
 
     def __init__(self):
         super().__init__()
 
         # Flight and track data
         self.trackdata = ()
-        # Array with flight ids which state is taken from data/file
-        self.replayflightid = np.array([])
+        # Array with callsigns which state is taken from data/file
+        self.replayid = []
         # Store parameters
+        self.id_prev = None
         self.lat_prev = None
         self.lon_prev = None
         self.hdg_prev = None
@@ -63,7 +63,6 @@ class TrafficReplay(Entity):
         self.t_next = 0.0
 
         with self.settrafarrays():
-            self.flightid = np.array([])                 # Flight ID
             self.replay = np.array([], dtype=np.bool)  # Take aircraft state from data/file
 
     def reset(self):
@@ -78,8 +77,8 @@ class TrafficReplay(Entity):
 
         # Flight and track data
         self.trackdata = ()
-        # Array with flight ids which state is taken from data/file
-        self.replayflightid = np.array([])
+        # Array with callsigns which state is taken from data/file
+        self.replayid = []
         # Store parameters
         self.lat_prev = None
         self.lon_prev = None
@@ -91,12 +90,10 @@ class TrafficReplay(Entity):
         self.t_next = 0.0
 
     @stack.command
-    def crereplay(self, acflightid: int,
-                  acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float):
+    def crereplay(self, acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float):
         """
         Function: Create aircraft which are updated from data
         Args:
-            acflightid: flight id [int, array]
             acid:       callsign [str, list]
             actype:     aircraft type [str, list]
             aclat:      latitude [float, array]
@@ -115,9 +112,8 @@ class TrafficReplay(Entity):
         # Get index
         idx = self.get_indices(bs.traf.id, acid)
         # Update flight data
-        self.flightid[idx] = acflightid
         self.replay[idx] = True
-        self.replayflightid = np.append(self.replayflightid, acflightid)
+        self.replayid = np.append(self.replayid, acid).tolist()
         # Update previous data point
         self.store_prev()
 
@@ -127,14 +123,14 @@ class TrafficReplay(Entity):
         Args: -
         Returns: -
 
-        Remark: Slicing is used for accessing the track data ([i0: i[-1]])
+        Remark: Slicing is used for accessing the track data ([i0: im])
 
         Created by: Bob van Dillen
         Date: 30-11-2021
         """
 
         # Check if there are aircraft
-        if len(self.replayflightid) == 0:
+        if len(self.replayid) == 0:
             return
 
         # Check if the next data point is reached
@@ -142,10 +138,10 @@ class TrafficReplay(Entity):
             # Track data index
             ac_count = self.trackdata[self.isimt_count][self.i_next]
             i0 = self.i_next  # First index
-            im = self.i_next+ac_count+1  # Last index + 1 for slicing
+            im = self.i_next+ac_count  # Last index + 1 for slicing (e.g. i=0; ac_count=1, therefore [0:1])
 
             # Get indices
-            itraf_up, itraf_prev, itrackdata = self.indices_update(self.trackdata[self.iflightid][i0: im])
+            itraf_up, itrackdata, itraf_prev, iprev = self.indices_update(self.trackdata[self.iid][i0: im])
 
             # Traffic with an update from the track data
             bs.traf.lat[itraf_up] = self.trackdata[self.ilat][i0: im][itrackdata]
@@ -163,16 +159,17 @@ class TrafficReplay(Entity):
 
         else:
             # Get indices when there is no new data point
-            itraf_prev = self.get_indices(self.flightid, self.replayflightid)
+            itraf_prev = self.get_indices(bs.traf.id, self.replayid)
+            iprev = self.get_indices(self.id_prev, self.replayid)
 
         # Other traffic
-        bs.traf.lat[itraf_prev] = self.lat_prev[itraf_prev]
-        bs.traf.lon[itraf_prev] = self.lon_prev[itraf_prev]
-        bs.traf.hdg[itraf_prev] = self.hdg_prev[itraf_prev]
-        bs.traf.alt[itraf_prev] = self.alt_prev[itraf_prev]
-        bs.traf.gs[itraf_prev] = self.gs_prev[itraf_prev]
-        bs.traf.selhdg[itraf_prev] = self.hdg_prev[itraf_prev]
-        bs.traf.selalt[itraf_prev] = self.alt_prev[itraf_prev]
+        bs.traf.lat[itraf_prev] = self.lat_prev[iprev]
+        bs.traf.lon[itraf_prev] = self.lon_prev[iprev]
+        bs.traf.hdg[itraf_prev] = self.hdg_prev[iprev]
+        bs.traf.alt[itraf_prev] = self.alt_prev[iprev]
+        bs.traf.gs[itraf_prev] = self.gs_prev[iprev]
+        bs.traf.selhdg[itraf_prev] = self.hdg_prev[iprev]
+        bs.traf.selalt[itraf_prev] = self.alt_prev[iprev]
 
         # Update other speeds (wind)
         self.update_speed()
@@ -188,7 +185,7 @@ class TrafficReplay(Entity):
         """
 
         # Get indices for traffic arrays
-        itraf = self.get_indices(self.flightid, self.replayflightid)
+        itraf = self.get_indices(bs.traf.id, self.replayid)
 
         # Check if there is no wind
         if bs.traf.wind.winddim == 0:
@@ -222,11 +219,10 @@ class TrafficReplay(Entity):
         """
 
         self.replay[idx] = False
-        acflightid = self.flightid[idx]
-        iacflightid = self.get_indices(self.replayflightid, acflightid)
-        self.replayflightid = np.delete(self.replayflightid, iacflightid)
+        acid = bs.traf.id[idx]
+        ireplay = self.get_indices(self.replayid, acid)
+        self.replayid = np.delete(self.replayid, ireplay).tolist()
         bs.stack.stackbase.del_scencmds(idx)
-
 
     def store_prev(self):
         """
@@ -238,34 +234,36 @@ class TrafficReplay(Entity):
         Date: 30-11-2021
         """
 
+        self.id_prev = bs.traf.id
         self.lat_prev = bs.traf.lat
         self.lon_prev = bs.traf.lon
         self.hdg_prev = bs.traf.hdg
         self.alt_prev = bs.traf.alt
         self.gs_prev = bs.traf.gs
 
-    def indices_update(self, flightid_trackdata):
+    def indices_update(self, id_trackdata):
         """
         Function: Get the indices for the traffic arrays and the trackdata
         Args:
-            flightid_trackdata: flight ids with available data [array]
+            id_trackdata:   callsigns with available data [array]
         Returns:
-            itraf_update:       index track data update for the traffic arrays [array]
-            itraf_prev:         index previous update for the traffic arrays [array]
-            itrackdata:         index for the trackdata [array]
+            itraf_update:   index track data update for the traffic arrays [array]
+            itrackdata:     index for the trackdata [array]
+            itraf_prev:     index previous update for the traffic arrays [array]
+            iprev:          index previous update for prev arrays [array]
 
         Created by: Bob van Dillen
         Date: 30-11-2021
         """
 
-        # Get flight ids that need an update and index for trackdata
-        flightid_update, ireplay, itrackdata = np.intersect1d(self.replayflightid,
-                                                                flightid_trackdata, return_indices=True)
+        # Get callsigns that need an update and index for trackdata
+        id_update, ireplay, itrackdata = np.intersect1d(self.replayid, id_trackdata, return_indices=True)
         # Get index for traffic arrays
-        itraf_update = self.get_indices(self.flightid, flightid_update)
-        itraf_prev = self.get_indices(self.flightid, np.delete(self.replayflightid, ireplay))
+        itraf_update = self.get_indices(bs.traf.id, id_update)
+        itraf_prev = self.get_indices(bs.traf.id, np.delete(self.replayid, ireplay))
+        iprev = self.get_indices(self.id_prev, np.delete(self.replayid, ireplay))
 
-        return itraf_update, itraf_prev, itrackdata
+        return itraf_update, itrackdata, itraf_prev, iprev
 
     @staticmethod
     def get_indices(arr, items):
@@ -305,12 +303,24 @@ def delreplay(func):
     """
 
     def inner(*args, **kwargs):
-        # Get flight id
-        acflightid = bs.traf.trafreplay.flightid[args[1]]
-        # Delete from replay flightid
-        if acflightid in bs.traf.trafreplay.replayflightid:
-            ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayflightid, acflightid)
-            bs.traf.trafreplay.replayflightid = np.delete(bs.traf.trafreplay.replayflightid, ireplay)
+        # Multiple delete
+        if len(args[1]) > 1:
+            # Get callsigns
+            ids = np.array(bs.traf.id)[args[1]].tolist()
+            for acid in ids:
+                # Delete from replay callsigns
+                if acid in bs.traf.trafreplay.replayid:
+                    ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
+                    bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
+        # Single delete
+        else:
+            # Get callsign
+            acid = np.array(bs.traf.id)[args[1]]
+            # Delete from replay callsigns
+            if acid in bs.traf.trafreplay.replayid:
+                ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
+                bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
+
         # Delete aircraft
         func(*args, **kwargs)
 

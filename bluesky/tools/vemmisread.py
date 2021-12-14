@@ -329,7 +329,7 @@ class VEMMISRead:
         acalt = self.flightdata['ALTITUDE'].astype(str)
         acspd = self.flightdata['SPEED'].astype(str)
 
-        create = list("CREREPLAY "+acflightid+", "+acid+", "+actype+", " +
+        create = list("CREREPLAY "+acid+", "+actype+", " +
                       aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
         origin = list("ORIG "+acid+", "+self.flightdata['ADEP'])
         destination = list("DEST "+acid+", "+self.flightdata['DEST'])
@@ -404,14 +404,13 @@ class VEMMISRead:
         unique, count = np.unique(simt, return_counts=True)
         simt_count = np.repeat(count, count)
 
-        flightid = np.array(self.trackdata['FLIGHT_ID'])
         acid = list(self.trackdata['CALLSIGN'])
         lat = np.array(self.trackdata['LATITUDE'])
         lon = np.array(self.trackdata['LONGITUDE'])
         hdg = np.array(self.trackdata['HEADING'])
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
-        return simt, simt_count, flightid, acid, lat, lon, hdg, alt, spd
+        return simt, simt_count, acid, lat, lon, hdg, alt, spd
 
 
 if __name__ == '__main__':
