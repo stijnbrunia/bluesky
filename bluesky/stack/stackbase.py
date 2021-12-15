@@ -48,6 +48,27 @@ def checkscen():
         del Stack.scencmd[:idx]
         del Stack.scentime[:idx]
 
+
+def del_scencmds(idx):
+    """
+    Function: delete the scenario lines for aircraft
+    Args:
+        idx:    index for traffic arrays
+    Returns:
+        -
+
+    Created by: Bob van Dillen
+    Date: 13-12-2021
+    """
+    if Stack.scencmd:
+        line = 0
+        while line < (len(Stack.scencmd)):
+            if str(bs.traf.id[idx]) in Stack.scencmd[line]:
+                del Stack.scencmd[line]
+            else:
+                line += 1
+
+
 def manual_del():
     """ deletes the scenario lines for aircraft when they enter manual mode (usefull on ADSB data)"""
     if Stack.scencmd:
@@ -60,11 +81,11 @@ def manual_del():
                     else:
                         line += 1
 
+
 def all_manual():
     """ Deletes the whole scenario, so all aircraft go manual (usefull on ADSB data)"""
     if Stack.scencmd:
         del Stack.scencmd[:]
-
 
 
 def stack(*cmdlines, sender_id=None):

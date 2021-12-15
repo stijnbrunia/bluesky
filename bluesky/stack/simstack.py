@@ -9,6 +9,7 @@ from bluesky.stack.basecmds import initbasecmds
 from bluesky.stack import recorder
 from bluesky.stack import argparser, ArgumentError
 from bluesky import settings
+from bluesky.tools import vemmisread
 
 
 # Register settings defaults

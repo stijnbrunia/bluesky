@@ -189,8 +189,8 @@ class nodeData:
         self.show_pz       = False
         self.show_fir      = True
         self.show_lbl      = 2
-        self.show_wpt      = 1
-        self.show_apt      = 1
+        self.show_wpt      = 0
+        self.show_apt      = 0
         self.show_poly     = 1  # 0=invisible, 1=outline, 2=fill
         self.ssd_all       = False
         self.ssd_conflicts = False
