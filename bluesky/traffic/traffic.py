@@ -31,6 +31,7 @@ from .aporasas import APorASAS
 from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
 from .turbulence import Turbulence
+from .trafficreplay import TrafficReplay
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
 
@@ -173,6 +174,9 @@ class Traffic(Entity):
             self.eps    = np.array([])  # Small nonzero numbers
             self.work   = np.array([])  # Work done throughout the flight
 
+            # Traffic that is updated from data
+            self.trafreplay = TrafficReplay()
+
         # Default bank angles per flight phase
         self.bphase = np.deg2rad(np.array([15, 35, 35, 35, 15, 45]))
 
@@ -255,18 +259,20 @@ class Traffic(Entity):
         self.lon[-n:]  = aclon
         self.alt[-n:]  = acalt
 
-        if achdg.upper() in bs.navdb.wpid:
-            index = bs.navdb.wpid.index(achdg.upper())
-            templat_hdg = bs.navdb.wplat[index]
-            templon_hdg = bs.navdb.wplon[index]
-            templat_ac = aclat
-            templon_ac = aclon
+        if isinstance(achdg, str):
+            if achdg.upper() in bs.navdb.wpid:
+                index = bs.navdb.wpid.index(achdg.upper())
+                templat_hdg = bs.navdb.wplat[index]
+                templon_hdg = bs.navdb.wplon[index]
+                templat_ac = aclat
+                templon_ac = aclon
 
-            achdg = angleFromCoordinate(templat_ac, templon_ac, templat_hdg, templon_hdg)
+                achdg = angleFromCoordinate(templat_ac, templon_ac, templat_hdg, templon_hdg)
 
-        else:
-            achdg = float(achdg)
-
+            else:
+                achdg = float(achdg)
+        elif isinstance(achdg, (int, float)):
+            achdg = np.array(n * [achdg])
 
         self.hdg[-n:]  = achdg
         self.trk[-n:]  = achdg
@@ -407,8 +413,14 @@ class Traffic(Entity):
         if isinstance(idx, Collection):
             idx = np.sort(idx)
 
+        # Callsigns
+        acid = np.array(self.id)[idx]
+
         # Call the actual delete function
         super().delete(idx)
+
+        # Replay delete
+        self.trafreplay.delreplay(acid)
 
         # Update number of aircraft
         self.ntraf = len(self.lat)
@@ -445,6 +457,9 @@ class Traffic(Entity):
         self.update_airspeed()
         self.update_groundspeed()
         self.update_pos()
+
+        # --------- Update from data --------------------------
+        self.trafreplay.update()
 
         #---------- Simulate Turbulence -----------------------
         self.turbulence.update()
@@ -576,7 +591,7 @@ class Traffic(Entity):
             elif not flag:
                 """ Manual Mode off """
                 print("MANUAL OFF")
-                bs.traf.swlnav[idx] = True
+
 
     def meteo(self, flag):
         """

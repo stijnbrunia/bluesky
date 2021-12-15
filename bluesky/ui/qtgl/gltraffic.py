@@ -322,19 +322,19 @@ class Traffic(glh.RenderObject, layer=100):
                     rawlabel += '%-13s' % acid[:8]  # Line 1: Flight code (ex. KL001)
                     if actdata.show_lbl == 2:
                         if alt <= data.translvl:
-                            rawlabel += '%-8s' % int(alt / ft + 0.5) # Line 2.1:
-                            rawlabel += '%-5s' % int(selalt / ft + 0.5)  # Line 2.2: altitiude
+                            rawlabel += '%-7s' % int(alt / ft + 0.5) # Line 2.1:
+                            rawlabel += '%-6s' % int(selalt / ft + 0.5)  # Line 2.2: altitiude
                         else:
-                            rawlabel += 'FL%-6s' % int(alt / ft / 100. + 0.5)  # Line 2.2: flight level
-                            rawlabel += 'FL%-3s' % int(selalt / ft / 100. + 0.5)  # Line 2.2: flight level
-                        rawlabel += '%-8s' % '.EAT' #int(hdg)  # Line 3.1:
+                            rawlabel += 'FL%-5s' % int(alt / ft / 100. + 0.5)  # Line 2.2: flight level
+                            rawlabel += 'FL%-4s' % int(selalt / ft / 100. + 0.5)  # Line 2.2: flight level
+                        rawlabel += '%-7s' % '..  ' #int(hdg)  # Line 3.1:
                         if selhdg == 0:
-                            rawlabel += '%-5s' % int(trk)  # Line 3.2: Heading
+                            rawlabel += '%-6s' % int(trk)  # Line 3.2: Heading
                         else:
-                            rawlabel += '%-5s' % int(selhdg)  # Line 3.2: Heading
-                        rawlabel += '%-8s' % str(type[i])  # Line 4.1: Aircraft type
+                            rawlabel += '%-6s' % int(selhdg)  # Line 3.2: Heading
+                        rawlabel += '%-7s' % str(type[i])  # Line 4.1: Aircraft type
                         vsarrow = 30 if vs > 0.25 else 31 if vs < -0.25 else 32
-                        rawlabel += '%-5s' % str(str(int(cas / kts + 0.5)) + chr(vsarrow))  # Line 4.2: Speed
+                        rawlabel += '%-6s' % str(str(int(cas / kts + 0.5)) + chr(vsarrow))  # Line 4.2: Speed
                     else:
                         rawlabel += 39 * ' '
 
