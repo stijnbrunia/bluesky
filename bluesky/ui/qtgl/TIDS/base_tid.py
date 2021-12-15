@@ -38,6 +38,18 @@ def tidclose(command, dialogname):
     bs.ui.qtgl.console.Console._instance.stack(bs.ui.qtgl.console.Console._instance.command_line)
 
 
-def open_map(command, mapid):
-    console.Console._instance.stack("MAP "+str(mapid))
-    lambda: command
+def nl_geo():
+    """
+    Function: Show/don't show the coastlines
+    Args: -
+    Returns: -
+
+    Created by: Bob van Dillen
+    Date: 15-12-2021
+    """
+
+    actdata = bs.net.get_nodedata()
+    if actdata.show_map:
+        actdata.show_map = False
+    else:
+        actdata.show_map = True

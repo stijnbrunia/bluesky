@@ -5,6 +5,7 @@ Created by: Bob van Dillen
 Date: 9-12-2021
 """
 
+
 appmaps = [['a1',    'ALS\n10NM',     'lambda: appmaps.close()|'
                                       'lambda: show_basetid("als10nm","als10nm")'],
            ['a2',    '',              None],
@@ -22,7 +23,7 @@ appmaps = [['a1',    'ALS\n10NM',     'lambda: appmaps.close()|'
 
            ['c1',    'PAR\nAPP',      'lambda: appmaps.close()|'
                                       'lambda: show_basetid("parapp", "parapp")'],
-           ['c2',    'NL\nGEO',       'lambda: None'],
+           ['c2',    'NL\nGEO',       'lambda: nl_geo()'],
            ['c3',    'AREAS\nRD',     'lambda: appmaps.close()|'
                                       'lambda: show_basetid("areasrd", "areasrd")'],
            ['c4',    'AREAS\nLE',     'lambda: appmaps.close()|'
@@ -45,6 +46,7 @@ appmaps = [['a1',    'ALS\n10NM',     'lambda: appmaps.close()|'
                                       'lambda: show_basetid("appmain", "appmain")'],
            ['f3',    '',              None],
            ['f4',    'FIC\nMAPS',     'lambda: None']]
+
 
 parapp = [['a1',    '10 NM\n36C',    'lambda: console.Console._instance.stack("map 21; map 213")'],
           ['a2',    '10 NM\n36R',    'lambda: console.Console._instance.stack("map 23; map 218")'],
@@ -253,7 +255,7 @@ areasrd = [['a1',    'ATZ\nVB',       'lambda: console.Console._instance.stack("
 
            ['b1',    '',              None],
            ['b2',    'BOSKO',         'lambda: console.Console._instance.stack("map 259")'],
-           ['b3',    'NL\nGEO',       'lambda: console.Console._instance.stack("map 441; map 442; map 443")'],
+           ['b3',    'NL\nGEO',       'lambda: nl_geo()'],
            ['b4',    'NL\nW-WAY',     'lambda: console.Console._instance.stack("map 444; map 445; map 446")'],
 
            ['c1',    'RD\n06',        'lambda: console.Console._instance.stack("map 75; map 242")'],

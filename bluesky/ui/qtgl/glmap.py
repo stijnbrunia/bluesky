@@ -2,6 +2,7 @@
 from os import path
 import numpy as np
 
+import bluesky as bs
 from bluesky.ui import palette
 from bluesky.ui.qtgl import glhelpers as glh
 from bluesky.ui.loadvisuals import load_coastlines
@@ -55,6 +56,13 @@ class Map(glh.RenderObject, layer=-100):
         self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_LATLON)
 
         # --- DRAW THE MAP AND COASTLINES ---------------------------------------------
+        # Show/don't show coastlines
+        actdata = bs.net.get_nodedata()
+        if not actdata.show_map:
+            self.coastlines.set_attribs(color=(0, 0, 0))
+        if actdata.show_map:
+            self.coastlines.set_attribs(color=palette.coastlines)
+
         # Map and coastlines: don't wrap around in the shader
         self.shaderset.enable_wrap(False)
 
