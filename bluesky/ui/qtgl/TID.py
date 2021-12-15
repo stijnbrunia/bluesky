@@ -18,7 +18,8 @@ class showTID(QDialog):
             loop_button = 'pushButton_' + str(dlgbuttons[i][0])
             exec('self.' + loop_button + '.setText(str(dlgbuttons[i][1]))')
             if dlgbuttons[i][2] != None:
-                exec('self.' + loop_button + '.clicked.connect('+ dlgbuttons[i][2] +')')
+                for func in dlgbuttons[i][2].split('|'):
+                    exec('self.' + loop_button + '.clicked.connect(' + func + ')')
             else:
                 exec('self.' + loop_button + '.setStyleSheet("border: 0px solid red;")')
 

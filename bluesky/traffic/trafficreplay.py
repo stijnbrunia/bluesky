@@ -239,11 +239,11 @@ class TrafficReplay(Entity):
         Date: 1-12-2021
         """
 
-        self.replay[idx] = False
         acid = bs.traf.id[idx]
-        ireplay = self.get_indices(self.replayid, acid)
-        self.replayid = np.delete(self.replayid, ireplay).tolist()
-        bs.stack.stackbase.del_scencmds(idx)
+        if acid in self.replayid:
+            self.replay[idx] = False
+            self.replayid.remove(acid)
+            bs.stack.stackbase.del_scencmds(idx)
 
     def store_prev(self):
         """

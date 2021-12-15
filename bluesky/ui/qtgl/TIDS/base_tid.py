@@ -20,11 +20,8 @@ def show_basetid(name, layout):
         loop_button = 'pushButton_'+str(dlgbuttons[i][0])
         exec(name+'.'+ loop_button+'.setText(dlgbuttons[i][1])')
         if dlgbuttons[i][2] != None:
-            if "|" in dlgbuttons[i][2]:
-                for func in dlgbuttons[i][2].split('|'):
-                    exec(name + '.' + loop_button + '.clicked.connect(' + func + ')')
-            else:
-                exec(name+'.' + loop_button + '.clicked.connect(' + dlgbuttons[i][2] + ')')
+            for func in dlgbuttons[i][2].split('|'):
+                exec(name + '.' + loop_button + '.clicked.connect(' + func + ')')
         else:
             exec(name+'.' + loop_button + '.setStyleSheet("border: 0px solid red;")')
 
