@@ -93,6 +93,8 @@ class Traffic(Entity):
         self.HR_Loaded = False
         self.activate_HR = False
 
+        self.id_select = ''  # aircraft that previously received a command
+
         with self.settrafarrays():
             # Aircraft Info
             self.id      = []  # identifier (string)
@@ -562,6 +564,15 @@ class Traffic(Entity):
             except:
                 return -1
 
+    def idselect2idx(self):
+        if self.id_select != '':
+            try:
+                return self.id.index(self.id_select.upper())
+            except:
+                return -1
+        else:
+            return -1
+
     def mnual(self, idx, flag=None):
         """
             Function:   Manual function in which an aircraft can be put in manual mode, this can be used when
@@ -751,7 +762,11 @@ class Traffic(Entity):
 
             # Show a/c info and highlight route of aircraft in radar window
             # and pan to a/c (to show route)
-            bs.scr.showroute(acid)
+            #bs.scr.showroute(acid)
+
+            # Select aircraft for acidselect commands
+            self.id_select = acid
+
             return True, lines
 
         # Waypoint: airport, navaid or fix

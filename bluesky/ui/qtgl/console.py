@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget, QTextEdit
 
 import bluesky as bs
 from bluesky.tools import cachefile
-from bluesky.tools.misc import cmdsplit
+from bluesky.tools.misc import cmdacid, cmdsplit
 from bluesky.core.signal import Signal
 from . import autocomplete
 
@@ -45,6 +45,10 @@ def process_cmdline(cmdlines):
             Console._instance.stack(cmd)
 
 
+def selected_ac():
+    process_cmdline(Console._instance.id_select)
+
+
 class Console(QWidget):
     lineEdit = None
     stackText = None
@@ -57,6 +61,7 @@ class Console(QWidget):
                 self.command_history = cache.load()
             except:
                 self.command_history = []
+        self.id_select = ''
         self.cmd = ''
         self.args = []
         self.history_pos = 0
@@ -101,6 +106,11 @@ class Console(QWidget):
         self.set_cmdline('')
         autocomplete.reset()
         self.history_pos = 0
+        # Select aircraft
+        actdata = bs.net.get_nodedata()
+        acid = cmdacid(text, actdata.acdata.id)
+        if acid:
+            self.id_select = acid
 
     def echo(self, text):
         actdata = bs.net.get_nodedata()
