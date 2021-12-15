@@ -7,8 +7,8 @@ from bluesky.ui.qtgl.TIDS.base_tid import tidclose
 
 base = [  ['a1',    'UCO',     'lambda: console.process_cmdline("UCO ")'],
           ['a2',    'HDG',     'lambda: console.process_cmdline("HDG ")'],
-          ['a3',    'EFL',     'lambda: console.process_cmdline("ALT FL")'],
-          ['a4',    'SPD',     'lambda: console.process_cmdline("SPD ")'],
+          ['a3',    'EFL',     'lambda: console.process_cmdline("SPD ")'],
+          ['a4',    'SPD',     'lambda: console.process_cmdline("ALT FL")'],
 
           ['b1',    'WPTS',    "lambda: show_basetid('waypoints','wpts')"],
           ['b2',    'MAPS',    "lambda: show_basetid('maps','maps')"],
@@ -70,7 +70,7 @@ wpts =  [ ['a1',    'RIVER',        'lambda:  tidclose(console.process_cmdline("
 
 maps =  [ ['a1',    '751',        'lambda:  tidclose(console.process_cmdline("map 751"), "maps")'],
           ['a2',    '752',        'lambda:  tidclose(console.process_cmdline("map 752"), "maps")'],
-          ['a3',    '252',        'lambda:  tidclose(console.process_cmdline("map 252"), "maps")'],
+          ['a3',    '',        None],
           ['a4',    '',        None],
 
           ['b1',    '',        None],

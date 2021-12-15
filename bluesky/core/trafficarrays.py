@@ -52,7 +52,6 @@ class TrafficArrays:
         self._ArrVars  = []
         self._LstVars  = []
 
-
     def reparent(self, newparent):
         ''' Give TrafficArrays object a new parent. '''
         # Remove myself from the parent list of children, and add to new parent

@@ -3,8 +3,6 @@ import math
 import os
 import traceback
 import bluesky as bs
-import pandas as pd
-import numpy as np
 from bluesky.stack.stackbase import Stack, stack, checkscen, forward
 from bluesky.stack.cmdparser import Command, command
 from bluesky.stack.basecmds import initbasecmds
@@ -179,52 +177,6 @@ def readscn(fname):
                 if not (len(line.strip()) > 0 and line.strip()[0] == "#"):
                     print("except this:" + line)
 
-def read_trackdata(folder, time0, i=None):
-    path = os.getcwd()+"\\scenario\\"+folder.lower()
-
-    if os.path.isdir(path):
-
-        for root, dirs, files in os.walk(path):
-            if len(files) < 6:
-                return False, f"TRACKDATA: The folder does not contain all the (correct) files"
-            if len(files) > 6:
-                return False, f"TRACKDATA: The folder does contain too many files"
-
-        bs.sim.reset()
-
-        bs.scr.echo('Preparing data from '+path+' ...')
-        vemmisdata = vemmisread.VEMMISRead(path, time0)
-
-        bs.scr.echo('Loading track data ...')
-        bs.traf.trackdata = vemmisdata.get_trackdata()
-
-        bs.scr.echo('Initialize simulation ...')
-        # Set date and time
-        simday, simmonth, simyear, simtime = vemmisdata.get_datetime()
-        bs.sim.setutc(simday, simmonth, simyear, simtime)
-        # Create first aircraft
-        i = bs.traf.trackdata[1][0]
-        acid = bs.traf.trackdata[2][i[0]: i[-1]+1]
-        actype = bs.traf.trackdata[3][i[0]: i[-1]+1]
-        lat = bs.traf.trackdata[4][i[0]: i[-1]+1]
-        lon = bs.traf.trackdata[5][i[0]: i[-1]+1]
-        hdg = bs.traf.trackdata[6][i[0]: i[-1]+1]
-        alt = bs.traf.trackdata[7][i[0]: i[-1]+1]
-        spd = bs.traf.trackdata[8][i[0]: i[-1]+1]
-        bs.traf.cre(acid, actype, lat, lon, hdg, alt, spd, True)
-        # Initialize previous data point
-        bs.traf.trackdata_prev = (bs.traf.trackdata[2][i[0]: i[-1]+1], bs.traf.trackdata[4][i[0]: i[-1]+1],
-                                  bs.traf.trackdata[5][i[0]: i[-1]+1], bs.traf.trackdata[6][i[0]: i[-1]+1],
-                                  bs.traf.trackdata[7][i[0]: i[-1]+1], bs.traf.trackdata[8][i[0]: i[-1]+1])
-        bs.traf.i_next = i[-1]+1
-        bs.traf.t_next = bs.traf.trackdata[0][bs.traf.i_next]
-
-        bs.scr.echo('Done')
-    else:
-        return False, f"TRACKDATA: Folder does not exist"
-
-
-    return
 
 @command(aliases=('CALL',), brief="PCALL filename [REL/ABS/args]")
 def pcall(fname, *pcall_arglst):
