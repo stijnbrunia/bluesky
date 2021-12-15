@@ -33,7 +33,7 @@ appmaps = [['a1',    'ALS\n10NM',     'lambda: appmaps.close()|'
            ['d2',    'TWEC\nTOC',     'lambda: appmaps.close()|'
                                       'lambda: show_basetid("twectoc", "twectoc")'],
            ['d3',    'OCA',           'lambda: None'],
-           ['d4',    'CTR\nKD',       'lambda: None'],
+           ['d4',    'CTR\nKD',       'lambda: console.Console._instance.stack("map 205")'],
 
            ['e1',    'VNR\nMAPS',     'lambda: None'],
            ['e2',    'POINTS\nFINAL', 'lambda: None'],
