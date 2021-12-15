@@ -28,7 +28,7 @@ from .aporasas import APorASAS
 from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
 from .turbulence import Turbulence
-from .trafficreplay import TrafficReplay, delreplay
+from .trafficreplay import TrafficReplay
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
 
@@ -387,7 +387,6 @@ class Traffic(Entity):
         self.ap.selaltcmd(len(self.lat) - 1, altref, acvs)
         self.vs[-1] = acvs
 
-    @delreplay
     def delete(self, idx):
         """Delete an aircraft"""
         # If this is a multiple delete, sort first for list delete
@@ -395,8 +394,14 @@ class Traffic(Entity):
         if isinstance(idx, Collection):
             idx = np.sort(idx)
 
+        # Callsigns
+        acid = np.array(self.id)[idx]
+
         # Call the actual delete function
         super().delete(idx)
+
+        # Replay delete
+        self.trafreplay.delreplay(acid)
 
         # Update number of aircraft
         self.ntraf = len(self.lat)

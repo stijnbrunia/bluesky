@@ -25,6 +25,7 @@ class TrafficReplay(Entity):
     Methods:
         reset():            Reset variables
         crereplay():        Create aircraft which are updated from data
+        delreplay():        Remove aircraft from replay callsigns list
         update():           Perform an update (step)
         uco_replay():       Stop taking the aircraft state from data (simulate the aircraft)
         store_prev():       Store the previous data point
@@ -80,6 +81,7 @@ class TrafficReplay(Entity):
         # Array with callsigns which state is taken from data/file
         self.replayid = []
         # Store parameters
+        self.id_prev = None
         self.lat_prev = None
         self.lon_prev = None
         self.hdg_prev = None
@@ -114,6 +116,25 @@ class TrafficReplay(Entity):
         # Update flight data
         self.replay[idx] = True
         self.replayid = np.append(self.replayid, acid).tolist()
+        # Update previous data point
+        self.store_prev()
+
+    def delreplay(self, ids):
+        """
+        Function: Remove aircraft from replay callsigns list
+        Args:
+            ids:    callsigns
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 15-12-2021
+        """
+
+        for acid in ids:
+            # Check if this callsign was updated from data
+            if acid in self.replayid:
+                self.replayid.remove(acid)
+
         # Update previous data point
         self.store_prev()
 
@@ -291,49 +312,51 @@ Static functions
 """
 
 
-def delreplay(func):
-    """
-    Function: Decorator function for deleting an aircraft
-    Args:
-        func:   function
-    Returns: -
+# def delreplay(func):
+#     """
+#     Function: Decorator function for deleting an aircraft
+#     Args:
+#         func:   function
+#     Returns: -
+#
+#     Created by: Bob van Dillen
+#     Date: 30-11-2021
+#     """
+#
+#     def inner(*args, **kwargs):
+#         # Multiple delete
+#         if len(args[1]) > 1:
+#             # Get callsigns
+#             ids = np.array(bs.traf.id)[args[1]].tolist()
+#             for acid in ids:
+#                 # Delete from replay callsigns
+#                 if acid in bs.traf.trafreplay.replayid:
+#                     ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
+#                     bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
+#
+#         # Single delete
+#         else:
+#             # Get callsign
+#             acid = np.array(bs.traf.id)[args[1]]
+#             # Delete from replay callsigns
+#             if acid in bs.traf.trafreplay.replayid:
+#                 ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
+#                 bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
+#
+#         # Delete aircraft
+#         func(*args, **kwargs)
+#
+#         # Update previous data point
+#         bs.traf.trafreplay.store_prev()
+#
+#     return inner
 
-    Created by: Bob van Dillen
-    Date: 30-11-2021
-    """
 
-    def inner(*args, **kwargs):
-        # Multiple delete
-        if len(args[1]) > 1:
-            # Get callsigns
-            ids = np.array(bs.traf.id)[args[1]].tolist()
-            for acid in ids:
-                # Delete from replay callsigns
-                if acid in bs.traf.trafreplay.replayid:
-                    ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
-                    bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
-        # Single delete
-        else:
-            # Get callsign
-            acid = np.array(bs.traf.id)[args[1]]
-            # Delete from replay callsigns
-            if acid in bs.traf.trafreplay.replayid:
-                ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
-                bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
-
-        # Delete aircraft
-        func(*args, **kwargs)
-
-        # Update previous data point
-        bs.traf.trafreplay.store_prev()
-
-    return inner
-
-
-def read_replay(folder, time0=None):
+def read_replay(datatype, folder, time0=None):
     """
     Function: Read and process track data for trafficreplay
     Args:
+        datatype:   type of flight data
         folder: name of the folder containing the files [str]
         time0:  start time in seconds [int, float]
     Returns: -
@@ -350,24 +373,26 @@ def read_replay(folder, time0=None):
         # Reset the simulation
         bs.sim.reset()
 
-        # Check if it contains the correct files
-        for root, dirs, files in os.walk(path):
-            if len(files) < 6:
-                return False, f"TRACKDATA: The folder does not contain all the (correct) files"
-            if len(files) > 6:
-                return False, f"TRACKDATA: The folder does contain too many files"
+        # VEMMIS Data
+        if datatype.upper() == 'VEMMIS':
+            # Check if it contains the correct files
+            if not vemmisread.files_check(path):
+                return False, f"REPLAY: The folder does not contain all the required files"
 
-        # Prepare the data
-        bs.scr.echo('Preparing data from '+path+' ...')
-        vemmisdata = vemmisread.VEMMISRead(path, time0, deltat=bs.sim.simdt)
-        # Load flight data
-        bs.scr.echo('Loading flight data ...')
-        commands, commandstime = vemmisdata.get_flightdata()
-        # Load track data
-        bs.scr.echo('Loading track data ...')
-        bs.traf.trafreplay.trackdata = vemmisdata.get_trackdata()
+            # Prepare the data
+            bs.scr.echo('Preparing data from '+path+' ...')
+            vemmisdata = vemmisread.VEMMISRead(path, time0, deltat=bs.sim.simdt)
+            # Load flight data
+            bs.scr.echo('Loading flight data ...')
+            commands, commandstime = vemmisdata.get_flightdata()
+            # Load track data
+            bs.scr.echo('Loading track data ...')
+            bs.traf.trafreplay.trackdata = vemmisdata.get_trackdata()
+
+        else:
+            return False, f"REPLAY: Type is not supported"
     else:
-        return False, f"TRACKDATA: Folder does not exist"
+        return False, f"REPLAY: Folder does not exist"
 
     # Initialize simulation
     bs.scr.echo('Initialize simulation ...')

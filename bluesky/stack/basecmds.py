@@ -363,8 +363,8 @@ def initbasecmds():
             bs.sim.realtime,
             "En-/disable realtime running allowing a variable timestep."],
         "REPLAY": [
-            "REPLAY folder, (time0 (HH:MM:SS))",
-            "txt, [txt]",
+            "REPLAY type, folder, (time0 (HH:MM:SS))",
+            "txt,txt,[txt]",
             trafficreplay.read_replay,
             "Load replay scenario (e.g. VEMMIS data)" + \
             "and provide the name of the folder in the scenario folder & start time"

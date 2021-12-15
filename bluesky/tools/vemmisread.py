@@ -13,6 +13,11 @@ from bluesky.tools.geo import qdrpos
 from bluesky.tools.aero import kts, ft
 
 
+"""
+Classes
+"""
+
+
 class VEMMISRead:
     """
     Class definition: Read and prepare the VEMMIS data
@@ -76,9 +81,13 @@ class VEMMISRead:
         """
 
         for root, dirs, files in os.walk(self.data_path):
-            self.flights = pd.read_csv(self.data_path+'\\'+files[1], sep=';')
-            self.flighttimes = pd.read_csv(self.data_path+'\\'+files[2], sep=';')
-            self.tracks = pd.read_csv(self.data_path+'\\'+files[5], sep=';')
+            for file in files:
+                if file.upper().startswith('FLIGHTS'):
+                    self.flights = pd.read_csv(self.data_path+'\\'+file, sep=';')
+                elif file.upper().startswith('FLIGHTTIMES'):
+                    self.flighttimes = pd.read_csv(self.data_path+'\\'+file, sep=';')
+                elif file.upper().startswith('TRACKS'):
+                    self.tracks = pd.read_csv(self.data_path+'\\'+files[5], sep=';')
 
     def delete_nan(self):
         """
@@ -411,6 +420,45 @@ class VEMMISRead:
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
         return simt, simt_count, acid, lat, lon, hdg, alt, spd
+
+
+"""
+Static functions
+"""
+
+
+def files_check(data_path):
+    """
+    Function: Check if the folder contains the required files
+    Args:
+        data_path:  path to the folder [str]
+    Returns:
+        True/False: True if required files are present, else False [bool]
+
+    Created by: Bob van Dillen
+    Date: 15-12-2021
+    """
+
+    file_array = np.array([])
+
+    for root, dirs, files in os.walk(data_path):
+        for file in files:
+            if file.upper().startswith('FLIGHTS'):
+                file_array = np.append(file_array, 'FLIGHTS')
+            elif file.upper().startswith('FLIGHTTIMES'):
+                file_array = np.append(file_array, 'FLIGHTTIMES')
+            elif file.upper().startswith('TRACKS'):
+                file_array = np.append(file_array, 'TRACKS')
+
+    if len(file_array) == 3 and len(np.unique(file_array)) == 3:
+        return True
+
+    return False
+
+
+"""
+Run
+"""
 
 
 if __name__ == '__main__':
