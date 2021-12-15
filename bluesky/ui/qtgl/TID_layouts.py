@@ -1,52 +1,14 @@
-from bluesky.ui.qtgl.TIDS.APP import *
+import bluesky as bs
+from bluesky.ui.qtgl import console
 
-"""
-Start window
-"""
-
-
-start = [['a1',    '',        None],
-         ['a2',    '',        None],
-         ['a3',    '',        None],
-         ['a4',    '',        None],
-
-         ['b1',    '',        None],
-         ['b2',    '',        None],
-         ['b3',    '',        None],
-         ['b4',    '',        None],
-
-         ['c1',    '',        None],
-         ['c2',    'BASE',    'lambda: show_basetid("base","base")'],
-         ['c3',    'APP',     'lambda: console.Console._instance.stack("map 252")|'
-                              'lambda: show_basetid("appmain","appmain")'],
-         ['c4',    '',        None],
-
-         ['d1',    '',        None],
-         ['d2',    '',        None],
-         ['d3',    'ACC',     'lambda: console.Console._instance.stack("map 751")|'
-                              'lambda: console.Console._instance.stack("map 752")'],
-         ['d4',    '',        None],
-
-         ['e1',    '',        None],
-         ['e2',    '',        None],
-         ['e3',    '',        None],
-         ['e4',    '',        None],
-
-         ['f1',    '',        None],
-         ['f2',    '',        None],
-         ['f3',    '',        None],
-         ['f4',    '',        None]]
-
-
-"""
-Basic TID
-"""
-
+import bluesky.ui.qtgl.mainwindow
+from bluesky.ui.qtgl.TID import showTID
+from bluesky.ui.qtgl.TIDS.base_tid import tidclose
 
 base = [  ['a1',    'UCO',     'lambda: console.process_cmdline("UCO ")'],
           ['a2',    'HDG',     'lambda: console.process_cmdline("HDG ")'],
-          ['a3',    'EFL',     'lambda: console.process_cmdline("ALT FL")'],
-          ['a4',    'SPD',     'lambda: console.process_cmdline("SPD ")'],
+          ['a3',    'EFL',     'lambda: console.process_cmdline("SPD ")'],
+          ['a4',    'SPD',     'lambda: console.process_cmdline("ALT FL")'],
 
           ['b1',    'WPTS',    "lambda: show_basetid('waypoints','wpts')"],
           ['b2',    'MAPS',    "lambda: show_basetid('maps','maps')"],
@@ -108,7 +70,7 @@ wpts =  [ ['a1',    'RIVER',        'lambda:  tidclose(console.process_cmdline("
 
 maps =  [ ['a1',    '751',        'lambda:  tidclose(console.process_cmdline("map 751"), "maps")'],
           ['a2',    '752',        'lambda:  tidclose(console.process_cmdline("map 752"), "maps")'],
-          ['a3',    '252',        'lambda:  tidclose(console.process_cmdline("map 252"), "maps")'],
+          ['a3',    '',        None],
           ['a4',    '',        None],
 
           ['b1',    '',        None],
@@ -167,4 +129,3 @@ blank =  [['a1',    '',        None],
           ['f3',    '',        None],
           ['f4',    '',        None],
           ]
-

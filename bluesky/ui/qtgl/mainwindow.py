@@ -392,7 +392,7 @@ class MainWindow(QMainWindow):
         elif self.sender() == self.MANUAL:
             console.process_cmdline("MANUAL")
         elif self.sender() == self.tid:
-            show_basetid('start', 'start')
+            show_basetid('base','base')
 
     def show_file_dialog(self):
         # Due to Qt5 bug in Windows, use temporarily Tkinter

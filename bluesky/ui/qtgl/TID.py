@@ -1,9 +1,14 @@
-from PyQt5.QtCore import Qt
+import bluesky as bs
 
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtCore import Qt, pyqtSlot, QTimer, QItemSelectionModel, QSize
+
+from PyQt5.QtWidgets import QMainWindow, QSplashScreen, QTreeWidgetItem, \
+    QPushButton, QFileDialog, QDialog, QTreeWidget, QVBoxLayout, \
+    QDialogButtonBox, QWidget
 
 from PyQt5 import uic
-
+from bluesky.ui.qtgl import console
+import bluesky.ui.qtgl.TID_layouts
 
 class showTID(QDialog):
     def __init__(self):
