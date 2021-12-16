@@ -415,14 +415,8 @@ class Traffic(Entity):
         if isinstance(idx, Collection):
             idx = np.sort(idx)
 
-        # Callsigns
-        acid = np.array(self.id)[idx]
-
         # Call the actual delete function
         super().delete(idx)
-
-        # Replay delete
-        self.trafreplay.delreplay(acid)
 
         # Update number of aircraft
         self.ntraf = len(self.lat)

@@ -5,6 +5,7 @@ Created by: Bob van Dillen
 Date: 25-11-2021
 """
 
+import copy
 import numpy as np
 import os
 import bluesky as bs
@@ -119,24 +120,23 @@ class TrafficReplay(Entity):
         # Update previous data point
         self.store_prev()
 
-    def delreplay(self, ids):
+    def delete(self, idx):
         """
         Function: Remove aircraft from replay callsigns list
         Args:
-            ids:    callsigns
+            idx:    indices for traffic arrays
         Returns: -
 
         Created by: Bob van Dillen
         Date: 15-12-2021
         """
 
+        ids = np.array(bs.traf.id)[idx]
+
         for acid in ids:
             # Check if this callsign was updated from data
             if acid in self.replayid:
                 self.replayid.remove(acid)
-
-        # Update previous data point
-        self.store_prev()
 
     def update(self):
         """
@@ -162,7 +162,7 @@ class TrafficReplay(Entity):
             im = self.i_next+ac_count  # Last index + 1 for slicing (e.g. i=0; ac_count=1, therefore [0:1])
 
             # Get indices
-            itraf_up, itrackdata, itraf_prev, iprev = self.indices_update(self.trackdata[self.iid][i0: im])
+            itraf_up, itrackdata, ireplay = self.indices_update(self.trackdata[self.iid][i0: im])
 
             # Traffic with an update from the track data
             bs.traf.lat[itraf_up] = self.trackdata[self.ilat][i0: im][itrackdata]
@@ -177,6 +177,10 @@ class TrafficReplay(Entity):
             self.store_prev()
             self.i_next = im
             self.t_next = self.trackdata[self.isimt][self.i_next]
+
+            # Get indices for aircraft with no new data
+            itraf_prev = self.get_indices(bs.traf.id, np.delete(self.replayid, ireplay))
+            iprev = self.get_indices(self.id_prev, np.delete(self.replayid, ireplay))
 
         else:
             # Get indices when there is no new data point
@@ -255,12 +259,12 @@ class TrafficReplay(Entity):
         Date: 30-11-2021
         """
 
-        self.id_prev = bs.traf.id
-        self.lat_prev = bs.traf.lat
-        self.lon_prev = bs.traf.lon
-        self.hdg_prev = bs.traf.hdg
-        self.alt_prev = bs.traf.alt
-        self.gs_prev = bs.traf.gs
+        self.id_prev = copy.deepcopy(bs.traf.id)
+        self.lat_prev = copy.deepcopy(bs.traf.lat)
+        self.lon_prev = copy.deepcopy(bs.traf.lon)
+        self.hdg_prev = copy.deepcopy(bs.traf.hdg)
+        self.alt_prev = copy.deepcopy(bs.traf.alt)
+        self.gs_prev = copy.deepcopy(bs.traf.gs)
 
     def indices_update(self, id_trackdata):
         """
@@ -281,10 +285,8 @@ class TrafficReplay(Entity):
         id_update, ireplay, itrackdata = np.intersect1d(self.replayid, id_trackdata, return_indices=True)
         # Get index for traffic arrays
         itraf_update = self.get_indices(bs.traf.id, id_update)
-        itraf_prev = self.get_indices(bs.traf.id, np.delete(self.replayid, ireplay))
-        iprev = self.get_indices(self.id_prev, np.delete(self.replayid, ireplay))
 
-        return itraf_update, itrackdata, itraf_prev, iprev
+        return itraf_update, itrackdata, ireplay
 
     @staticmethod
     def get_indices(arr, items):
@@ -294,14 +296,14 @@ class TrafficReplay(Entity):
             arr:    array/list containing the items [array, list]
             items:  get indices of items [int, float, str, list, array]
         Returns:
-            i:      indices [int, array]
+            i:      indices [array]
 
         Created by: Bob van Dillen
         Date: 1-12-2021
         """
 
         if isinstance(items, (str, int, float)):
-            i = np.nonzero(np.array([items])[:, None] == arr)[1][0]
+            i = np.nonzero(np.array([items])[:, None] == arr)[1]
         else:
             i = np.nonzero(np.array(items)[:, None] == arr)[1]
         return i
