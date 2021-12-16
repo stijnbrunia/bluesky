@@ -9,7 +9,7 @@ Date: 9-12-2021
 appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
            ['a2', '36',             'lambda: None'],
            ['a3', '18',             'lambda: None'],
-           ['a4', 'REL',            'lambda: None'],
+           ['a4', 'REL',            'lambda: console.process_cmdline(" REL")'],
 
            ['b1', 'HDG',            'lambda: console.process_cmdline(" ; HDG ")|'
                                     'lambda: show_basetid("apphdg", "apphdg")'],
@@ -29,7 +29,7 @@ appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
            ['d3', '',               None],
            ['d4', 'RWY',            'lambda: None'],
 
-           ['e1', 'REL',            'lambda: None'],
+           ['e1', 'REL',            'lambda: console.process_cmdline(" REL")'],
            ['e2', '',               None],
            ['e3', 'ATTN',           'lambda: None'],
            ['e4', 'UCO',            'lambda: console.process_cmdline(" UCO")'],

@@ -51,7 +51,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.protectedzone = glh.Circle()
         # self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
         self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
-        self.aclabels = glh.Text(settings.text_size, (13, 4))
+        self.aclabels = glh.Text(settings.text_size, (7, 4))
         self.cpalines = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.route = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.routelbl = glh.Text(settings.text_size, (12, 2))
@@ -311,32 +311,71 @@ class Traffic(glh.RenderObject, layer=100):
             confidx = 0
 
             zdata = zip(data.id, data.ingroup, data.inconf, data.tcpamax, data.selhdg, data.trk, data.gs,
-                        data.cas, data.vs, data.selalt, data.alt, data.lat, data.lon, itertools.repeat(data.type))
+                        data.cas, data.selspd, data.vs, data.selalt, data.alt, data.lat, data.lon, data.flighttype,
+                        data.wtc, data.uco, data.type, data.arr, data.sid, data.empt)
             for i, (acid, ingroup, inconf, tcpa,
-                    selhdg, trk, gs, cas, vs, selalt, alt, lat, lon, type) in enumerate(zdata):
+                    selhdg, trk, gs, cas, selspd, vs, selalt, alt, lat, lon,
+                    flighttype, wtc, uco, type, arr, sid, empt) in enumerate(zdata):
                 if i >= MAX_NAIRCRAFT:
                     break
 
-                    # Make label: 3 lines of 8 characters per aircraft
+                # Make label: 3 lines of 8 characters per aircraft
+                # if actdata.show_lbl >= 1:
+                #     rawlabel += '%-13s' % acid[:8]  # Line 1: Flight code (ex. KL001)
+                #     if actdata.show_lbl == 2:
+                #         if alt <= data.translvl:
+                #             rawlabel += '%-7s' % int(alt / ft + 0.5) # Line 2.1:
+                #             rawlabel += '%-6s' % int(selalt / ft + 0.5)  # Line 2.2: altitiude
+                #         else:
+                #             rawlabel += 'FL%-5s' % int(alt / ft / 100. + 0.5)  # Line 2.2: flight level
+                #             rawlabel += 'FL%-4s' % int(selalt / ft / 100. + 0.5)  # Line 2.2: flight level
+                #         rawlabel += '%-7s' % '..  ' #int(hdg)  # Line 3.1:
+                #         if selhdg == 0:
+                #             rawlabel += '%-6s' % int(trk)  # Line 3.2: Heading
+                #         else:
+                #             rawlabel += '%-6s' % int(selhdg)  # Line 3.2: Heading
+                #         rawlabel += '%-7s' % str(type[i])  # Line 4.1: Aircraft type
+                #         vsarrow = 30 if vs > 0.25 else 31 if vs < -0.25 else 32
+                #         rawlabel += '%-6s' % str(str(int(cas / kts + 0.5)) + chr(vsarrow))  # Line 4.2: Speed
+                #     else:
+                #         rawlabel += 39 * ' '
+
                 if actdata.show_lbl >= 1:
-                    rawlabel += '%-13s' % acid[:8]  # Line 1: Flight code (ex. KL001)
-                    if actdata.show_lbl == 2:
-                        if alt <= data.translvl:
-                            rawlabel += '%-7s' % int(alt / ft + 0.5) # Line 2.1:
-                            rawlabel += '%-6s' % int(selalt / ft + 0.5)  # Line 2.2: altitiude
+                    # Line 1
+                    rawlabel += '%-7s' % acid[:7]
+
+                    if actdata.show_lbl == 2 and flighttype in ['INBOUND', 'OUTBOUND']:
+                        # Line 2
+                        rawlabel += '%-3s' % leading_zeros(alt/ft/100)[-3:]
+                        rawlabel += '%-1s' % ' '
+                        if uco:
+                            rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
                         else:
-                            rawlabel += 'FL%-5s' % int(alt / ft / 100. + 0.5)  # Line 2.2: flight level
-                            rawlabel += 'FL%-4s' % int(selalt / ft / 100. + 0.5)  # Line 2.2: flight level
-                        rawlabel += '%-7s' % '..  ' #int(hdg)  # Line 3.1:
-                        if selhdg == 0:
-                            rawlabel += '%-6s' % int(trk)  # Line 3.2: Heading
+                            rawlabel += '%-3s' % '   '
+
+                        # Line 3
+                        rawlabel += '%-4s' % str(type)[:4]
+                        if flighttype == 'INBOUND' and not uco:
+                            rawlabel += '%-3s' % str(arr)[:3]
+                        elif flighttype == 'OUTBOUND' and not uco:
+                            rawlabel += '%-3s' % str(sid)[:3]
+                        elif uco:
+                            rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
                         else:
-                            rawlabel += '%-6s' % int(selhdg)  # Line 3.2: Heading
-                        rawlabel += '%-7s' % str(type[i])  # Line 4.1: Aircraft type
-                        vsarrow = 30 if vs > 0.25 else 31 if vs < -0.25 else 32
-                        rawlabel += '%-6s' % str(str(int(cas / kts + 0.5)) + chr(vsarrow))  # Line 4.2: Speed
+                            rawlabel += '%-3s' % (3*str(empt))[:3]
+
+                        # Line 4
+                        rawlabel += '%-3s' % leading_zeros(gs/kts)[:3]
+                        if wtc.upper() == 'H':
+                            rawlabel += '%-1s' % str(wtc)[:1]
+                        else:
+                            rawlabel += '%-1s' % (str(empt))[:3]
+                        if uco:
+                            rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
+                        else:
+                            rawlabel += '%-3s' % 'SPD'
                     else:
-                        rawlabel += 39 * ' '
+                        rawlabel += 21*' '
 
                 if inconf:
                     if actdata.ssd_conflicts:
@@ -372,3 +411,14 @@ class Traffic(glh.RenderObject, layer=100):
             if self.route_acid in data.id:
                 idx = data.id.index(self.route_acid)
                 self.route.vertex.update(np.array([data.lat[idx], data.lon[idx]], dtype=np.float32))
+
+
+def leading_zeros(number):
+    if number < 0:
+        number = 0
+    if number < 10:
+        return '00'+str(round(number))
+    elif number < 100:
+        return '0'+str(round(number))
+    else:
+        return str(round(number))

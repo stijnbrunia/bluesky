@@ -613,8 +613,13 @@ class Autopilot(Entity, replaceable=True):
             bs.traf.ap.selhdgcmd(idx, hdg)
         if spd:
             bs.traf.ap.selspdcmd(idx, spd)
-        bs.traf.mnual(idx, 'ON')
+        # bs.traf.mnual(idx, 'ON')
         bs.traf.trafreplay.uco_replay(idx)
+        bs.traf.trafreplay.uco[idx] = True
+
+    @stack.command(name='REL')
+    def relcmd(self, idx: 'acid'):
+        bs.traf.trafreplay.uco[idx] = False
 
     @stack.command(name='DEST')
     def setdest(self, acidx: 'acid', wpname:'wpt' = None):

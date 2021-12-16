@@ -65,7 +65,14 @@ class TrafficReplay(Entity):
         self.t_next = 0.0
 
         with self.settrafarrays():
+            self.arr = []
+            self.sid = []
+            self.flighttype = []
             self.replay = np.array([], dtype=np.bool)  # Take aircraft state from data/file
+            self.sid = []
+            self.uco = np.array([], dtype=np.bool)
+            self.wtc = []
+            self.empt = []
 
     def reset(self):
         """
@@ -93,34 +100,45 @@ class TrafficReplay(Entity):
         self.t_next = 0.0
 
     @stack.command
-    def crereplay(self, acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float):
+    def crereplay(self, acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float,
+                  acflighttype: str = '', acwtc: str = ''):
         """
         Function: Create aircraft which are updated from data
         Args:
-            acid:       callsign [str, list]
-            actype:     aircraft type [str, list]
-            aclat:      latitude [float, array]
-            aclon:      longitude [float, array]
-            achdg:      heading [float, array]
-            acalt:      altitude [float, array]
-            acspd:      calibrated airspeed [float, array]
+            acid:           callsign [str, list]
+            actype:         aircraft type [str, list]
+            aclat:          latitude [float, array]
+            aclon:          longitude [float, array]
+            achdg:          heading [float, array]
+            acalt:          altitude [float, array]
+            acspd:          calibrated airspeed [float, array]
+            acflighttype:   flight type [str]
+            acwtc:          aircraft wtc [str]
         Returns: -
 
         Created by: Bob van Dillen
         Date: 30-11-2021
         """
+        # Determine number of aircraft to create from array length of acid
+        n = 1 if isinstance(acid, str) else len(acid)
 
         bs.traf.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
 
-        # Get index
-        idx = self.get_indices(bs.traf.id, acid)
         # Update flight data
-        self.replay[idx] = True
+        self.flighttype[-n:] = [acflighttype]
+        self.replay[-n:] = True
+        self.wtc[-n:] = [acwtc]
+
+        if acflighttype == 'INBOUND':
+            self.arr[-n:] = ['ARR']
+        elif acflighttype == 'OUTBOUND':
+            self.sid[-n:] = ['SID']
+
         self.replayid = np.append(self.replayid, acid).tolist()
         # Update previous data point
         self.store_prev()
 
-    def delete(self, idx):
+    def delreplay(self, idx):
         """
         Function: Remove aircraft from replay callsigns list
         Args:
@@ -170,8 +188,6 @@ class TrafficReplay(Entity):
             bs.traf.hdg[itraf_up] = self.trackdata[self.ihdg][i0: im][itrackdata]
             bs.traf.alt[itraf_up] = self.trackdata[self.ialt][i0: im][itrackdata]
             bs.traf.gs[itraf_up] = self.trackdata[self.ispd][i0: im][itrackdata]
-            bs.traf.selhdg[itraf_up] = self.trackdata[self.ihdg][i0: im][itrackdata]
-            bs.traf.selalt[itraf_up] = self.trackdata[self.ialt][i0: im][itrackdata]
 
             # Update variables
             self.store_prev()
@@ -193,8 +209,6 @@ class TrafficReplay(Entity):
         bs.traf.hdg[itraf_prev] = self.hdg_prev[iprev]
         bs.traf.alt[itraf_prev] = self.alt_prev[iprev]
         bs.traf.gs[itraf_prev] = self.gs_prev[iprev]
-        bs.traf.selhdg[itraf_prev] = self.hdg_prev[iprev]
-        bs.traf.selalt[itraf_prev] = self.alt_prev[iprev]
 
         # Update other speeds (wind)
         self.update_speed()

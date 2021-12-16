@@ -329,7 +329,6 @@ class VEMMISRead:
         commandtime = [0.]
 
         # Create commands
-        acflightid = self.flightdata['FLIGHT_ID'].astype(str)
         acid = self.flightdata['CALLSIGN']
         actype = self.flightdata['ICAO_ACTYPE']
         aclat = self.flightdata['LATITUDE'].astype(str)
@@ -337,9 +336,12 @@ class VEMMISRead:
         achdg = self.flightdata['HEADING'].astype(str)
         acalt = self.flightdata['ALTITUDE'].astype(str)
         acspd = self.flightdata['SPEED'].astype(str)
+        acflighttype = self.flightdata['FLIGHT_TYPE']
+        acwtc = self.flightdata['WTC']
 
         create = list("CREREPLAY "+acid+", "+actype+", " +
-                      aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+                      aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd+", " +
+                      acflighttype+", "+acwtc)
         origin = list("ORIG "+acid+", "+self.flightdata['ADEP'])
         destination = list("DEST "+acid+", "+self.flightdata['DEST'])
         delete = list("DEL "+acid)

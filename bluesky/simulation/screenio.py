@@ -235,6 +235,7 @@ class ScreenIO:
         data['tas']        = bs.traf.tas
         data['cas']        = bs.traf.cas
         data['gs']         = bs.traf.gs
+        data['selspd']     = bs.traf.selspd
         data['ingroup']    = bs.traf.groups.ingroup
         data['inconf'] = bs.traf.cd.inconf
         data['type'] = bs.traf.type
@@ -251,6 +252,14 @@ class ScreenIO:
         data['vmin']       = bs.traf.perf.vmin
         data['vmax']       = bs.traf.perf.vmax
 
+        # Replay data
+        data['arr']        = bs.traf.trafreplay.arr
+        data['flighttype'] = bs.traf.trafreplay.flighttype
+        data['sid']        = bs.traf.trafreplay.sid
+        data['uco']        = bs.traf.trafreplay.uco
+        data['wtc']        = bs.traf.trafreplay.wtc
+        data['empt']       = bs.traf.trafreplay.empt
+
         # Transition level as defined in traf
         data['translvl']   = bs.traf.translvl
 
@@ -259,6 +268,15 @@ class ScreenIO:
         data['asastrk']  = bs.traf.cr.trk
 
         bs.net.send_stream(b'ACDATA', data)
+
+    def send_command_data(self):
+        data = dict()
+        data['selalt'] = bs.traf.selalt
+        data['selhdg'] = bs.traf.selhdg
+        data['selspd'] = bs.traf.selspd
+        data['uco'] = bs.traf.uco
+
+        bs.net.send_stream(b'CMDDATA', data)
 
     def send_route_data(self):
         for sender, acid in self.route_acid.items():

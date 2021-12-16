@@ -415,6 +415,9 @@ class Traffic(Entity):
         if isinstance(idx, Collection):
             idx = np.sort(idx)
 
+        # Replay delete
+        self.trafreplay.delreplay(idx)
+
         # Call the actual delete function
         super().delete(idx)
 
