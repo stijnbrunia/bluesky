@@ -2,6 +2,7 @@
 import numpy as np
 import itertools
 from bluesky.ui.qtgl import glhelpers as glh
+from bluesky.ui.qtgl import console
 
 import bluesky as bs
 from bluesky.tools import geo
@@ -184,7 +185,7 @@ class Traffic(glh.RenderObject, layer=100):
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Process incoming traffic data. '''
-        if 'ACDATA' in changed_elems:
+        if 'ACDATA' in changed_elems or 'CMDDATA' in changed_elems:
             self.update_aircraft_data(nodedata.acdata)
         if 'ROUTEDATA' in changed_elems:
             self.update_route_data(nodedata.routedata)
@@ -312,10 +313,10 @@ class Traffic(glh.RenderObject, layer=100):
 
             zdata = zip(data.id, data.ingroup, data.inconf, data.tcpamax, data.selhdg, data.trk, data.gs,
                         data.cas, data.selspd, data.vs, data.selalt, data.alt, data.lat, data.lon, data.flighttype,
-                        data.wtc, data.uco, data.type, data.arr, data.sid, data.empt)
+                        data.wtc, data.uco, data.type, data.arr, data.sid)
             for i, (acid, ingroup, inconf, tcpa,
                     selhdg, trk, gs, cas, selspd, vs, selalt, alt, lat, lon,
-                    flighttype, wtc, uco, type, arr, sid, empt) in enumerate(zdata):
+                    flighttype, wtc, uco, type, arr, sid) in enumerate(zdata):
                 if i >= MAX_NAIRCRAFT:
                     break
 
@@ -348,7 +349,7 @@ class Traffic(glh.RenderObject, layer=100):
                         # Line 2
                         rawlabel += '%-3s' % leading_zeros(alt/ft/100)[-3:]
                         rawlabel += '%-1s' % ' '
-                        if uco:
+                        if uco and selalt != 0:
                             rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
                         else:
                             rawlabel += '%-3s' % '   '
@@ -359,17 +360,17 @@ class Traffic(glh.RenderObject, layer=100):
                             rawlabel += '%-3s' % str(arr)[:3]
                         elif flighttype == 'OUTBOUND' and not uco:
                             rawlabel += '%-3s' % str(sid)[:3]
-                        elif uco:
+                        elif uco and selhdg != 0:
                             rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
                         else:
-                            rawlabel += '%-3s' % (3*str(empt))[:3]
+                            rawlabel += '%-3s' % '   '
 
                         # Line 4
                         rawlabel += '%-3s' % leading_zeros(gs/kts)[:3]
                         if wtc.upper() == 'H':
                             rawlabel += '%-1s' % str(wtc)[:1]
                         else:
-                            rawlabel += '%-1s' % (str(empt))[:3]
+                            rawlabel += '%-1s' % ' '
                         if uco:
                             rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
                         else:
@@ -385,6 +386,10 @@ class Traffic(glh.RenderObject, layer=100):
                     cpalines[4 * confidx: 4 * confidx +
                              4] = [lat, lon, lat1, lon1]
                     confidx += 1
+                # Selected aircraft
+                elif acid == console.Console._instance.id_select:
+                    rgb = (227, 227, 49) + (255,)
+                    color[i, :] = rgb
                 else:
                     # Get custom color if available, else default
                     rgb = palette.aircraft

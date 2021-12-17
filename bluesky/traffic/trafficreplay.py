@@ -1,9 +1,10 @@
 """
-This python file contains a class for managing replay flights which state is taken from data (database/file/... etc.).
+This python file contains a class for managing replay flights, which state is taken from data (database/file/... etc.).
 
 Created by: Bob van Dillen
 Date: 25-11-2021
 """
+
 
 import copy
 import numpy as np
@@ -24,14 +25,17 @@ class TrafficReplay(Entity):
     """
     Class definition: Replay traffic based on data (VEMMIS)
     Methods:
-        reset():            Reset variables
-        crereplay():        Create aircraft which are updated from data
-        delreplay():        Remove aircraft from replay callsigns list
-        update():           Perform an update (step)
-        uco_replay():       Stop taking the aircraft state from data (simulate the aircraft)
-        store_prev():       Store the previous data point
-        indices_update():   Get the indices for the traffic arrays and the trackdata
-        get_indices():      Get indices of items in array/list
+        reset():                Reset variables
+        crereplay():            Create aircraft which are updated from data
+        delreplay():            Remove aircraft from replay callsigns list
+        update():               Perform an update (step)
+        update_fromtrackdata(): Update aircraft data from trackdata
+        update_fromprevious():  Update aircraft data from previous data point
+        update_speed():         Calculate the different speeds
+        uco_replay():           Stop taking the aircraft state from data (simulate the aircraft)
+        store_prev():           Store the previous data point
+        indices_update():       Get the indices for the traffic arrays and the trackdata
+        get_indices():          Get indices of items in array/list
 
     Created by  : Bob van Dillen
     Date: 25-11-2021
@@ -72,7 +76,6 @@ class TrafficReplay(Entity):
             self.sid = []
             self.uco = np.array([], dtype=np.bool)
             self.wtc = []
-            self.empt = []
 
     def reset(self):
         """
@@ -177,41 +180,70 @@ class TrafficReplay(Entity):
             # Track data index
             ac_count = self.trackdata[self.isimt_count][self.i_next]
             i0 = self.i_next  # First index
-            im = self.i_next+ac_count  # Last index + 1 for slicing (e.g. i=0; ac_count=1, therefore [0:1])
+            im = self.i_next+ac_count  # Last index + 1 for slicing (e.g. i=1; ac_count=2, therefore [1:3])
 
             # Get indices
             itraf_up, itrackdata, ireplay = self.indices_update(self.trackdata[self.iid][i0: im])
+            itraf_prev = self.get_indices(bs.traf.id, np.delete(self.replayid, ireplay))
+            iprev = self.get_indices(self.id_prev, np.delete(self.replayid, ireplay))
 
-            # Traffic with an update from the track data
-            bs.traf.lat[itraf_up] = self.trackdata[self.ilat][i0: im][itrackdata]
-            bs.traf.lon[itraf_up] = self.trackdata[self.ilon][i0: im][itrackdata]
-            bs.traf.hdg[itraf_up] = self.trackdata[self.ihdg][i0: im][itrackdata]
-            bs.traf.alt[itraf_up] = self.trackdata[self.ialt][i0: im][itrackdata]
-            bs.traf.gs[itraf_up] = self.trackdata[self.ispd][i0: im][itrackdata]
+            # Update traffic data
+            self.update_fromtrackdata(i0, im, itraf_up, itrackdata)
+            self.update_fromprev(itraf_prev, iprev)
 
             # Update variables
             self.store_prev()
             self.i_next = im
             self.t_next = self.trackdata[self.isimt][self.i_next]
 
-            # Get indices for aircraft with no new data
-            itraf_prev = self.get_indices(bs.traf.id, np.delete(self.replayid, ireplay))
-            iprev = self.get_indices(self.id_prev, np.delete(self.replayid, ireplay))
-
         else:
             # Get indices when there is no new data point
             itraf_prev = self.get_indices(bs.traf.id, self.replayid)
             iprev = self.get_indices(self.id_prev, self.replayid)
 
-        # Other traffic
-        bs.traf.lat[itraf_prev] = self.lat_prev[iprev]
-        bs.traf.lon[itraf_prev] = self.lon_prev[iprev]
-        bs.traf.hdg[itraf_prev] = self.hdg_prev[iprev]
-        bs.traf.alt[itraf_prev] = self.alt_prev[iprev]
-        bs.traf.gs[itraf_prev] = self.gs_prev[iprev]
+            # Update traffic data
+            self.update_fromprev(itraf_prev, iprev)
 
         # Update other speeds (wind)
         self.update_speed()
+
+    def update_fromtrackdata(self, i0, im, itraf_update, itrackdata):
+        """
+        Function: Update aircraft data from trackdata
+        Args:
+            i0:             first index (for slicing) [int]
+            im:             last index + 1 (for slicing) [int]
+            itraf_update:   indices for traffic arrays [list, array]
+            itrackdata:     indices for trackdata [list, array]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 17-12-2021
+        """
+
+        bs.traf.lat[itraf_update] = self.trackdata[self.ilat][i0: im][itrackdata]
+        bs.traf.lon[itraf_update] = self.trackdata[self.ilon][i0: im][itrackdata]
+        bs.traf.hdg[itraf_update] = self.trackdata[self.ihdg][i0: im][itrackdata]
+        bs.traf.alt[itraf_update] = self.trackdata[self.ialt][i0: im][itrackdata]
+        bs.traf.gs[itraf_update] = self.trackdata[self.ispd][i0: im][itrackdata]
+
+    def update_fromprev(self, itraf_previous, i_previous):
+        """
+        Function: Update aircraft data from previous data point
+        Args:
+            itraf_previous: indices for traffic arrays [list, array]
+            i_previous:     indices for previous traffic arrays [list, array]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 17-12-2021
+        """
+
+        bs.traf.lat[itraf_previous] = self.lat_prev[i_previous]
+        bs.traf.lon[itraf_previous] = self.lon_prev[i_previous]
+        bs.traf.hdg[itraf_previous] = self.hdg_prev[i_previous]
+        bs.traf.alt[itraf_previous] = self.alt_prev[i_previous]
+        bs.traf.gs[itraf_previous] = self.gs_prev[i_previous]
 
     def update_speed(self):
         """
@@ -229,7 +261,7 @@ class TrafficReplay(Entity):
         # Check if there is no wind
         if bs.traf.wind.winddim == 0:
             bs.traf.gsnorth[itraf] = bs.traf.gs[itraf]*np.cos(np.radians(bs.traf.hdg[itraf]))
-            bs.traf.gseast[itraf] = bs.traf.gs[itraf]*np.cos(np.radians(bs.traf.hdg[itraf]))
+            bs.traf.gseast[itraf] = bs.traf.gs[itraf]*np.sin(np.radians(bs.traf.hdg[itraf]))
             bs.traf.tas[itraf] = bs.traf.gs[itraf]
             bs.traf.trk[itraf] = bs.traf.hdg[itraf]
 
@@ -328,53 +360,13 @@ Static functions
 """
 
 
-# def delreplay(func):
-#     """
-#     Function: Decorator function for deleting an aircraft
-#     Args:
-#         func:   function
-#     Returns: -
-#
-#     Created by: Bob van Dillen
-#     Date: 30-11-2021
-#     """
-#
-#     def inner(*args, **kwargs):
-#         # Multiple delete
-#         if len(args[1]) > 1:
-#             # Get callsigns
-#             ids = np.array(bs.traf.id)[args[1]].tolist()
-#             for acid in ids:
-#                 # Delete from replay callsigns
-#                 if acid in bs.traf.trafreplay.replayid:
-#                     ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
-#                     bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
-#
-#         # Single delete
-#         else:
-#             # Get callsign
-#             acid = np.array(bs.traf.id)[args[1]]
-#             # Delete from replay callsigns
-#             if acid in bs.traf.trafreplay.replayid:
-#                 ireplay = bs.traf.trafreplay.get_indices(bs.traf.trafreplay.replayid, acid)
-#                 bs.traf.trafreplay.replayid = list(np.delete(bs.traf.trafreplay.replayid, ireplay))
-#
-#         # Delete aircraft
-#         func(*args, **kwargs)
-#
-#         # Update previous data point
-#         bs.traf.trafreplay.store_prev()
-#
-#     return inner
-
-
 def read_replay(datatype, folder, time0=None):
     """
     Function: Read and process track data for trafficreplay
     Args:
         datatype:   type of flight data
-        folder: name of the folder containing the files [str]
-        time0:  start time in seconds [int, float]
+        folder:     name of the folder containing the files [str]
+        time0:      start time in seconds [int, float]
     Returns: -
 
     Created by: Bob van Dillen
