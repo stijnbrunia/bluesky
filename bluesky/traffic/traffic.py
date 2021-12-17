@@ -205,6 +205,9 @@ class Traffic(Entity):
         # Reset transition level to default value
         self.translvl = 5000.*ft
 
+        # Reset traffic replay
+        self.trafreplay.clear()
+
     def mcre(self, n, actype="B744", acalt=None, acspd=None, dest=None):
         """ Create one or more random aircraft in a specified area """
         area = bs.scr.getviewbounds()

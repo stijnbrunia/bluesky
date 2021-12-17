@@ -25,7 +25,7 @@ class TrafficReplay(Entity):
     """
     Class definition: Replay traffic based on data (VEMMIS)
     Methods:
-        reset():                Reset variables
+        clear():                Reset variables
         crereplay():            Create aircraft which are updated from data
         delreplay():            Remove aircraft from replay callsigns list
         update():               Perform an update (step)
@@ -77,7 +77,7 @@ class TrafficReplay(Entity):
             self.uco = np.array([], dtype=np.bool)
             self.wtc = []
 
-    def reset(self):
+    def clear(self):
         """
         Function: Reset variables
         Args: -
@@ -258,25 +258,52 @@ class TrafficReplay(Entity):
         # Get indices for traffic arrays
         itraf = self.get_indices(bs.traf.id, self.replayid)
 
-        # Check if there is no wind
+        # No wind
         if bs.traf.wind.winddim == 0:
+            # Decompose ground speed
             bs.traf.gsnorth[itraf] = bs.traf.gs[itraf]*np.cos(np.radians(bs.traf.hdg[itraf]))
             bs.traf.gseast[itraf] = bs.traf.gs[itraf]*np.sin(np.radians(bs.traf.hdg[itraf]))
+
+            # Determine true airspeed
             bs.traf.tas[itraf] = bs.traf.gs[itraf]
+
+            # Determine calibrated airspeed
+            bs.traf.cas[itraf] = aero.vtas2cas(bs.traf.tas[itraf], bs.traf.alt[itraf])
+
+            # Determine mach
+            bs.traf.M[itraf] = aero.vtas2mach(bs.traf.tas[itraf], bs.traf.alt[itraf])
+
+            # Determine track
             bs.traf.trk[itraf] = bs.traf.hdg[itraf]
 
+        # Wind
         else:
+            # Decompose ground speed
+            bs.traf.gsnorth[itraf] = bs.traf.gs[itraf]*np.cos(np.radians(bs.traf.hdg[itraf]))
+            bs.traf.gseast[itraf] = bs.traf.gs[itraf]*np.sin(np.radians(bs.traf.hdg[itraf]))
+
+            # Wind when airborn
             applywind = bs.traf.alt[itraf] > 50.*aero.ft
 
+            # Get wind data
             bs.traf.windnorth[itraf], bs.traf.windeast[itraf] = bs.traf.wind.getdata(bs.traf.lat[itraf],
                                                                                      bs.traf.lon[itraf],
                                                                                      bs.traf.alt[itraf])
+
+            # Determine true airspeed
             tasnorth = bs.traf.gsnorth[itraf] - bs.traf.windnorth[itraf]*applywind
-            taseast = bs.traf.gseast[itraf] - bs.traf.windnorth[itraf]*applywind
+            taseast = bs.traf.gseast[itraf] - bs.traf.windeast[itraf]*applywind
             bs.traf.tas[itraf] = np.sqrt(tasnorth*tasnorth + taseast*taseast)
 
-            bs.traf.trk[itraf] = np.logical_not(applywind)*bs.traf.tas[itraf] +\
-                                 applywind*np.degrees(np.arctan2(bs.traf.gseast[itraf], bs.traf.gsnorth[itraf])) % 360
+            # Determine calibrated airspeed
+            bs.traf.cas[itraf] = aero.vtas2cas(bs.traf.tas[itraf], bs.traf.alt[itraf])
+
+            # Determine mach
+            bs.traf.M[itraf] = aero.vtas2mach(bs.traf.tas[itraf], bs.traf.alt[itraf])
+
+            # Determine track
+            bs.traf.trk[itraf] = np.logical_not(applywind)*bs.traf.hdg[itraf] +\
+                                 applywind*np.degrees(np.arctan2(bs.traf.gseast[itraf], bs.traf.gsnorth[itraf])) % 360.
 
     def uco_replay(self, idx):
         """
