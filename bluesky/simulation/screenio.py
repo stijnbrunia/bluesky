@@ -266,6 +266,11 @@ class ScreenIO:
         data['asastas']  = bs.traf.cr.tas
         data['asastrk']  = bs.traf.cr.trk
 
+        # History symbols
+        bs.traf.histsymb.send()
+        data['histsymblat'] = bs.traf.histsymb.lat
+        data['histsymblon'] = bs.traf.histsymb.lon
+
         bs.net.send_stream(b'ACDATA', data)
 
     def send_route_data(self):

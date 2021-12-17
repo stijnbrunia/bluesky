@@ -47,11 +47,14 @@ class Traffic(glh.RenderObject, layer=100):
         self.lbl = glh.GLBuffer()
         self.asasn = glh.GLBuffer()
         self.asase = glh.GLBuffer()
+        self.histsymblat = glh.GLBuffer()
+        self.histsymblon = glh.GLBuffer()
 
         self.ssd = glh.VertexArrayObject(glh.gl.GL_POINTS, shader_type='ssd')
         self.protectedzone = glh.Circle()
         # self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
         self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
+        self.hist_symbol = glh.VertexArrayObject(glh.gl.GL_POINTS)
         self.aclabels = glh.Text(settings.text_size, (7, 4))
         self.cpalines = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.route = glh.VertexArrayObject(glh.gl.GL_LINES)
@@ -74,6 +77,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.asasn.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.asase.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.rpz.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
+        self.histsymblat.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
+        self.histsymblon.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
 
         self.ssd.create(lat1=self.lat, lon1=self.lon, alt1=self.alt,
                         tas1=self.tas, trk1=self.hdg)
@@ -110,6 +115,10 @@ class Traffic(glh.RenderObject, layer=100):
 
         self.ac_symbol.set_attribs(lat=self.lat, lon=self.lon, color=self.color,
                                     instance_divisor=1)
+
+        self.hist_symbol.create(vertex=np.array([(0, 0)], dtype=np.float32))
+        self.hist_symbol.set_attribs(lat=self.histsymblat, lon=self.histsymblon,
+                                     color=palette.aircraft, instance_divisor=1)
 
         self.aclabels.create(self.lbl, self.lat, self.lon, self.color,
                              (ac_size, -0.5 * ac_size), instanced=True)
@@ -165,6 +174,10 @@ class Traffic(glh.RenderObject, layer=100):
 
         # Draw traffic symbols
         self.ac_symbol.draw(n_instances=actdata.naircraft)
+
+        if actdata.show_histsymb:
+            glh.gl.glPointSize(2)
+            self.hist_symbol.draw(n_instances=len(actdata.acdata.histsymblat))
 
         if self.routelbl.n_instances:
             self.rwaypoints.draw(n_instances=self.routelbl.n_instances)
@@ -294,6 +307,8 @@ class Traffic(glh.RenderObject, layer=100):
             self.alt.update(np.array(data.alt, dtype=np.float32))
             self.tas.update(np.array(data.tas, dtype=np.float32))
             self.rpz.update(np.array(data.rpz, dtype=np.float32))
+            self.histsymblat.update(np.array(data.histsymblat, dtype=np.float32))
+            self.histsymblon.update(np.array(data.histsymblon, dtype=np.float32))
             if hasattr(data, 'asasn') and hasattr(data, 'asase'):
                 self.asasn.update(np.array(data.asasn, dtype=np.float32))
                 self.asase.update(np.array(data.asase, dtype=np.float32))
@@ -325,7 +340,7 @@ class Traffic(glh.RenderObject, layer=100):
                     # Line 1
                     rawlabel += '%-7s' % acid[:7]
 
-                    if actdata.show_lbl == 2 and flighttype in ['INBOUND', 'OUTBOUND']:
+                    if actdata.show_lbl == 2:  # and flighttype in ['INBOUND', 'OUTBOUND']:
                         # Line 2
                         rawlabel += '%-3s' % leading_zeros(alt/ft/100)[-3:]
                         rawlabel += '%-1s' % ' '
@@ -399,6 +414,17 @@ class Traffic(glh.RenderObject, layer=100):
 
 
 def leading_zeros(number):
+    """
+    Function: Add leading zeros to number string (e.g. 005)
+    Args:
+        number: number to be displayed [int, float]
+    Returns:
+        number: number with leading zeros [str]
+
+    Created by: Bob van Dillen
+    Date: 16-12-2021
+    """
+
     if number < 0:
         number = 0
     if number < 10:

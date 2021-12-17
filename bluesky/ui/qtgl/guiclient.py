@@ -192,6 +192,7 @@ class nodeData:
         self.show_wpt      = 0
         self.show_apt      = 0
         self.show_poly     = 1  # 0=invisible, 1=outline, 2=fill
+        self.show_histsymb = True
         self.ssd_all       = False
         self.ssd_conflicts = False
         self.ssd_ownship   = set()

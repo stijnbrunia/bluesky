@@ -34,6 +34,7 @@ from .turbulence import Turbulence
 from .trafficreplay import TrafficReplay
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
+from .historysymbols import HistorySymbols
 
 # Register settings defaults
 bs.settings.set_variable_defaults(performance_model='openap', asas_dt=1.0)
@@ -157,6 +158,7 @@ class Traffic(Entity):
             self.trails   = Trails()
             self.actwp    = ActiveWaypoint()
             self.perf     = PerfBase()
+            self.histsymb = HistorySymbols()
 
             # Group Logic
             self.groups = TrafficGroups()
