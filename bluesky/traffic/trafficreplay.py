@@ -104,7 +104,7 @@ class TrafficReplay(Entity):
 
     @stack.command
     def crereplay(self, acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float,
-                  acflighttype: str = '', acwtc: str = ''):
+                  acflighttype: str = '', acwtc: str = '', acsid: str = '', acarr: str = ''):
         """
         Function: Create aircraft which are updated from data
         Args:
@@ -115,8 +115,10 @@ class TrafficReplay(Entity):
             achdg:          heading [float, array]
             acalt:          altitude [float, array]
             acspd:          calibrated airspeed [float, array]
-            acflighttype:   flight type [str]
-            acwtc:          aircraft wtc [str]
+            acflighttype:   flight type [str, list]
+            acwtc:          aircraft wtc [str, list]
+            acsid:          SID [str, list]
+            acarr:          ARRIVAL [str, list]
         Returns: -
 
         Created by: Bob van Dillen
@@ -128,16 +130,23 @@ class TrafficReplay(Entity):
         bs.traf.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
 
         # Update flight data
-        self.flighttype[-n:] = [acflighttype]
         self.replay[-n:] = True
-        self.wtc[-n:] = [acwtc]
+        # Single create
+        if n == 1:
+            self.flighttype[-n:] = [acflighttype]
+            self.wtc[-n:] = [acwtc]
+            self.sid[-n:] = [acsid]
+            self.arr[-n:] = [acarr.replace('ARTIP', 'ATP')]
+        # Multiple create
+        else:
+            self.flighttype[-n:] = acflighttype
+            self.wtc[-n:] = acwtc
+            self.sid[-n:] = acsid
+            self.arr[-n:] = acarr.replace('ARTIP', 'ATP')
 
-        if acflighttype == 'INBOUND':
-            self.arr[-n:] = ['ARR']
-        elif acflighttype == 'OUTBOUND':
-            self.sid[-n:] = ['SID']
-
+        # Add to replay list
         self.replayid = np.append(self.replayid, acid).tolist()
+
         # Update previous data point
         self.store_prev()
 

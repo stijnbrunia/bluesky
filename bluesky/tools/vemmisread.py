@@ -57,6 +57,8 @@ class VEMMISRead:
         self.flightdata = None
         self.routedata = None
         self.trackdata = None
+        self.takeoffs = None
+        self.landings = None
 
         self.datetime0 = None
 
@@ -87,7 +89,11 @@ class VEMMISRead:
                 elif file.upper().startswith('FLIGHTTIMES'):
                     self.flighttimes = pd.read_csv(self.data_path+'\\'+file, sep=';')
                 elif file.upper().startswith('TRACKS'):
-                    self.tracks = pd.read_csv(self.data_path+'\\'+files[5], sep=';')
+                    self.tracks = pd.read_csv(self.data_path+'\\'+file, sep=';')
+                elif file.upper().startswith('TAKEOFFS'):
+                    self.takeoffs = pd.read_csv(self.data_path+'\\'+file, sep=';')
+                elif file.upper().startswith('LANDINGS'):
+                    self.landings = pd.read_csv(self.data_path+'\\'+file, sep=';')
 
     def delete_nan(self):
         """
@@ -202,6 +208,8 @@ class VEMMISRead:
                                    on='FLIGHT_ID')
         self.flightdata = self.flightdata.sort_values(by=['ACTUAL_TIME'])
         self.flightdata.drop_duplicates(subset='FLIGHT_ID', keep='first', inplace=True)
+        self.flightdata = pd.merge(self.flightdata, self.takeoffs[['FLIGHT_ID', 'SID']], on='FLIGHT_ID', how='left')
+        self.flightdata = pd.merge(self.flightdata, self.landings[['FLIGHT_ID', 'STACK']], on='FLIGHT_ID', how='left')
 
         self.routedata = pd.merge(self.flighttimes, self.flights[['FLIGHT_ID', 'CALLSIGN']], on='FLIGHT_ID')
 
@@ -338,10 +346,12 @@ class VEMMISRead:
         acspd = self.flightdata['SPEED'].astype(str)
         acflighttype = self.flightdata['FLIGHT_TYPE']
         acwtc = self.flightdata['WTC']
+        acsid = self.flightdata['SID'].astype(str).str.replace('nan', '')
+        acarr = self.flightdata['STACK'].astype(str).str.replace('nan', '')
 
         create = list("CREREPLAY "+acid+", "+actype+", " +
                       aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd+", " +
-                      acflighttype+", "+acwtc)
+                      acflighttype+", "+acwtc+", "+acsid+", "+acarr)
         origin = list("ORIG "+acid+", "+self.flightdata['ADEP'])
         destination = list("DEST "+acid+", "+self.flightdata['DEST'])
         delete = list("DEL "+acid)
@@ -353,37 +363,6 @@ class VEMMISRead:
 
         command += create + origin + destination + delete
         commandtime += tcreate + torigin + tdestination + tdelete
-
-        # for acid in self.trackdata['CALLSIGN'].unique():
-        #     flight = self.flights.loc[self.flights['CALLSIGN'] == acid].iloc[0]
-        #     track = self.trackdata.loc[self.trackdata['CALLSIGN'] == acid]
-        #
-        #     t_cre = track['SIM_TIME'].iloc[0]
-        #     t_del = track['SIM_TIME'].iloc[-1]
-        #
-        #     acflightid = str(flight['FLIGHT_ID'])
-        #     actype = flight['ICAO_ACTYPE']
-        #     orig = flight['ADEP']
-        #     dest = flight['DEST']
-        #     wpts, wptst = self.get_wpts(acid, t_cre, orig, dest)
-        #
-        #     lat = str(track['LATITUDE'].iloc[0])
-        #     lon = str(track['LONGITUDE'].iloc[0])
-        #     hdg = str(track['HEADING'].iloc[0])
-        #     alt = str(track['ALTITUDE'].iloc[0])
-        #     spd = str(track['SPEED'].iloc[0])
-        #
-        #     # str_cre = "CRE "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
-        #     str_crereplay = "CREREPLAY "+acflightid+", "+acid+", "+actype+", "+lat+", "+lon+", "+hdg+", "+alt+", "+spd
-        #     str_orig = "ORIG "+acid+" "+orig
-        #     str_dest = "DEST "+acid+" "+dest
-        #     str_del = "DEL "+acid
-        #     command += [str_crereplay, str_orig, str_dest] + wpts + [str_del]
-        #     commandtime += [t_cre] + [t_cre+0.005]*2+wptst + [t_del]
-        #
-        #     i_cre = track.index[0]
-        #     i_del = track.index[-1]
-        #     self.trackdata = self.trackdata.drop([i_cre, i_del])
 
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
