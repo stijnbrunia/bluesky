@@ -366,7 +366,7 @@ class Traffic(glh.RenderObject, layer=100):
                             rawlabel += '%-1s' % str(wtc)[:1]
                         else:
                             rawlabel += '%-1s' % ' '
-                        if uco:
+                        if uco and selspd != 0:
                             rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
                         else:
                             rawlabel += '%-3s' % 'SPD'

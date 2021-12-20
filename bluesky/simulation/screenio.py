@@ -267,7 +267,6 @@ class ScreenIO:
         data['asastrk']  = bs.traf.cr.trk
 
         # History symbols
-        bs.traf.histsymb.send()
         data['histsymblat'] = bs.traf.histsymb.lat
         data['histsymblon'] = bs.traf.histsymb.lon
 

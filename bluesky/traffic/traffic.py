@@ -210,6 +210,9 @@ class Traffic(Entity):
         # Reset traffic replay
         self.trafreplay.clear()
 
+        # Reset history symbols
+        self.histsymb.clear()
+
     def mcre(self, n, actype="B744", acalt=None, acspd=None, dest=None):
         """ Create one or more random aircraft in a specified area """
         area = bs.scr.getviewbounds()
