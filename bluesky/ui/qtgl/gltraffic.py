@@ -56,6 +56,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
         self.hist_symbol = glh.VertexArrayObject(glh.gl.GL_POINTS)
         self.aclabels = glh.Text(settings.text_size, (7, 4))
+        self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.cpalines = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.route = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.routelbl = glh.Text(settings.text_size, (12, 2))
@@ -121,7 +122,11 @@ class Traffic(glh.RenderObject, layer=100):
                                      color=palette.aircraft, instance_divisor=1)
 
         self.aclabels.create(self.lbl, self.lat, self.lon, self.color,
-                             (ac_size, -0.5 * ac_size), instanced=True)
+                             (3*ac_size, -0.5 * ac_size), instanced=True)
+
+        self.leaderlines.create(vertex=np.array([(ac_size, 0), (2.6*ac_size, 0)], dtype=np.float32))
+        self.leaderlines.set_attribs(lat=self.lat, lon=self.lon, color=self.color,
+                                     instance_divisor=1)
 
         self.cpalines.create(vertex=MAX_NCONFLICTS * 16, color=palette.conflict, usage=glh.GLBuffer.StreamDraw)
 
@@ -185,6 +190,7 @@ class Traffic(glh.RenderObject, layer=100):
 
         if actdata.show_lbl:
             self.aclabels.draw(n_instances=actdata.naircraft)
+            self.leaderlines.draw(n_instances=actdata.naircraft)
 
         # SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
