@@ -122,9 +122,9 @@ class Traffic(glh.RenderObject, layer=100):
                                      color=palette.aircraft, instance_divisor=1)
 
         self.aclabels.create(self.lbl, self.lat, self.lon, self.color,
-                             (3*ac_size, -0.5 * ac_size), instanced=True)
+                             (4*ac_size, -0.5 * ac_size), instanced=True)
 
-        self.leaderlines.create(vertex=np.array([(ac_size, 0), (2.6*ac_size, 0)], dtype=np.float32))
+        self.leaderlines.create(vertex=np.array([(ac_size, 0), (3.6*ac_size, 0)], dtype=np.float32))
         self.leaderlines.set_attribs(lat=self.lat, lon=self.lon, color=self.color,
                                      instance_divisor=1)
 
