@@ -473,7 +473,7 @@ def applabel(rawlabel, actdata, acid, uco, alt, selalt, actype, flighttype, arr,
         else:
             rawlabel += 21 * ' '
 
-        return rawlabel
+    return rawlabel
 
 
 def leading_zeros(number):
