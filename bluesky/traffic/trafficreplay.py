@@ -12,7 +12,7 @@ import os
 import bluesky as bs
 from bluesky import stack
 from bluesky.core import Entity
-from bluesky.tools import aero, vemmisread
+from bluesky.tools import aero, misc, vemmisread
 from bluesky.stack import stackbase
 
 
@@ -35,7 +35,6 @@ class TrafficReplay(Entity):
         uco_replay():           Stop taking the aircraft state from data (simulate the aircraft)
         store_prev():           Store the previous data point
         indices_update():       Get the indices for the traffic arrays and the trackdata
-        get_indices():          Get indices of items in array/list
 
     Created by  : Bob van Dillen
     Date: 25-11-2021
@@ -193,8 +192,8 @@ class TrafficReplay(Entity):
 
             # Get indices
             itraf_up, itrackdata, ireplay = self.indices_update(self.trackdata[self.iid][i0: im])
-            itraf_prev = self.get_indices(bs.traf.id, np.delete(self.replayid, ireplay))
-            iprev = self.get_indices(self.id_prev, np.delete(self.replayid, ireplay))
+            itraf_prev = misc.get_indices(bs.traf.id, np.delete(self.replayid, ireplay))
+            iprev = misc.get_indices(self.id_prev, np.delete(self.replayid, ireplay))
 
             # Update traffic data
             self.update_fromtrackdata(i0, im, itraf_up, itrackdata)
@@ -207,8 +206,8 @@ class TrafficReplay(Entity):
 
         else:
             # Get indices when there is no new data point
-            itraf_prev = self.get_indices(bs.traf.id, self.replayid)
-            iprev = self.get_indices(self.id_prev, self.replayid)
+            itraf_prev = misc.get_indices(bs.traf.id, self.replayid)
+            iprev = misc.get_indices(self.id_prev, self.replayid)
 
             # Update traffic data
             self.update_fromprev(itraf_prev, iprev)
@@ -265,7 +264,7 @@ class TrafficReplay(Entity):
         """
 
         # Get indices for traffic arrays
-        itraf = self.get_indices(bs.traf.id, self.replayid)
+        itraf = misc.get_indices(bs.traf.id, self.replayid)
 
         # No wind
         if bs.traf.wind.winddim == 0:
@@ -366,29 +365,9 @@ class TrafficReplay(Entity):
         # Get callsigns that need an update and index for trackdata
         id_update, ireplay, itrackdata = np.intersect1d(self.replayid, id_trackdata, return_indices=True)
         # Get index for traffic arrays
-        itraf_update = self.get_indices(bs.traf.id, id_update)
+        itraf_update = misc.get_indices(bs.traf.id, id_update)
 
         return itraf_update, itrackdata, ireplay
-
-    @staticmethod
-    def get_indices(arr, items):
-        """
-        Function: Get indices of items in array/list
-        Args:
-            arr:    array/list containing the items [array, list]
-            items:  get indices of items [int, float, str, list, array]
-        Returns:
-            i:      indices [array]
-
-        Created by: Bob van Dillen
-        Date: 1-12-2021
-        """
-
-        if isinstance(items, (str, int, float)):
-            i = np.nonzero(np.array([items])[:, None] == arr)[1]
-        else:
-            i = np.nonzero(np.array(items)[:, None] == arr)[1]
-        return i
 
 
 """

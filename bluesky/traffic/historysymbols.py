@@ -8,6 +8,7 @@ Date: 17-12-2021
 import numpy as np
 import bluesky as bs
 from bluesky.core import Entity, timed_function
+from bluesky.tools import misc
 
 
 class HistorySymbols(Entity):
@@ -80,7 +81,7 @@ class HistorySymbols(Entity):
 
         # Replay/playback traffic
         if len(bs.traf.trafreplay.replayid) > 0:
-            itrafreplay = bs.traf.trafreplay.get_indices(bs.traf.id, bs.traf.trafreplay.replayid)
+            itrafreplay = misc.get_indices(bs.traf.id, bs.traf.trafreplay.replayid)
             # Replay traffic that received an update
             itrafnew = np.nonzero(bs.traf.lat != self.lat1)[0]
             ireplay_new = np.intersect1d(itrafreplay, itrafnew, assume_unique=True)

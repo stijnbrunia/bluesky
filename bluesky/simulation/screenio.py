@@ -53,6 +53,10 @@ class ScreenIO:
         self.fast_timer.timeout.connect(self.send_aircraft_data)
         self.fast_timer.start(int(1000 / self.acupdate_rate))
 
+        self.cmd_timer = Timer()
+        self.cmd_timer.timeout.connect(self.send_command_data)
+        self.cmd_timer.start(int(1000 / 2))
+
     def step(self):
         if bs.sim.state == bs.OP:
             self.samplecount += 1
@@ -271,6 +275,17 @@ class ScreenIO:
         data['histsymblon'] = bs.traf.histsymb.lon
 
         bs.net.send_stream(b'ACDATA', data)
+
+    def send_command_data(self):
+        data = dict()
+        data['id'] = bs.traf.id
+        data['idsel'] = bs.traf.id_select
+        data['uco'] = bs.traf.trafreplay.uco
+        data['selhdg'] = bs.traf.selhdg
+        data['selalt'] = bs.traf.selalt
+        data['selspd'] = bs.traf.selspd
+
+        bs.net.send_stream(b'CMDDATA', data)
 
     def send_route_data(self):
         for sender, acid in self.route_acid.items():

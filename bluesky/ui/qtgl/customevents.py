@@ -2,9 +2,10 @@
 from PyQt5.QtCore import QEvent
 
 
-NUMCUSTOMEVENTS    = 2
+NUMCUSTOMEVENTS    = 3
 ACDataEventType    = 1000
 RouteDataEventType = 1001
+CMDDataEventType = 1002
 
 
 class RouteDataEvent(QEvent):
@@ -45,6 +46,17 @@ class ACDataEvent(QEvent):
         self.nconf_cur  = 0
         self.nlos_cur   = 0
         self.translvl   = 0.0
+
+        # Update values
+        if data:
+            self.__dict__.update(data)
+
+class CMDDataEvent(QEvent):
+    def __init__(self, data=None):
+        super().__init__(CMDDataEventType)
+        self.selhdg = []
+        self.selalt = []
+        self.selspd = []
 
         # Update values
         if data:

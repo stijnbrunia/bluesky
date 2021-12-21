@@ -23,7 +23,7 @@ appmaps = [['a1',    'ALS\n10NM',     'lambda: appmaps.close()|'
 
            ['c1',    'PAR\nAPP',      'lambda: appmaps.close()|'
                                       'lambda: show_basetid("parapp", "parapp")'],
-           ['c2',    'NL\nGEO',       'lambda: nl_geo()'],
+           ['c2',    'NL\nGEO',       'lambda: console.Console._instance.stack("SWRAD GEO")'],
            ['c3',    'AREAS\nRD',     'lambda: appmaps.close()|'
                                       'lambda: show_basetid("areasrd", "areasrd")'],
            ['c4',    'AREAS\nLE',     'lambda: appmaps.close()|'
@@ -255,7 +255,7 @@ areasrd = [['a1',    'ATZ\nVB',       'lambda: console.Console._instance.stack("
 
            ['b1',    '',              None],
            ['b2',    'BOSKO',         'lambda: console.Console._instance.stack("map 259")'],
-           ['b3',    'NL\nGEO',       'lambda: nl_geo()'],
+           ['b3',    'NL\nGEO',       'lambda: console.Console._instance.stack("SWRAD GEO")'],
            ['b4',    'NL\nW-WAY',     'lambda: console.Console._instance.stack("map 444; map 445; map 446")'],
 
            ['c1',    'RD\n06',        'lambda: console.Console._instance.stack("map 75; map 242")'],
@@ -376,5 +376,5 @@ favareas = [['a1',    'FAVA\n18R',     'lambda: console.Console._instance.stack(
             ['f2',    'MAIN',          'lambda: favareas.close()|'
                                        'lambda: show_basetid("appmain", "appmain")'],
             ['f3',    'MAPS\nAPP',     'lambda: favareas.close()|'
-                                      'lambda: show_basetid("appmaps", "appmaps")'],
+                                       'lambda: show_basetid("appmaps", "appmaps")'],
             ['f4',    '',              None]]

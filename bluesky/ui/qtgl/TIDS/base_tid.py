@@ -36,20 +36,3 @@ def tidclose(command, dialogname):
     lambda: command
     globals()[str(dialogname)].close()
     bs.ui.qtgl.console.Console._instance.stack(bs.ui.qtgl.console.Console._instance.command_line)
-
-
-def nl_geo():
-    """
-    Function: Show/don't show the coastlines
-    Args: -
-    Returns: -
-
-    Created by: Bob van Dillen
-    Date: 15-12-2021
-    """
-
-    actdata = bs.net.get_nodedata()
-    if actdata.show_map:
-        actdata.show_map = False
-    else:
-        actdata.show_map = True

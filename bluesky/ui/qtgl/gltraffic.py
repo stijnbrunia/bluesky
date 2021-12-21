@@ -5,7 +5,7 @@ from bluesky.ui.qtgl import glhelpers as glh
 from bluesky.ui.qtgl import console
 
 import bluesky as bs
-from bluesky.tools import geo
+from bluesky.tools import geo, misc
 from bluesky import settings
 from bluesky.ui import palette
 from bluesky.tools.aero import ft, nm, kts
@@ -198,8 +198,10 @@ class Traffic(glh.RenderObject, layer=100):
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Process incoming traffic data. '''
-        if 'ACDATA' in changed_elems or 'CMDDATA' in changed_elems:
+        if 'ACDATA' in changed_elems:
             self.update_aircraft_data(nodedata.acdata)
+        if 'CMDDATA' in changed_elems:
+            self.update_command_data(nodedata.cmddata, nodedata.acdata)
         if 'ROUTEDATA' in changed_elems:
             self.update_route_data(nodedata.routedata)
         if 'TRAILS' in changed_elems:
@@ -335,43 +337,8 @@ class Traffic(glh.RenderObject, layer=100):
                 if i >= MAX_NAIRCRAFT:
                     break
 
-                # Make label: 4 lines of 7 characters per aircraft
-                if actdata.show_lbl >= 1:
-                    # Line 1
-                    rawlabel += '%-7s' % acid[:7]
-
-                    if actdata.show_lbl == 2:  # and flighttype in ['INBOUND', 'OUTBOUND']:
-                        # Line 2
-                        rawlabel += '%-3s' % leading_zeros(alt/ft/100)[-3:]
-                        rawlabel += '%-1s' % ' '
-                        if uco and selalt != 0:
-                            rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
-                        else:
-                            rawlabel += '%-3s' % '   '
-
-                        # Line 3
-                        rawlabel += '%-4s' % str(type)[:4]
-                        if flighttype == 'INBOUND' and not uco:
-                            rawlabel += '%-3s' % str(arr)[:3]
-                        elif flighttype == 'OUTBOUND' and not uco:
-                            rawlabel += '%-3s' % str(sid)[:3]
-                        elif uco and selhdg != 0:
-                            rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
-                        else:
-                            rawlabel += '%-3s' % '   '
-
-                        # Line 4
-                        rawlabel += '%-3s' % leading_zeros(gs/kts)[:3]
-                        if wtc.upper() == 'H' or wtc.upper() == 'J':
-                            rawlabel += '%-1s' % str(wtc)[:1]
-                        else:
-                            rawlabel += '%-1s' % ' '
-                        if uco and selspd != 0:
-                            rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
-                        else:
-                            rawlabel += '%-3s' % 'SPD'
-                    else:
-                        rawlabel += 21*' '
+                rawlabel = applabel(rawlabel, actdata, acid, uco, alt, selalt, type,
+                                    flighttype, arr, sid, selhdg, gs, wtc, selspd)
 
                 if inconf:
                     if actdata.ssd_conflicts:
@@ -411,6 +378,96 @@ class Traffic(glh.RenderObject, layer=100):
             if self.route_acid in data.id:
                 idx = data.id.index(self.route_acid)
                 self.route.vertex.update(np.array([data.lat[idx], data.lon[idx]], dtype=np.float32))
+
+    def update_command_data(self, cmddata, acdata):
+        actdata = bs.net.get_nodedata()
+        naircraft = len(acdata.lat)
+
+        if naircraft > 0:
+            rawlabel = ''
+            zdata = zip(acdata.alt, acdata.arr, acdata.flighttype, acdata.gs,acdata.id, acdata.selalt,
+                        acdata.selhdg, acdata.selspd, acdata.sid, acdata.type, acdata.uco, acdata.wtc)
+            for i, (alt, arr, flighttype, gs, acid, selalt,
+                    selhdg, selspd, sid, actype, uco, wtc) in enumerate(zdata):
+
+                if i >= MAX_NAIRCRAFT:
+                    break
+
+                if acid in cmddata.id:
+                    j = misc.get_indices(cmddata.id, acid)[0]
+                    rawlabel = applabel(rawlabel, actdata, acid, cmddata.uco[j], alt, cmddata.selalt[j],
+                                        actype, flighttype, arr, sid, cmddata.selhdg[j], gs, wtc, cmddata.selspd[j])
+
+                else:
+                    rawlabel = applabel(rawlabel, actdata, acid, uco, alt, selalt, actype,
+                                        flighttype, arr, sid, selhdg, gs, wtc, selspd)
+
+            self.lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
+
+
+def applabel(rawlabel, actdata, acid, uco, alt, selalt, actype, flighttype, arr, sid, selhdg, gs, wtc, selspd):
+    """
+    Function: Create approach label
+    Args:
+        rawlabel:   string to add label [str]
+        actdata:    node data [class]
+        acid:       callsign [str]
+        uco:        UCO [bool]
+        alt:        altitude [float]
+        selalt:     selected altitude [float]
+        actype:     aircraft type [str]
+        flighttype: flight type [str]
+        arr:        arrival [str]
+        sid:        SID [str]
+        selhdg:     selected heading [float]
+        gs:         ground speed [float]
+        wtc:        WTC [str]
+        selspd:     selected speed [float]
+    Returns:
+        rawlabel:   label string [str]
+
+    Created by: Bob van Dillen
+    Date: 21-12-2021
+    """
+
+    if actdata.show_lbl >= 1:
+        # Line 1
+        rawlabel += '%-7s' % acid[:7]
+
+        if actdata.show_lbl == 2:  # and flighttype in ['INBOUND', 'OUTBOUND']:
+            # Line 2
+            rawlabel += '%-3s' % leading_zeros(alt / ft / 100)[-3:]
+            rawlabel += '%-1s' % ' '
+            if uco and selalt != 0:
+                rawlabel += '%-3s' % leading_zeros(selalt / ft / 100)[-3:]
+            else:
+                rawlabel += '%-3s' % '   '
+
+            # Line 3
+            rawlabel += '%-4s' % str(actype)[:4]
+            if flighttype == 'INBOUND' and not uco:
+                rawlabel += '%-3s' % str(arr)[:3]
+            elif flighttype == 'OUTBOUND' and not uco:
+                rawlabel += '%-3s' % str(sid)[:3]
+            elif uco and selhdg != 0:
+                rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
+            else:
+                rawlabel += '%-3s' % '   '
+
+            # Line 4
+            rawlabel += '%-3s' % leading_zeros(gs / kts)[:3]
+            if wtc.upper() == 'H' or wtc.upper() == 'J':
+                rawlabel += '%-1s' % str(wtc)[:1]
+            else:
+                rawlabel += '%-1s' % ' '
+            if uco and selspd != 0:
+                rawlabel += '%-3s' % leading_zeros(selspd / kts)[:3]
+            else:
+                rawlabel += '%-3s' % 'SPD'
+        else:
+            rawlabel += 21 * ' '
+
+        return rawlabel
 
 
 def leading_zeros(number):

@@ -435,3 +435,23 @@ def findall(lst,x):
         except ValueError:
             found = False
     return idx
+
+
+def get_indices(arr, items):
+    """
+    Function: Get indices of items in array/list
+    Args:
+        arr:    array/list containing the items [array, list]
+        items:  get indices of items [int, float, str, list, array]
+    Returns:
+        i:      indices [array]
+
+    Created by: Bob van Dillen
+    Date: 1-12-2021
+    """
+
+    if isinstance(items, (str, int, float)):
+        i = np.nonzero(np.array([items])[:, None] == arr)[1]
+    else:
+        i = np.nonzero(np.array(items)[:, None] == arr)[1]
+    return i

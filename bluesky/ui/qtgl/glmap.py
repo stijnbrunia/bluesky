@@ -58,9 +58,9 @@ class Map(glh.RenderObject, layer=-100):
         # --- DRAW THE MAP AND COASTLINES ---------------------------------------------
         # Show/don't show coastlines
         actdata = bs.net.get_nodedata()
-        if not actdata.show_map:
+        if not actdata.show_coast:
             self.coastlines.set_attribs(color=(0, 0, 0))
-        if actdata.show_map:
+        if actdata.show_coast:
             self.coastlines.set_attribs(color=palette.coastlines)
 
         # Map and coastlines: don't wrap around in the shader
