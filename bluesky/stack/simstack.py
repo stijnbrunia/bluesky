@@ -20,6 +20,7 @@ tmxlist = ("BGPASAS", "DFFLEVEL", "FFLEVEL", "FILTCONF", "FILTTRED", "FILTTAMB",
            "GRAB", "HDGREF", "MOVIE", "NAVDB", "PREDASAS", "RENAME", "RETYPE",
            "SWNLRPASAS", "TRAFRECDT", "TRAFLOGDT", "TREACT", "WINDGRID")
 
+tbar_lst = ['NIRSI', 'SOKS2', 'GALIS']
 maps_loaded = []
 
 def init():
@@ -245,7 +246,10 @@ def maptoggle_func(fname):
     t_offset = bs.sim.simt
     # Read the scenario file
     # readscn(fname, pcall_arglst, t_offset)
-    fname = 'mapid/'+fname
+    if fname.strip('del_').upper() in tbar_lst:
+        fname = 'T-bar/'+fname
+    else:
+        fname = 'mapid/'+fname
     insidx = 0
     instime = bs.sim.simt
 
