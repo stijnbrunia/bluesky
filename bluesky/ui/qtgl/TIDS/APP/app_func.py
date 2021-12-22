@@ -47,9 +47,9 @@ apphdg = [['a1', 'ARTIP',       'lambda: console.process_cmdline("RIVER ")'],
           ['a3', 'RIVER',       'lambda: console.process_cmdline("RIVER ")'],
           ['a4', '',            None],
 
-          ['b1', '',            None],
-          ['b2', '',            None],
-          ['b3', '',            None],
+          ['b1', 'NIRSI',       'lambda: show_basetid("nirsi", "nirsi")'],
+          ['b2', 'SOKS2',       'lambda: None'],
+          ['b3', 'GALIS',       'lambda: None'],
           ['b4', '',            None],
 
           ['c1', '7',       'lambda: console.process_cmdline("7")'],
@@ -77,6 +77,37 @@ apphdg = [['a1', 'ARTIP',       'lambda: console.process_cmdline("RIVER ")'],
           ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
                             'lambda: console.selected_ac()|'
                             'lambda: apphdg.close()']]
+
+
+nirsi = [['a1',    'NIRSI',   'lambda: None'],
+         ['a2',    'GAL01',   'lambda: None'],
+         ['a3',    'GAL02',   'lambda: None'],
+         ['a4',    'AM603',   'lambda: None'],
+
+         ['b1',    '',        None],
+         ['b2',    '',        None],
+         ['b3',    '',        None],
+         ['b4',    '',        None],
+
+         ['c1',    '',        None],
+         ['c2',    '',        None],
+         ['c3',    '',        None],
+         ['c4',    '',        None],
+
+         ['d1',    '',        None],
+         ['d2',    '',        None],
+         ['d3',    '',        None],
+         ['d4',    '',        None],
+
+         ['e1',    '',        None],
+         ['e2',    '',        None],
+         ['e3',    '',        None],
+         ['e4',    '',        None],
+
+         ['f1',    '',        None],
+         ['f2',    '',        None],
+         ['f3',    '',        None],
+         ['f4',    '',        None]]
 
 
 appefl = [['a1', '',        None],

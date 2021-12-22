@@ -54,7 +54,7 @@ tbars = {'NIRSI': [['GAL01', 'NIRSI'],
 
 for tbar in tbars.keys():
     fcre = open("C:\\Users\\LVNL_ILAB3\PycharmProjects\\bluesky\\scenario\\T-bar\\"+tbar+".scn", "w")
-    fdel = open(r"C:\\Users\\LVNL_ILAB3\PycharmProjects\\bluesky\\scenario\\T-bar\\del_"+tbar+".scn", "w")
+    fdel = open("C:\\Users\\LVNL_ILAB3\PycharmProjects\\bluesky\\scenario\\T-bar\\del_"+tbar+".scn", "w")
 
     for i in range(len(tbars[tbar])):
         pos0 = tbars[tbar][i][0]
