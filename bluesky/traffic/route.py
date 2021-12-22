@@ -6,7 +6,7 @@ import bluesky as bs
 from bluesky.tools import geo
 from bluesky.core import Replaceable
 from bluesky.tools.aero import ft, kts, g0, nm, mach2cas, casormach2tas
-from bluesky.tools.misc import degto180, txt2tim, txt2alt, txt2spd
+from bluesky.tools.misc import degto180, get_indices, txt2tim, txt2alt, txt2spd
 from bluesky.tools.position import txt2pos
 from bluesky import stack
 from bluesky.stack.cmdparser import Command, command, commandgroup
@@ -1401,3 +1401,28 @@ class Route(Replaceable):
         else:
             nextqdr = -999.
         return nextqdr
+
+    @stack.command
+    @staticmethod
+    def addrte(idx: 'acidselect', rtename: 'txt'):
+        """
+        Function: Add a route (sequence of waypoints) for an aircraft
+        Args:
+            idx:    index for traffic array [int]
+            name:   route name [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 22-12-2021
+        """
+
+        acid = bs.traf.id[idx]
+
+        if rtename.upper() in bs.navdb.rte:
+            for i in range(len(bs.navdb.rte[rtename.upper()]['waypoints'])):
+                wpt = bs.navdb.rte[rtename.upper()]['waypoints'][i]
+                alt = bs.navdb.rte[rtename.upper()]['altitudes'][i]
+                spd = bs.navdb.rte[rtename.upper()]['speeds'][i]
+                bs.stack.stack('ADDWPT '+acid+', '+wpt+', '+alt+', '+spd)
+        else:
+            return False, "ADDRTE: Route not found"

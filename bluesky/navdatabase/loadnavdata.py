@@ -26,10 +26,11 @@ def load_navdata():
             firdata       = cache.load()
             codata        = cache.load()
             rwythresholds = cache.load()
+            rtedata       = cache.load()
         except (pickle.PickleError, cachefile.CacheError) as e:
             print(e.args[0])
 
-            wptdata, aptdata, awydata, firdata, codata = loadnavdata_txt()
+            wptdata, aptdata, awydata, firdata, codata, rtedata = loadnavdata_txt()
             rwythresholds = loadthresholds_txt()
 
             cache.dump(wptdata)
@@ -38,5 +39,6 @@ def load_navdata():
             cache.dump(firdata)
             cache.dump(codata)
             cache.dump(rwythresholds)
+            cache.dump(rtedata)
 
-    return wptdata, aptdata, awydata, firdata, codata, rwythresholds
+    return wptdata, aptdata, awydata, firdata, codata, rwythresholds, rtedata
