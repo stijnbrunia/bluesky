@@ -204,10 +204,8 @@ class Traffic(glh.RenderObject, layer=100):
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Process incoming traffic data. '''
-        if 'ACDATA' in changed_elems:
-            self.update_aircraft_data(nodedata.acdata)
-        if 'CMDDATA' in changed_elems:
-            self.update_command_data(nodedata.cmddata, nodedata.acdata)
+        if 'ACDATA' in changed_elems or 'CMDDATA' in changed_elems:
+            self.update_aircraft_data(nodedata.acdata, nodedata.cmddata)
         if 'ROUTEDATA' in changed_elems:
             self.update_route_data(nodedata.routedata)
         if 'TRAILS' in changed_elems:
@@ -280,7 +278,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.route.set_vertex_count(0)
             self.routelbl.n_instances = 0
 
-    def update_aircraft_data(self, data):
+    def update_aircraft_data(self, data, cmddata):
         ''' Update GPU buffers with new aircraft simulation data. '''
         if not self.initialized:
             return
@@ -334,17 +332,24 @@ class Traffic(glh.RenderObject, layer=100):
             selssd = np.zeros(naircraft, dtype=np.uint8)
             confidx = 0
 
-            zdata = zip(data.id, data.ingroup, data.inconf, data.tcpamax, data.selhdg, data.trk, data.gs,
-                        data.cas, data.selspd, data.vs, data.selalt, data.alt, data.lat, data.lon, data.flighttype,
-                        data.wtc, data.uco, data.type, data.arr, data.sid)
-            for i, (acid, ingroup, inconf, tcpa,
-                    selhdg, trk, gs, cas, selspd, vs, selalt, alt, lat, lon,
-                    flighttype, wtc, uco, type, arr, sid) in enumerate(zdata):
+            zdata = zip(data.alt, data.arr, data.cas, data.flighttype, data.gs, data.id, data.inconf,
+                        data.ingroup, data.lat, data.lon, data.selalt, data.selhdg, data.selspd, data.sid,
+                        data.tcpamax, data.trk, data.type, data.uco, data.vs, data.wtc)
+            for i, (alt, arr, cas, flighttype, gs, acid, inconf,
+                    ingroup, lat, lon, selalt, selhdg, selspd, sid,
+                    tcpa, trk, actype, uco, vs, wtc) in enumerate(zdata):
+
                 if i >= MAX_NAIRCRAFT:
                     break
 
-                rawlabel = applabel(rawlabel, actdata, acid, uco, alt, selalt, type,
-                                    flighttype, arr, sid, selhdg, gs, wtc, selspd)
+                # Update with command data or acdata only
+                if acid in cmddata.id:
+                    j = misc.get_indices(cmddata.id, acid)[0]
+                    rawlabel = applabel(rawlabel, actdata, acid, cmddata.uco[j], alt, cmddata.selalt[j],
+                                        actype, flighttype, arr, sid, cmddata.selhdg[j], gs, wtc, cmddata.selspd[j])
+                else:
+                    rawlabel = applabel(rawlabel, actdata, acid, uco, alt, selalt, actype,
+                                        flighttype, arr, sid, selhdg, gs, wtc, selspd)
 
                 if inconf:
                     if actdata.ssd_conflicts:
@@ -355,7 +360,7 @@ class Traffic(glh.RenderObject, layer=100):
                              4] = [lat, lon, lat1, lon1]
                     confidx += 1
                 # Selected aircraft
-                elif acid == console.Console._instance.id_select:
+                elif acid == cmddata.idsel:
                     rgb = (227, 227, 49) + (255,)
                     color[i, :] = rgb
                 else:
@@ -384,31 +389,6 @@ class Traffic(glh.RenderObject, layer=100):
             if self.route_acid in data.id:
                 idx = data.id.index(self.route_acid)
                 self.route.vertex.update(np.array([data.lat[idx], data.lon[idx]], dtype=np.float32))
-
-    def update_command_data(self, cmddata, acdata):
-        actdata = bs.net.get_nodedata()
-        naircraft = len(acdata.lat)
-
-        if naircraft > 0:
-            rawlabel = ''
-            zdata = zip(acdata.alt, acdata.arr, acdata.flighttype, acdata.gs,acdata.id, acdata.selalt,
-                        acdata.selhdg, acdata.selspd, acdata.sid, acdata.type, acdata.uco, acdata.wtc)
-            for i, (alt, arr, flighttype, gs, acid, selalt,
-                    selhdg, selspd, sid, actype, uco, wtc) in enumerate(zdata):
-
-                if i >= MAX_NAIRCRAFT:
-                    break
-
-                if acid in cmddata.id:
-                    j = misc.get_indices(cmddata.id, acid)[0]
-                    rawlabel = applabel(rawlabel, actdata, acid, cmddata.uco[j], alt, cmddata.selalt[j],
-                                        actype, flighttype, arr, sid, cmddata.selhdg[j], gs, wtc, cmddata.selspd[j])
-
-                else:
-                    rawlabel = applabel(rawlabel, actdata, acid, uco, alt, selalt, actype,
-                                        flighttype, arr, sid, selhdg, gs, wtc, selspd)
-
-            self.lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
 
 
 def applabel(rawlabel, actdata, acid, uco, alt, selalt, actype, flighttype, arr, sid, selhdg, gs, wtc, selspd):
