@@ -204,6 +204,8 @@ class nodeData:
         self.ssd_conflicts = False
         self.ssd_ownship   = set()
 
+        self.atcmode = 'APP'
+
 
     def siminit(self, shapes, **kwargs):
         self.__dict__.update(kwargs)
@@ -370,6 +372,13 @@ class nodeData:
 
         elif flag == 'HISTORY':
             self.show_histsymb = not self.show_histsymb
+
+        elif flag == 'ATCMODE':
+            self.atcmode = args[0]
+            if self.atcmode == 'APP':
+                palette.aircraft = (210, 210, 200)
+            else:
+                palette.aircraft = (0,255,0)
 
     def echo(self, text='', flags=0):
         if text:

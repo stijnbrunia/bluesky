@@ -166,6 +166,22 @@ class ScreenIO:
     def trails(self,sw):
         bs.net.send_event(b'DISPLAYFLAG', dict(flag='TRAIL', args=sw))
 
+    def setatcmode(self, mode):
+        """
+        Function: Set the ATC mode
+        Args:
+            mode:   ATC mode
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 23-12-2021
+        """
+
+        if mode in ['APP', 'ACC']:
+            bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode))
+        else:
+            return False, 'SETATCMODE: ATC Mode not recognized'
+
     def showroute(self, acid):
         ''' Toggle show route for this aircraft '''
         self.route_acid[stack.sender()] = acid
@@ -261,6 +277,7 @@ class ScreenIO:
         data['flighttype'] = bs.traf.trafreplay.flighttype
         data['sid']        = bs.traf.trafreplay.sid
         data['uco']        = bs.traf.trafreplay.uco
+        data['rel']        = bs.traf.trafreplay.rel
         data['wtc']        = bs.traf.trafreplay.wtc
 
         # Transition level as defined in traf
@@ -281,6 +298,7 @@ class ScreenIO:
         data['id'] = bs.traf.id
         data['idsel'] = bs.traf.id_select
         data['uco'] = bs.traf.trafreplay.uco
+        data['rel'] = bs.traf.trafreplay.rel
         data['selhdg'] = bs.traf.selhdg
         data['selalt'] = bs.traf.selalt
         data['selspd'] = bs.traf.selspd

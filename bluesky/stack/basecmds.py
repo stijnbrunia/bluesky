@@ -70,6 +70,12 @@ def initbasecmds():
             bs.traf.cond.ataltcmd,
             "When a/c at given altitude , execute a command cmd",
         ],
+        "ATCMODE": [
+            "ATCMODE APP/ACC",
+            'txt',
+            bs.scr.setatcmode,
+            "Change the ATC mode",
+        ],
         "ATDIST": [
             "acid ATDIST pos dist cmd ",
             "acid,latlon,float,string",

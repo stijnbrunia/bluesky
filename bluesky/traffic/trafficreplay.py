@@ -72,6 +72,7 @@ class TrafficReplay(Entity):
             self.sid = []
             self.flighttype = []
             self.replay = np.array([], dtype=np.bool)  # Take aircraft state from data/file
+            self.rel = np.array([], dtype=np.bool)
             self.sid = []
             self.uco = np.array([], dtype=np.bool)
             self.wtc = []

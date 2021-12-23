@@ -47,7 +47,7 @@ class Navdatabase:
     def reset(self):
         print("Loading global navigation database...")
         wptdata, aptdata, awydata, firdata, codata, rwythresholds, rtedata = load_navdata()
-        print(rtedata)
+
         # Get waypoint data
         self.wpid     = wptdata['wpid']       # identifier (string)
         self.wplat    = wptdata['wplat']      # latitude [deg]

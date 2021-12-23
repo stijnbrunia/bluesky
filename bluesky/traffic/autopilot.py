@@ -633,6 +633,7 @@ class Autopilot(Entity, replaceable=True):
     @stack.command(name='REL')
     def relcmd(self, idx: 'acid'):
         bs.traf.trafreplay.uco[idx] = False
+        bs.traf.trafreplay.rel[idx] = True
 
     @stack.command(name='DEST')
     def setdest(self, acidx: 'acid', wpname:'wpt' = None):
