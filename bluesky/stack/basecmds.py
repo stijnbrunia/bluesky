@@ -244,6 +244,12 @@ def initbasecmds():
             bs.traf.activate_HighRes,
             "Manuel Switch per aircraft (using ADSB data)",
         ],
+        "HISTORY": [
+            "HISTORY ON/OFF",
+            "onoff",
+            bs.traf.histsymb.setHistory,
+            "Enable/Disable history symbols"
+        ],
         "HOLD": ["HOLD", "", bs.sim.hold, "Pause(hold) simulation"],
         "IMPLEMENTATION": [
             "IMPLEMENTATION [base, implementation]",

@@ -54,7 +54,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.protectedzone = glh.Circle()
         # self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
         self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
-        self.hist_symbol = glh.VertexArrayObject(glh.gl.GL_POINTS)
+        self.hist_symbol = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
         self.aclabels = glh.Text(settings.text_size, (7, 4))
         self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.cpalines = glh.VertexArrayObject(glh.gl.GL_LINES)
@@ -117,7 +117,11 @@ class Traffic(glh.RenderObject, layer=100):
         self.ac_symbol.set_attribs(lat=self.lat, lon=self.lon, color=self.color,
                                     instance_divisor=1)
 
-        self.hist_symbol.create(vertex=np.array([(0, 0)], dtype=np.float32))
+        histsymbol_size = 2
+        self.hist_symbol.create(vertex=np.array([(histsymbol_size/2, histsymbol_size/2),
+                                                 (-histsymbol_size/2, histsymbol_size/2),
+                                                 (-histsymbol_size/2, -histsymbol_size/2),
+                                                 (histsymbol_size/2, -histsymbol_size/2)], dtype=np.float32))
         self.hist_symbol.set_attribs(lat=self.histsymblat, lon=self.histsymblon,
                                      color=palette.aircraft, instance_divisor=1)
 
@@ -180,8 +184,8 @@ class Traffic(glh.RenderObject, layer=100):
         # Draw traffic symbols
         self.ac_symbol.draw(n_instances=actdata.naircraft)
 
-        if actdata.show_histsymb:
-            glh.gl.glPointSize(2)
+        if actdata.show_histsymb and len(actdata.acdata.histsymblat) != 0:
+            # glh.gl.glPointSize(2)
             self.hist_symbol.draw(n_instances=len(actdata.acdata.histsymblat))
 
         if self.routelbl.n_instances:

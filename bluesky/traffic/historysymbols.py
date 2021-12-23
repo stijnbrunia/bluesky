@@ -15,7 +15,10 @@ class HistorySymbols(Entity):
     """
     Class definition: Histroy symbols for aircraft
     Methods:
-
+        clear():    Reset variables
+        update():   Update the history symbols
+        update_history():   Update the history locations
+        setHistory():       Enable/Disable history symbols
 
     Created by: Bob van Dillen
     Date: 17-12-2021
@@ -23,6 +26,8 @@ class HistorySymbols(Entity):
 
     def __init__(self):
         super().__init__()
+
+        self.active = True
 
         self.lat = np.array([])
         self.lon = np.array([])
@@ -73,41 +78,42 @@ class HistorySymbols(Entity):
         Date: 20-12-2021
         """
 
-        # Get latitudes and longitudes for all history symbols
-        self.lat = np.append(self.lat1, (self.lat2, self.lat3, self.lat4, self.lat5))
-        self.lon = np.append(self.lon1, (self.lon2, self.lon3, self.lon4, self.lon5))
-        self.lat = self.lat[self.lat != 0.]
-        self.lon = self.lon[self.lon != 0.]
+        if self.active:
+            # Get latitudes and longitudes for all history symbols
+            self.lat = np.append(self.lat1, (self.lat2, self.lat3, self.lat4, self.lat5))
+            self.lon = np.append(self.lon1, (self.lon2, self.lon3, self.lon4, self.lon5))
+            self.lat = self.lat[self.lat != 0.]
+            self.lon = self.lon[self.lon != 0.]
 
-        # Replay/playback traffic
-        if len(bs.traf.trafreplay.replayid) > 0:
-            itrafreplay = misc.get_indices(bs.traf.id, bs.traf.trafreplay.replayid)
-            # Replay traffic that received an update
-            itrafnew = np.nonzero(bs.traf.lat != self.lat1)[0]
-            ireplay_new = np.intersect1d(itrafreplay, itrafnew, assume_unique=True)
-        else:
-            itrafreplay = np.array([])
-            ireplay_new = np.array([])
+            # Replay/playback traffic
+            if len(bs.traf.trafreplay.replayid) > 0:
+                itrafreplay = misc.get_indices(bs.traf.id, bs.traf.trafreplay.replayid)
+                # Replay traffic that received an update
+                itrafnew = np.nonzero(bs.traf.lat != self.lat1)[0]
+                ireplay_new = np.intersect1d(itrafreplay, itrafnew, assume_unique=True)
+            else:
+                itrafreplay = np.array([])
+                ireplay_new = np.array([])
 
-        # Simulated traffic
-        deltat = bs.sim.simt - self.t_prev
-        if deltat >= bs.settings.screendt:
-            itraf_new = np.setdiff1d(np.arange(bs.traf.ntraf), itrafreplay)
-            self.t_prev = bs.sim.simt
-        else:
-            itraf_new = np.array([])
+            # Simulated traffic
+            deltat = bs.sim.simt - self.t_prev
+            if deltat >= bs.settings.screendt:
+                itraf_new = np.setdiff1d(np.arange(bs.traf.ntraf), itrafreplay)
+                self.t_prev = bs.sim.simt
+            else:
+                itraf_new = np.array([])
 
-        # Merge indices and update history
-        i_new = np.append(ireplay_new, itraf_new)
-        i_new = i_new.astype(np.int32)
+            # Merge indices and update history
+            i_new = np.append(ireplay_new, itraf_new)
+            i_new = i_new.astype(np.int32)
 
-        # Every other position gets a history symbol
-        i_swhistory = np.nonzero(self.swhistory)[0]
-        i_update = np.intersect1d(i_new, i_swhistory)
-        self.swhistory[i_new] = ~self.swhistory[i_new]
+            # Every other position gets a history symbol
+            i_swhistory = np.nonzero(self.swhistory)[0]
+            i_update = np.intersect1d(i_new, i_swhistory)
+            self.swhistory[i_new] = ~self.swhistory[i_new]
 
-        # Update the history symbols
-        self.update_history(i_update)
+            # Update the history symbols
+            self.update_history(i_update)
 
     def update_history(self, indices):
         """
@@ -134,3 +140,22 @@ class HistorySymbols(Entity):
 
         self.lat1[indices] = bs.traf.lat[indices]
         self.lon1[indices] = bs.traf.lon[indices]
+
+    def setHistory(self, *args):
+        """
+        Function: Enable/Disable history symbols
+        Args:
+            *args:  arguments
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 23-12-2021
+        """
+
+        if type(args[0]) == bool:
+            self.active = args[0]
+            if not self.active:
+                self.lat = np.array([])
+                self.lon = np.array([])
+
+        return True
