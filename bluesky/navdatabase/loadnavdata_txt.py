@@ -224,14 +224,17 @@ def loadnavdata_txt():
             if len(line) == 0 or line[0] == "#":
                 continue
 
-            fields = line.split(",")
-            rtedata[fields[0]] = {'waypoints': [],
-                                  'altitudes': [],
-                                  'speeds': []}
-            for i in range(1, len(fields), 3):
-                rtedata[fields[0]]['waypoints'].append(fields[i].strip())
-                rtedata[fields[0]]['altitudes'].append(fields[i+1].strip())
-                rtedata[fields[0]]['speeds'].append(fields[i+2].strip())
+            fields = line.split(";")
+            name = fields[0].strip()
+            fields.remove(fields[0])
+            rtedata[name] = {'waypoints': [],
+                             'altitudes': [],
+                             'speeds': []}
+            for wpt in fields:
+                wpt = wpt.split(',')
+                rtedata[name]['waypoints'].append(wpt[0].strip())
+                rtedata[name]['altitudes'].append(wpt[1].strip())
+                rtedata[name]['speeds'].append(wpt[2].strip())
 
 
 

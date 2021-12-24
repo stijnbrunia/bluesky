@@ -247,9 +247,9 @@ def maptoggle_func(fname):
     # Read the scenario file
     # readscn(fname, pcall_arglst, t_offset)
     if fname.strip('del_').upper() in tbar_lst:
-        fname = 'T-bar/'+fname
+        fname = 'LVNL/Maps/T-bar/'+fname
     else:
-        fname = 'mapid/'+fname
+        fname = 'LVNL/Maps/mapid/'+fname
     insidx = 0
     instime = bs.sim.simt
 
@@ -292,6 +292,11 @@ def map(fname):
 # def map_del(fname):
 #     fname = 'del_' + fname
 #     maptoggle_func(fname)
+
+
+def addroute(acid, rtename):
+    # TODO Implement reading routes from scenario files (e.g. LVNL/ROUTES/ARR/NIRSI.scn)
+    return
 
 @command(aliases=('LOAD', 'OPEN'))
 def ic(filename : 'string' = ''):

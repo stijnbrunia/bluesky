@@ -7,8 +7,7 @@ Date: 24-12-2021
 
 
 import numpy as np
-import bluesky as bs
-from bluesky.core import Entity, timed_function
+from bluesky.core import Entity
 from bluesky import stack
 
 
@@ -18,6 +17,19 @@ Classes
 
 
 class LVNLVariables(Entity):
+    """
+    Definition: Class containing variables used by LVNL
+    Methods:
+        setarr():           Set the arrival/stack
+        setflighttype():    Set the flight type
+        setrwy():           Set the runway
+        setsid():           Set the SID
+        setwtc():           Set the wtc
+
+    Created by: Bob van Dillen
+    Date: 24-12-2021
+    """
+
     def __init__(self):
         super().__init__()
 
@@ -30,10 +42,10 @@ class LVNLVariables(Entity):
             self.uco = np.array([], dtype=np.bool)  # Under Control
             self.wtc = []                           # Wake Turbulence Category
 
-    @stack.command(name='ARR')
+    @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK', aliases=('STACK',))
     def setarr(self, idx: 'acid', arr: str = ''):
         """
-        Function: Set the arrival
+        Function: Set the arrival/stack
         Args:
             idx:    index for traffic arrays [int]
             arr:    arrival/stack [str]
@@ -46,7 +58,7 @@ class LVNLVariables(Entity):
         if isinstance(arr, str):
             self.arr[idx] = arr
 
-    @stack.command(name='FLIGHTTYPE')
+    @stack.command(name='FLIGHTTYPE', brief='FLIGHTTYPE CALLSIGN TYPE')
     def setflighttype(self, idx: 'acid', flighttype: str):
         """
         Function: Set the flight type
@@ -62,7 +74,7 @@ class LVNLVariables(Entity):
         if isinstance(flighttype, str):
             self.flighttype[idx] = flighttype
 
-    @stack.command(name='RWY')
+    @stack.command(name='RWY', brief='RWY CALLSIGN RUNWAY', aliases=('RW',))
     def setrwy(self, idx: 'acid', rwy: str):
         """
         Function: Set the runway
@@ -78,7 +90,7 @@ class LVNLVariables(Entity):
         if isinstance(rwy, str):
             self.rwy[idx] = rwy
 
-    @stack.command(name='SID')
+    @stack.command(name='SID', brief='SID CALLSIGN SID')
     def setsid(self, idx: 'acid', sid: str = ''):
         """
         Function: Set the SID
@@ -94,7 +106,7 @@ class LVNLVariables(Entity):
         if isinstance(sid, str):
             self.sid[idx] = sid
 
-    @stack.command(name='WTC')
+    @stack.command(name='WTC', brief='WTC CALLSIGN WTC')
     def setwtc(self, idx: 'acid', wtc: str = ''):
         """
         Function: Set the wtc
