@@ -622,18 +622,23 @@ class Autopilot(Entity, replaceable=True):
         else:
             bs.traf.selspd[idx] = 0.
 
-        bs.traf.swlnav[idx] = False
-        bs.traf.swvnav[idx] = False
-        bs.traf.swvnavspd[idx] = False
+        bs.traf.swlnav[idx] = True
+        bs.traf.swvnav[idx] = True
+        bs.traf.swvnavspd[idx] = True
 
         # bs.traf.mnual(idx, 'ON')
         bs.traf.trafreplay.uco_replay(idx)
-        bs.traf.trafreplay.uco[idx] = True
+        bs.traf.lvnlvars.uco[idx] = True
+        bs.traf.lvnlvars.rel[idx] = False
 
     @stack.command(name='REL')
-    def relcmd(self, idx: 'acid'):
-        bs.traf.trafreplay.uco[idx] = False
-        bs.traf.trafreplay.rel[idx] = True
+    def setrelcmd(self, idx: 'acid'):
+        bs.traf.swlnav[idx] = True
+        bs.traf.swvnav[idx] = True
+        bs.traf.swvnavspd[idx] = True
+
+        bs.traf.lvnlvars.uco[idx] = False
+        bs.traf.lvnlvars.rel[idx] = True
 
     @stack.command(name='DEST')
     def setdest(self, acidx: 'acid', wpname:'wpt' = None):

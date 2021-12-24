@@ -51,8 +51,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.histsymblon = glh.GLBuffer()
         # Label data
         self.lbl = glh.GLBuffer()
-        self.mlbl = glh.GLBuffer()
         self.ssrlbl = glh.GLBuffer()
+        self.mlbl = glh.GLBuffer()
 
         self.ssd = glh.VertexArrayObject(glh.gl.GL_POINTS, shader_type='ssd')
         self.protectedzone = glh.Circle()
@@ -66,8 +66,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.traillines = glh.VertexArrayObject(glh.gl.GL_LINES)
         # Labels
         self.aclabels = glh.Text(settings.text_size, (8, 4))
-        self.microlabels = glh.Text(0.85*settings.text_size, (3, 1))
         self.ssrlabels = glh.Text(0.85*settings.text_size, (7, 3))
+        self.microlabels = glh.Text(0.85*settings.text_size, (3, 1))
         self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
@@ -89,8 +89,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.histsymblon.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
         # Labels
         self.lbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.mlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.ssrlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+        self.mlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
 
         self.ssd.create(lat1=self.lat, lon1=self.lon, alt1=self.alt,
                         tas1=self.tas, trk1=self.hdg)
@@ -134,10 +134,10 @@ class Traffic(glh.RenderObject, layer=100):
 
         self.aclabels.create(self.lbl, self.lat, self.lon, self.color,
                              (1.2*ac_size, -0.5 * ac_size), instanced=True)
-        self.microlabels.create(self.mlbl, self.lat, self.lon, self.color,
-                                (-3*0.8*text_size-ac_size, 0.5*ac_size), instanced=True)
         self.ssrlabels.create(self.ssrlbl, self.lat, self.lon, self.color,
                               (ac_size, -0.5*ac_size), instanced=True)
+        self.microlabels.create(self.mlbl, self.lat, self.lon, self.color,
+                                (-3*0.8*text_size-ac_size, 0.5*ac_size), instanced=True)
 
         # self.leaderlines.create(vertex=np.array([(ac_size, 0), (3.6*ac_size, 0)], dtype=np.float32))
         # self.leaderlines.set_attribs(lat=self.lat, lon=self.lon, color=self.color,
@@ -206,8 +206,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         if actdata.show_lbl >= 1:
             self.aclabels.draw(n_instances=actdata.naircraft)
-            self.microlabels.draw(n_instances=actdata.naircraft)
             self.ssrlabels.draw(n_instances=actdata.naircraft)
+            self.microlabels.draw(n_instances=actdata.naircraft)
             # self.leaderlines.draw(n_instances=actdata.naircraft)
 
         # SSD
@@ -371,13 +371,20 @@ class Traffic(glh.RenderObject, layer=100):
                                                                     cmddata.uco[j], cmddata.rel[j], alt,
                                                                     cmddata.selalt[j], actype, flighttype, arr, sid,
                                                                     cmddata.selhdg[j], gs, wtc, cmddata.selspd[j])
-                    #elif actdata.atcmode == 'ACC':
-                    # TODO Implement this
+                    elif actdata.atcmode == 'ACC':
+                        rawlabel, rawmlabel, rawssrlabel = acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid,
+                                                                    cmddata.uco[j], cmddata.rel[j], alt,
+                                                                    cmddata.selalt[j], gs, wtc, cmddata.selspd[j],
+                                                                    actype)
 
                 else:
-                    rawlabel, rawmlabel, rawssrlabel = applabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid, uco,
-                                                                rel, alt, selalt, actype, flighttype, arr, sid, selhdg,
-                                                                gs, wtc, selspd)
+                    if actdata.atcmode == 'APP':
+                        rawlabel, rawmlabel, rawssrlabel = applabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid,
+                                                                    uco, rel, alt, selalt, actype, flighttype, arr,
+                                                                    sid, selhdg, gs, wtc, selspd)
+                    elif actdata.atcmode == 'ACC':
+                        rawlabel, rawmlabel, rawssrlabel = acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid,
+                                                                    uco, rel, alt, selalt, gs, wtc, selspd, actype)
 
                 # Colours
                 if inconf:
@@ -413,8 +420,8 @@ class Traffic(glh.RenderObject, layer=100):
             self.cpalines.update(vertex=cpalines)
             self.color.update(color)
             self.lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
-            self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
             self.ssrlbl.update(np.array(rawssrlabel.encode('utf8'), dtype=np.string_))
+            self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:
@@ -445,7 +452,9 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid, uco, rel,
         wtc:            WTC [str]
         selspd:         selected speed [float]
     Returns:
-        rawlabel:   label string [str]
+        rawlabel:       track label string [str]
+        rawmlabel:      micro label string [str]
+        rawssrlabel:    ssr label string [str]
 
     Created by: Bob van Dillen
     Date: 21-12-2021
@@ -472,7 +481,7 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid, uco, rel,
             # Line 3
             rawlabel += '%-4s' % str(actype)[:4]
             if flighttype == 'INBOUND' and not uco:
-                rawlabel += '%-3s' % str(arr)[:3]
+                rawlabel += '%-3s' % str(arr).replace('ARTIP', 'ATP')[:3]
             elif flighttype == 'OUTBOUND' and not uco:
                 rawlabel += '%-3s' % str(sid)[:3]
             elif uco and selhdg != 0:
@@ -494,7 +503,7 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid, uco, rel,
             rawlabel += '%-1s' % ' '
 
         # Micro label
-        rawmlabel += '18R'
+        rawmlabel += '   '
 
         # SSR label
         rawssrlabel += 7*3*' '
@@ -524,62 +533,91 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid, uco, rel,
     return rawlabel, rawmlabel, rawssrlabel
 
 
-def acclabel(rawlabel, actdata, acid, uco, rel, alt, selalt, gs, wtc, selspd):
+def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, acid, uco, rel, alt, selalt, gs, wtc, selspd, actype):
     """
     Function: Create acc label
     Args:
-        rawlabel:   string to add label [str]
-        actdata:    node data [class]
-        acid:       callsign [str]
-        uco:        UCO [bool]
-        rel:        REL [bool]
-        alt:        altitude [float]
-        selalt:     selected altitude [float]
-        actype:     aircraft type [str]
-        flighttype: flight type [str]
-        arr:        arrival [str]
-        sid:        SID [str]
-        selhdg:     selected heading [float]
-        gs:         ground speed [float]
-        wtc:        WTC [str]
-        selspd:     selected speed [float]
+        rawlabel:       string to add label [str]
+        rawmlabel:      string to add micro label [str]
+        rawssrlabel:    string to add ssr label [str]
+        actdata:        node data [class]
+        acid:           callsign [str]
+        uco:            UCO [bool]
+        rel:            REL [bool]
+        alt:            altitude [float]
+        selalt:         selected altitude [float]
+        gs:             ground speed [float]
+        wtc:            WTC [str]
+        selspd:         selected speed [float]
+        actype:         aircraft type [str]
     Returns:
-        rawlabel:   label string [str]
+        rawlabel:       track label string [str]
+        rawmlabel:      micro label string [str]
+        rawssrlabel:    ssr label string [str]
 
     Created by: Bob van Dillen
     Date: 21-12-2021
     """
 
-    # Line 1
-    rawlabel += '%-8s' % acid[:7]
+    if not rel:
+        # Line 1
+        rawlabel += '%-8s' % acid[:8]
 
-    if actdata.show_lbl == 2:
-        # Line 2
-        rawlabel += '%-3s' % leading_zeros(alt / ft / 100)[-3:]
-        if alt < actdata.translvl:
-            rawlabel += '%-1s' % 'A'
-        else:
+        if actdata.show_lbl == 2:
+            # Line 2
+            rawlabel += '%-3s' % leading_zeros(alt/ft/100)[-3:]
+            if alt < actdata.translvl:
+                rawlabel += '%-1s' % 'A'
+            else:
+                rawlabel += '%-1s' % ' '
+            if uco and selalt != 0:
+                rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
+            else:
+                rawlabel += '%-3s' % '   '
             rawlabel += '%-1s' % ' '
-        if uco and selalt != 0:
-            rawlabel += '%-3s' % leading_zeros(selalt / ft / 100)[-3:]
+
+            # Line 3
+            rawlabel += '%-3s' % '...'
+            rawlabel += '%-1s' % ' '
+            rawlabel += '%-3s' % leading_zeros(gs/kts)[:3]
+            if wtc.upper() == 'H' or wtc.upper() == 'J':
+                rawlabel += '%-1s' % str(wtc)[:1]
+            else:
+                rawlabel += '%-1s' % ' '
+
+            # Line 4
+            if uco and selspd != 0:
+                rawlabel += '%-1s' % 'I'
+                rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
+            else:
+                rawlabel += '%-4s' % '    '
+            rawlabel += '%-4s' % actype[:4]
+
+            rawmlabel += 3*' '
+            rawssrlabel += 7*3*' '
+    else:
+        # Track label
+        rawlabel += 8*4*' '
+
+        # Micro label
+        rawmlabel += 3*' '
+
+        # SSR Label
+        # Line 1
+        rawssrlabel += '%-7s' % '       '
+
+        # Line 2
+        rawssrlabel += '%-3s' % leading_zeros(alt/ft/100)[:3]
+
+        if alt < actdata.translvl:
+            rawssrlabel += '%-4s' % 'A   '
         else:
-            rawlabel += '%-3s' % '   '
-        rawlabel += '%-1s' % ' '
+            rawssrlabel += '%-4s' % '    '
 
         # Line 3
-        rawlabel += '%-3s' % '...'
-        rawlabel += '%-1s' % ' '
-        rawlabel += '%-3s' % leading_zeros(gs/kts)[:3]
-        if wtc.upper() == 'H' or wtc.upper() == 'J':
-            rawlabel += '%-1s' % str(wtc)[:1]
-        else:
-            rawlabel += '%-1s' % ' '
+        rawssrlabel += '%-7s' % '       '
 
-        # Line 4
-        if uco and selspd != 0:
-            rawlabel += '%-4s' % 'I'+leading_zeros(selspd/kts)[:3]
-        else:
-            rawlabel += '%-4s' % '    '
+    return rawlabel, rawmlabel, rawssrlabel
 
 
 

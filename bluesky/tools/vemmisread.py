@@ -348,21 +348,25 @@ class VEMMISRead:
         acwtc = self.flightdata['WTC']
         acsid = self.flightdata['SID'].astype(str).str.replace('nan', '')
         acarr = self.flightdata['STACK'].astype(str).str.replace('nan', '')
-
-        create = list("CREREPLAY "+acid+", "+actype+", " +
-                      aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd+", " +
-                      acflighttype+", "+acwtc+", "+acsid+", "+acarr)
+        # Command strings
+        create = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        replay = list("ADDREPLAY "+acid)
+        arr = list("ARR "+acid+" "+acarr)
+        sid = list("SID "+acid+" "+acsid)
+        flighttype = list("FLIGHTTYPE "+acid+", "+acflighttype)
+        wtc = list("WTC "+acid+", "+acwtc)
         origin = list("ORIG "+acid+", "+self.flightdata['ADEP'])
         destination = list("DEST "+acid+", "+self.flightdata['DEST'])
         delete = list("DEL "+acid)
-
+        # Time
         tcreate = list(self.flightdata['SIM_START'])
+        tset = list(self.flightdata['SIM_START']+0.01)
         torigin = list(self.flightdata['SIM_START']+0.01)
         tdestination = list(self.flightdata['SIM_START']+0.01)
         tdelete = list(self.flightdata['SIM_END'])
 
-        command += create + origin + destination + delete
-        commandtime += tcreate + torigin + tdestination + tdelete
+        command += create + replay + arr + sid + flighttype + wtc + origin + destination + delete
+        commandtime += tcreate + 7*tset + tdelete
 
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])

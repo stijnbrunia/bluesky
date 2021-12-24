@@ -272,13 +272,13 @@ class ScreenIO:
         data['vmin']       = bs.traf.perf.vmin
         data['vmax']       = bs.traf.perf.vmax
 
-        # Replay data
-        data['arr']        = bs.traf.trafreplay.arr
-        data['flighttype'] = bs.traf.trafreplay.flighttype
-        data['sid']        = bs.traf.trafreplay.sid
-        data['uco']        = bs.traf.trafreplay.uco
-        data['rel']        = bs.traf.trafreplay.rel
-        data['wtc']        = bs.traf.trafreplay.wtc
+        # LVNL Variables
+        data['arr']        = bs.traf.lvnlvars.arr
+        data['flighttype'] = bs.traf.lvnlvars.flighttype
+        data['sid']        = bs.traf.lvnlvars.sid
+        data['uco']        = bs.traf.lvnlvars.uco
+        data['rel']        = bs.traf.lvnlvars.rel
+        data['wtc']        = bs.traf.lvnlvars.wtc
 
         # Transition level as defined in traf
         data['translvl']   = bs.traf.translvl
@@ -297,8 +297,8 @@ class ScreenIO:
         data = dict()
         data['id'] = bs.traf.id
         data['idsel'] = bs.traf.id_select
-        data['uco'] = bs.traf.trafreplay.uco
-        data['rel'] = bs.traf.trafreplay.rel
+        data['uco'] = bs.traf.lvnlvars.uco
+        data['rel'] = bs.traf.lvnlvars.rel
         data['selhdg'] = bs.traf.selhdg
         data['selalt'] = bs.traf.selalt
         data['selspd'] = bs.traf.selspd

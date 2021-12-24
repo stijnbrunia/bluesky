@@ -374,7 +374,7 @@ class nodeData:
             self.show_histsymb = not self.show_histsymb
 
         elif flag == 'ATCMODE':
-            self.atcmode = args[0]
+            self.atcmode = args
             if self.atcmode == 'APP':
                 palette.aircraft = (210, 210, 200)
             else:

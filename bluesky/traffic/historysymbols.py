@@ -52,7 +52,7 @@ class HistorySymbols(Entity):
             self.lat5 = np.array([])
             self.lon5 = np.array([])
 
-    def clear(self):
+    def reset(self):
         """
         Function: Reset variables
         Args: -
@@ -61,6 +61,10 @@ class HistorySymbols(Entity):
         Created by: Bob van Dillen
         Date: 20-12-2021
         """
+
+        super().reset()
+
+        self.active = True
 
         self.lat = np.array([])
         self.lon = np.array([])

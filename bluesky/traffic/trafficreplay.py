@@ -68,16 +68,9 @@ class TrafficReplay(Entity):
         self.t_next = 0.0
 
         with self.settrafarrays():
-            self.arr = []
-            self.sid = []
-            self.flighttype = []
             self.replay = np.array([], dtype=np.bool)  # Take aircraft state from data/file
-            self.rel = np.array([], dtype=np.bool)
-            self.sid = []
-            self.uco = np.array([], dtype=np.bool)
-            self.wtc = []
 
-    def clear(self):
+    def reset(self):
         """
         Function: Reset variables
         Args: -
@@ -86,6 +79,8 @@ class TrafficReplay(Entity):
         Created by: Bob van Dillen
         Date: 2-12-2021
         """
+
+        super().reset()
 
         # Flight and track data
         self.trackdata = ()
@@ -102,55 +97,22 @@ class TrafficReplay(Entity):
         self.i_next = 0
         self.t_next = 0.0
 
-    @stack.command
-    def crereplay(self, acid: str, actype: str, aclat: float, aclon: float, achdg: float, acalt: float, acspd: float,
-                  acflighttype: str = '', acwtc: str = '', acsid: str = '', acarr: str = ''):
+    def create(self, n=1):
         """
-        Function: Create aircraft which are updated from data
+        Function: Create an aircraft
         Args:
-            acid:           callsign [str, list]
-            actype:         aircraft type [str, list]
-            aclat:          latitude [float, array]
-            aclon:          longitude [float, array]
-            achdg:          heading [float, array]
-            acalt:          altitude [float, array]
-            acspd:          calibrated airspeed [float, array]
-            acflighttype:   flight type [str, list]
-            acwtc:          aircraft wtc [str, list]
-            acsid:          SID [str, list]
-            acarr:          ARRIVAL [str, list]
+            n:  number of aircraft
         Returns: -
 
         Created by: Bob van Dillen
-        Date: 30-11-2021
+        Date: 24-12-2021
         """
-        # Determine number of aircraft to create from array length of acid
-        n = 1 if isinstance(acid, str) else len(acid)
 
-        bs.traf.cre(acid, actype, aclat, aclon, achdg, acalt, acspd)
+        super().create(n)
 
-        # Update flight data
-        self.replay[-n:] = True
-        # Single create
-        if n == 1:
-            self.flighttype[-n:] = [acflighttype]
-            self.wtc[-n:] = [acwtc]
-            self.sid[-n:] = [acsid]
-            self.arr[-n:] = [acarr.replace('ARTIP', 'ATP')]
-        # Multiple create
-        else:
-            self.flighttype[-n:] = acflighttype
-            self.wtc[-n:] = acwtc
-            self.sid[-n:] = acsid
-            self.arr[-n:] = acarr.replace('ARTIP', 'ATP')
-
-        # Add to replay list
-        self.replayid = np.append(self.replayid, acid).tolist()
-
-        # Update previous data point
         self.store_prev()
 
-    def delreplay(self, idx):
+    def delete(self, idx):
         """
         Function: Remove aircraft from replay callsigns list
         Args:
@@ -162,11 +124,14 @@ class TrafficReplay(Entity):
         """
 
         ids = np.array(bs.traf.id)[idx]
+        print(ids)
 
         for acid in ids:
             # Check if this callsign was updated from data
             if acid in self.replayid:
                 self.replayid.remove(acid)
+
+        super().delete(idx)
 
     def update(self):
         """
@@ -369,6 +334,22 @@ class TrafficReplay(Entity):
         itraf_update = misc.get_indices(bs.traf.id, id_update)
 
         return itraf_update, itrackdata, ireplay
+
+    @stack.command(name='ADDREPLAY')
+    def setreplay(self, idx: 'acid'):
+        """
+        Function: Add aircraft to replay mode
+        Args:
+            idx:    index for traffic arrays [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 24-12-2021
+        """
+
+        acid = np.array(bs.traf.id)[idx]
+        self.replayid.append(acid)
+        self.replay[idx] = True
 
 
 """

@@ -30,6 +30,7 @@ from .adsbmodel import ADSB
 from .aporasas import APorASAS
 from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
+from .lvnlvariables import LVNLVariables
 from .turbulence import Turbulence
 from .trafficreplay import TrafficReplay
 from .trafficgroups import TrafficGroups
@@ -85,6 +86,8 @@ class Traffic(Entity):
         self.wind = WindSim()
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
+
+        self.lvnlvars = LVNLVariables()  # Variables used by LVNL
 
         self.HighRes = False
         self.Wind_DB = ""
@@ -206,12 +209,6 @@ class Traffic(Entity):
 
         # Reset transition level to default value
         self.translvl = 5000.*ft
-
-        # Reset traffic replay
-        self.trafreplay.clear()
-
-        # Reset history symbols
-        self.histsymb.clear()
 
     def mcre(self, n, actype="B744", acalt=None, acspd=None, dest=None):
         """ Create one or more random aircraft in a specified area """
@@ -422,9 +419,6 @@ class Traffic(Entity):
         # (which will use list in reverse order to avoid index confusion)
         if isinstance(idx, Collection):
             idx = np.sort(idx)
-
-        # Replay delete
-        self.trafreplay.delreplay(idx)
 
         # Call the actual delete function
         super().delete(idx)
