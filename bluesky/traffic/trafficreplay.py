@@ -124,7 +124,6 @@ class TrafficReplay(Entity):
         """
 
         ids = np.array(bs.traf.id)[idx]
-        print(ids)
 
         for acid in ids:
             # Check if this callsign was updated from data

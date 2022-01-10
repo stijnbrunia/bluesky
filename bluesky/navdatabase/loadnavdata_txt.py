@@ -216,29 +216,6 @@ def loadnavdata_txt():
     #     awydata['awtolat']   = np.array(awydata['awtolat'])
     #     awydata['awtolon']   = np.array(awydata['awtolon'])
 
-    #----------  Read routes.dat file   ----------
-    rtedata            = dict()
-    with open(os.path.join(settings.navdata_path, 'routes.dat'), 'rb') as f:
-        for line in f:
-            line = line.decode(encoding="ascii", errors="ignore").strip()
-            if len(line) == 0 or line[0] == "#":
-                continue
-
-            fields = line.split(";")
-            name = fields[0].strip()
-            fields.remove(fields[0])
-            rtedata[name] = {'waypoints': [],
-                             'altitudes': [],
-                             'speeds': []}
-            for wpt in fields:
-                wpt = wpt.split(',')
-                rtedata[name]['waypoints'].append(wpt[0].strip())
-                rtedata[name]['altitudes'].append(wpt[1].strip())
-                rtedata[name]['speeds'].append(wpt[2].strip())
-
-
-
-
     #----------  Read airports.dat file ----------
     aptdata           = dict()
     aptdata['apid']      = []              # 4 char identifier (string)
@@ -381,7 +358,7 @@ def loadnavdata_txt():
                 codata['conr'].append(-1)
 
 
-    return wptdata, aptdata, awydata, firdata, codata, rtedata
+    return wptdata, aptdata, awydata, firdata, codata
 
 
 def loadthresholds_txt():

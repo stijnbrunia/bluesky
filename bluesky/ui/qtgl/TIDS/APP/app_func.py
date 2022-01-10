@@ -11,20 +11,20 @@ appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
            ['a3', '18',             'lambda: None'],
            ['a4', 'REL',            'lambda: console.process_cmdline(" REL")'],
 
-           ['b1', 'HDG',            'lambda: console.process_cmdline(" ; HDG ")|'
-                                    'lambda: show_basetid("apphdg", "apphdg")'],
+           ['b1', 'HDG',            ['lambda: console.process_cmdline(" ; HDG ")',
+                                     'lambda: show_basetid("apphdg", "apphdg")']],
            ['b2', 'POS',            'lambda: None'],
            ['b3', '',               None],
            ['b4', 'ACM',            'lambda: None'],
 
-           ['c1', 'EFL',            'lambda: console.process_cmdline(" ; ALT FL")|'
-                                    'lambda: show_basetid("appefl", "appefl")'],
+           ['c1', 'EFL',            ['lambda: console.process_cmdline(" ; ALT FL")',
+                                     'lambda: show_basetid("appefl", "appefl")']],
            ['c2', 'TFL',            'lambda: None'],
            ['c3', 'LBL',            'lambda: None'],
            ['c4', 'ERA',            'lambda: None'],
 
-           ['d1', 'SPD',            'lambda: console.process_cmdline(" ; SPD ")|'
-                                    'lambda: show_basetid("appspd", "appspd")'],
+           ['d1', 'SPD',            ['lambda: console.process_cmdline(" ; SPD ")',
+                                     'lambda: show_basetid("appspd", "appspd")']],
            ['d2', 'DPL',            'lambda: None'],
            ['d3', '',               None],
            ['d4', 'RWY',            'lambda: None'],
@@ -36,10 +36,11 @@ appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
 
            ['f1', 'COR',            'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
            ['f2', 'MAIN 2',         'lambda: None'],
-           ['f3', 'APP\nMAPS',      'lambda: appmain.close()|'
-                                    'lambda: show_basetid("appmaps", "appmaps")'],
-           ['f4', 'EXQ',            'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
-                                    'lambda: console.selected_ac()']]
+           ['f3', 'APP\nMAPS',      ['lambda: appmain.close()',
+                                     'lambda: show_basetid("appmaps", "appmaps")']],
+           ['f4', 'EXQ',            ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
+                                     'lambda: console.selected_ac()']]
+           ]
 
 
 apphdg = [['a1', 'ARTIP',       'lambda: console.process_cmdline("RIVER ")'],
@@ -68,15 +69,16 @@ apphdg = [['a1', 'ARTIP',       'lambda: console.process_cmdline("RIVER ")'],
           ['e4', '',        None],
 
           ['f1', 'COR',     'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
-          ['f2', 'EFL',     'lambda: console.process_cmdline(" ; ALT FL")|'
-                            'lambda: apphdg.close()|'
-                            'lambda: show_basetid("appefl", "appefl")'],
-          ['f3', 'SPD',     'lambda: console.process_cmdline(" ; SPD ")|'
-                            'lambda: apphdg.close()|'
-                            'lambda: show_basetid("appspd", "appspd")'],
-          ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
-                            'lambda: console.selected_ac()|'
-                            'lambda: apphdg.close()']]
+          ['f2', 'EFL',     ['lambda: console.process_cmdline(" ; ALT FL")',
+                             'lambda: apphdg.close()',
+                             'lambda: show_basetid("appefl", "appefl")']],
+          ['f3', 'SPD',     ['lambda: console.process_cmdline(" ; SPD ")',
+                             'lambda: apphdg.close()',
+                             'lambda: show_basetid("appspd", "appspd")']],
+          ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
+                             'lambda: console.selected_ac()',
+                             'lambda: apphdg.close()']]
+          ]
 
 
 nirsi = [['a1',    'NIRSI',   'lambda: None'],
@@ -136,15 +138,16 @@ appefl = [['a1', '',        None],
           ['e4', '',        None],
 
           ['f1', 'COR',     'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
-          ['f2', 'HDG',     'lambda: console.process_cmdline(" ; HDG ")|'
-                            'lambda: appefl.close()|'
-                            'lambda: show_basetid("apphdg", "apphdg")'],
-          ['f3', 'SPD',     'lambda: console.process_cmdline(" ; SPD ")|'
-                            'lambda: appefl.close()|'
-                            'lambda: show_basetid("appspd", "appspd")'],
-          ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
-                            'lambda: console.selected_ac()|'
-                            'lambda: appefl.close()']]
+          ['f2', 'HDG',     ['lambda: console.process_cmdline(" ; HDG ")',
+                             'lambda: appefl.close()',
+                             'lambda: show_basetid("apphdg", "apphdg")']],
+          ['f3', 'SPD',     ['lambda: console.process_cmdline(" ; SPD ")',
+                             'lambda: appefl.close()',
+                             'lambda: show_basetid("appspd", "appspd")']],
+          ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
+                             'lambda: console.selected_ac()',
+                             'lambda: appefl.close()']]
+          ]
 
 
 appspd = [['a1', '250',     'lambda: console.process_cmdline("250 ")'],
@@ -173,12 +176,13 @@ appspd = [['a1', '250',     'lambda: console.process_cmdline("250 ")'],
           ['e4', '',        None],
 
           ['f1', 'COR',     'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
-          ['f2', 'HDG',     'lambda: console.process_cmdline(" ; HDG ")|'
-                            'lambda: appspd.close()|'
-                            'lambda: show_basetid("apphdg", "apphdg")'],
-          ['f3', 'EFL',     'lambda: console.process_cmdline(" ; ALT FL")|'
-                            'lambda: appspd.close()|'
-                            'lambda: show_basetid("appefl", "appefl")'],
-          ['f4', 'EXQ',     'lambda: console.Console._instance.stack(console.Console._instance.command_line)|'
-                            'lambda: console.selected_ac()|'
-                            'lambda: appspd.close()']]
+          ['f2', 'HDG',     ['lambda: console.process_cmdline(" ; HDG ")',
+                             'lambda: appspd.close()',
+                             'lambda: show_basetid("apphdg", "apphdg")']],
+          ['f3', 'EFL',     ['lambda: console.process_cmdline(" ; ALT FL")',
+                             'lambda: appspd.close()',
+                             'lambda: show_basetid("appefl", "appefl")']],
+          ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
+                             'lambda: console.selected_ac()',
+                             'lambda: appspd.close()']]
+          ]

@@ -10,13 +10,9 @@ import bluesky as bs
 class Navdatabase:
     """
     Navdatabase class definition : command stack & processing class
-
     Methods:
         Navdatabase()          :  constructor
-
         findid(txt,lat,lon)    : find a nav closest to lat,lon
-
-
     Members:
         wpid                      : list of identifier/short names
         wpname                    : long name
@@ -24,7 +20,6 @@ class Navdatabase:
         wplat                     : latitude
         wplon                     : longitude
         wpco                      : country code
-
         apid                      : list of identifier/short names
         apname                    : long name
         aplat                     : latitude
@@ -33,8 +28,6 @@ class Navdatabase:
         apmaxrwy                  : max rwy length in meters
         apco                      : country code
         apelev                    : country code
-
-
     Created by  : Jacco M. Hoekstra (TU Delft)
     """
 
@@ -46,7 +39,7 @@ class Navdatabase:
 
     def reset(self):
         print("Loading global navigation database...")
-        wptdata, aptdata, awydata, firdata, codata, rwythresholds, rtedata = load_navdata()
+        wptdata, aptdata, awydata, firdata, codata, rwythresholds = load_navdata()
 
         # Get waypoint data
         self.wpid     = wptdata['wpid']       # identifier (string)
@@ -69,9 +62,6 @@ class Navdatabase:
         # self.awndir     = awydata['awndir']      # number of directions (1 or 2)
         # self.awlowfl    = awydata['awlowfl']     # lower flight level (int)
         # self.awupfl     = awydata['awupfl']      # upper flight level (int)
-
-        # Get route data
-        self.rte = rtedata
 
         # Get airpoint data
         self.aptid     = aptdata['apid']      # 4 char identifier (string)
@@ -377,18 +367,3 @@ class Navdatabase:
         #             connect.append(newitem)
         #
         # return connect # return list of [awid,wpid]
-
-    def defrte(self, name, *args):
-        """
-        Function: Define a route (sequence of waypoints)
-        Args:
-            name:   route name [str]
-            *args:  waypoints [str]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 22-12-2021
-        """
-
-
-        pass

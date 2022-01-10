@@ -17,14 +17,16 @@ start = [['a1',    '',        None],
 
          ['c1',    '',        None],
          ['c2',    'BASE',    'lambda: show_basetid("base","base")'],
-         ['c3',    'APP',     'lambda: console.Console._instance.stack("map 252")|'
-                              'lambda: show_basetid("appmain","appmain")'],
+         ['c3',    'APP',     ['lambda: console.Console._instance.stack("ATCMODE APP")',
+                               'lambda: console.Console._instance.stack("map 252")',
+                               'lambda: show_basetid("appmain","appmain")']],
          ['c4',    '',        None],
 
          ['d1',    '',        None],
          ['d2',    '',        None],
-         ['d3',    'ACC',     'lambda: console.Console._instance.stack("map 751")|'
-                              'lambda: console.Console._instance.stack("map 752")'],
+         ['d3',    'ACC',     ['lambda: console.Console._instance.stack("ATCMODE ACC")',
+                               'lambda: console.Console._instance.stack("map 751")',
+                               'lambda: console.Console._instance.stack("map 752")']],
          ['d4',    '',        None],
 
          ['e1',    '',        None],

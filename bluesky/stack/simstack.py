@@ -242,6 +242,7 @@ def pcall(fname, *pcall_arglst):
     except FileNotFoundError as e:
         return False, f"PCALL: File not found'{e.filename}'"
 
+
 def maptoggle_func(fname):
     t_offset = bs.sim.simt
     # Read the scenario file
@@ -293,10 +294,6 @@ def map(fname):
 #     fname = 'del_' + fname
 #     maptoggle_func(fname)
 
-
-def addroute(acid, rtename):
-    # TODO Implement reading routes from scenario files (e.g. LVNL/ROUTES/ARR/NIRSI.scn)
-    return
 
 @command(aliases=('LOAD', 'OPEN'))
 def ic(filename : 'string' = ''):
