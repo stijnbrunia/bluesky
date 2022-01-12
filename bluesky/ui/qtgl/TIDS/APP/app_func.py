@@ -13,7 +13,7 @@ appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
 
            ['b1', 'HDG',            ['lambda: console.process_cmdline(" ; HDG ")',
                                      'lambda: show_basetid("apphdg", "apphdg")']],
-           ['b2', 'POS',            'lambda: None'],
+           ['b2', 'POS',            'lambda: show_basetid("apppos", "apppos")'],
            ['b3', '',               None],
            ['b4', 'ACM',            'lambda: None'],
 
@@ -185,4 +185,36 @@ appspd = [['a1', '250',     'lambda: console.process_cmdline("250 ")'],
           ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
                              'lambda: console.selected_ac()',
                              'lambda: appspd.close()']]
+          ]
+
+
+apppos = [['a1', '',        None],
+          ['a2', '',        None],
+          ['a3', '',        None],
+          ['a4', '',        None],
+
+          ['b1', '',        None],
+          ['b2', '7',       'lambda: None'],
+          ['b3', '4',       'lambda: None'],
+          ['b4', '1',       'lambda: None'],
+
+          ['c1', '',        None],
+          ['c2', '8',       'lambda: None'],
+          ['c3', 'PLOT',    'lambda: None'],
+          ['c4', '2',       'lambda: None'],
+
+          ['d1', '',        None],
+          ['d2', '9',       'lambda: None'],
+          ['d3', '6',       'lambda: None'],
+          ['d4', '3',       'lambda: None'],
+
+          ['e1', '',        None],
+          ['e2', '',        None],
+          ['e3', '',        None],
+          ['e4', '',        None],
+
+          ['f1', 'COR',     'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
+          ['f2', '',        None],
+          ['f3', '',        None],
+          ['f4', '',        None]
           ]

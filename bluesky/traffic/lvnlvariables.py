@@ -36,11 +36,27 @@ class LVNLVariables(Entity):
         with self.settrafarrays():
             self.arr = []                           # Arrival/Stack
             self.flighttype = []                    # Flight type
+            self.lblpos = []                        # Label position
             self.rel = np.array([], dtype=np.bool)  # Release
             self.rwy = []                           # Runway
             self.sid = []                           # SID
             self.uco = np.array([], dtype=np.bool)  # Under Control
             self.wtc = []                           # Wake Turbulence Category
+
+    def create(self, n=1):
+        """
+        Function: Create an aircraft
+        Args:
+            n:  number of aircraft
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 12-1-2022
+        """
+
+        super().create(n)
+
+        self.lblpos[-n:] = ['CR']
 
     @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK', aliases=('STACK',))
     def setarr(self, idx: 'acid', arr: str = ''):
@@ -121,3 +137,21 @@ class LVNLVariables(Entity):
 
         if isinstance(wtc, str):
             self.wtc[idx] = wtc
+
+    @stack.command(name='POSLABEL', brief='POSLABEL CALLSIGN LL/LC/LR/CL/CR/UL/UC/UR')
+    def poslabel(self, idx: 'acidselect', labelposition: str):
+        """
+        Function: Set position of the label
+        Args:
+            idx:            index for traffic arrays [int]
+            labelposition:  position of the label [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 12-1-2021
+        """
+
+        if labelposition.upper() in ['LL', 'LC', 'LR', 'CL', 'CR', 'UL', 'UC', 'UR']:
+            self.lblpos[idx] = labelposition.upper()
+        else:
+            return False, 'POSLABEL: Not a valid label position'
