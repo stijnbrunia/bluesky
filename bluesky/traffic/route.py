@@ -6,7 +6,7 @@ import bluesky as bs
 from bluesky.tools import geo
 from bluesky.core import Replaceable
 from bluesky.tools.aero import ft, kts, g0, nm, mach2cas, casormach2tas
-from bluesky.tools.misc import degto180, txt2tim, txt2alt, txt2spd
+from bluesky.tools.misc import degto180, get_indices, txt2tim, txt2alt, txt2spd
 from bluesky.tools.position import txt2pos
 from bluesky import stack
 from bluesky.stack.cmdparser import Command, command, commandgroup

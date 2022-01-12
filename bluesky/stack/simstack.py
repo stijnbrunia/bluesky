@@ -20,6 +20,7 @@ tmxlist = ("BGPASAS", "DFFLEVEL", "FFLEVEL", "FILTCONF", "FILTTRED", "FILTTAMB",
            "GRAB", "HDGREF", "MOVIE", "NAVDB", "PREDASAS", "RENAME", "RETYPE",
            "SWNLRPASAS", "TRAFRECDT", "TRAFLOGDT", "TREACT", "WINDGRID")
 
+tbar_lst = ['NIRSI', 'SOKS2', 'GALIS']
 maps_loaded = []
 
 def init():
@@ -241,11 +242,15 @@ def pcall(fname, *pcall_arglst):
     except FileNotFoundError as e:
         return False, f"PCALL: File not found'{e.filename}'"
 
+
 def maptoggle_func(fname):
     t_offset = bs.sim.simt
     # Read the scenario file
     # readscn(fname, pcall_arglst, t_offset)
-    fname = 'mapid/'+fname
+    if fname.strip('del_').upper() in tbar_lst:
+        fname = 'LVNL/Maps/T-bar/'+fname
+    else:
+        fname = 'LVNL/Maps/mapid/'+fname
     insidx = 0
     instime = bs.sim.simt
 
@@ -288,6 +293,7 @@ def map(fname):
 # def map_del(fname):
 #     fname = 'del_' + fname
 #     maptoggle_func(fname)
+
 
 @command(aliases=('LOAD', 'OPEN'))
 def ic(filename : 'string' = ''):

@@ -53,6 +53,10 @@ class ScreenIO:
         self.fast_timer.timeout.connect(self.send_aircraft_data)
         self.fast_timer.start(int(1000 / self.acupdate_rate))
 
+        self.cmd_timer = Timer()
+        self.cmd_timer.timeout.connect(self.send_command_data)
+        self.cmd_timer.start(int(1000 / 2))
+
     def step(self):
         if bs.sim.state == bs.OP:
             self.samplecount += 1
@@ -162,6 +166,22 @@ class ScreenIO:
     def trails(self,sw):
         bs.net.send_event(b'DISPLAYFLAG', dict(flag='TRAIL', args=sw))
 
+    def setatcmode(self, mode):
+        """
+        Function: Set the ATC mode
+        Args:
+            mode:   ATC mode
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 23-12-2021
+        """
+
+        if mode in ['APP', 'ACC']:
+            bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode))
+        else:
+            return False, 'SETATCMODE: ATC Mode not recognized'
+
     def showroute(self, acid):
         ''' Toggle show route for this aircraft '''
         self.route_acid[stack.sender()] = acid
@@ -235,6 +255,7 @@ class ScreenIO:
         data['tas']        = bs.traf.tas
         data['cas']        = bs.traf.cas
         data['gs']         = bs.traf.gs
+        data['selspd']     = bs.traf.selspd
         data['ingroup']    = bs.traf.groups.ingroup
         data['inconf'] = bs.traf.cd.inconf
         data['type'] = bs.traf.type
@@ -251,6 +272,14 @@ class ScreenIO:
         data['vmin']       = bs.traf.perf.vmin
         data['vmax']       = bs.traf.perf.vmax
 
+        # LVNL Variables
+        data['arr']        = bs.traf.lvnlvars.arr
+        data['flighttype'] = bs.traf.lvnlvars.flighttype
+        data['sid']        = bs.traf.lvnlvars.sid
+        data['uco']        = bs.traf.lvnlvars.uco
+        data['rel']        = bs.traf.lvnlvars.rel
+        data['wtc']        = bs.traf.lvnlvars.wtc
+
         # Transition level as defined in traf
         data['translvl']   = bs.traf.translvl
 
@@ -258,7 +287,23 @@ class ScreenIO:
         data['asastas']  = bs.traf.cr.tas
         data['asastrk']  = bs.traf.cr.trk
 
+        # History symbols
+        data['histsymblat'] = bs.traf.histsymb.lat
+        data['histsymblon'] = bs.traf.histsymb.lon
+
         bs.net.send_stream(b'ACDATA', data)
+
+    def send_command_data(self):
+        data = dict()
+        data['id'] = bs.traf.id
+        data['idsel'] = bs.traf.id_select
+        data['uco'] = bs.traf.lvnlvars.uco
+        data['rel'] = bs.traf.lvnlvars.rel
+        data['selhdg'] = bs.traf.selhdg
+        data['selalt'] = bs.traf.selalt
+        data['selspd'] = bs.traf.selspd
+
+        bs.net.send_stream(b'CMDDATA', data)
 
     def send_route_data(self):
         for sender, acid in self.route_acid.items():

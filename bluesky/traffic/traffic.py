@@ -30,10 +30,12 @@ from .adsbmodel import ADSB
 from .aporasas import APorASAS
 from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
+from .lvnlvariables import LVNLVariables
 from .turbulence import Turbulence
 from .trafficreplay import TrafficReplay
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
+from .historysymbols import HistorySymbols
 
 # Register settings defaults
 bs.settings.set_variable_defaults(performance_model='openap', asas_dt=1.0)
@@ -84,6 +86,8 @@ class Traffic(Entity):
         self.wind = WindSim()
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
+
+        self.lvnlvars = LVNLVariables()  # Variables used by LVNL
 
         self.HighRes = False
         self.Wind_DB = ""
@@ -157,6 +161,7 @@ class Traffic(Entity):
             self.trails   = Trails()
             self.actwp    = ActiveWaypoint()
             self.perf     = PerfBase()
+            self.histsymb = HistorySymbols()
 
             # Group Logic
             self.groups = TrafficGroups()
@@ -415,14 +420,8 @@ class Traffic(Entity):
         if isinstance(idx, Collection):
             idx = np.sort(idx)
 
-        # Callsigns
-        acid = np.array(self.id)[idx]
-
         # Call the actual delete function
         super().delete(idx)
-
-        # Replay delete
-        self.trafreplay.delreplay(acid)
 
         # Update number of aircraft
         self.ntraf = len(self.lat)
@@ -762,7 +761,7 @@ class Traffic(Entity):
 
             # Show a/c info and highlight route of aircraft in radar window
             # and pan to a/c (to show route)
-            #bs.scr.showroute(acid)
+            # bs.scr.showroute(acid)
 
             # Select aircraft for acidselect commands
             self.id_select = acid

@@ -4,14 +4,14 @@ import numpy as np
 
 from bluesky.ui import palette
 from bluesky.ui.polytools import PolygonSet
-from bluesky.ui.qtgl.customevents import ACDataEvent, RouteDataEvent
+from bluesky.ui.qtgl.customevents import ACDataEvent, CMDDataEvent, RouteDataEvent
 from bluesky.network.client import Client
 from bluesky.core import Signal
 from bluesky.tools.aero import ft
 
 # Globals
 UPDATE_ALL = ['SHAPE', 'TRAILS', 'CUSTWPT', 'PANZOOM', 'ECHOTEXT']
-ACTNODE_TOPICS = [b'ACDATA', b'PLOT*', b'ROUTEDATA*']
+ACTNODE_TOPICS = [b'ACDATA', b'CMDDATA', b'PLOT*', b'ROUTEDATA*']
 
 
 class GuiClient(Client):
@@ -49,6 +49,9 @@ class GuiClient(Client):
         if name == b'ACDATA':
             actdata.setacdata(data)
             changed = name.decode('utf8')
+        elif name == b'CMDDATA':
+            actdata.setcmddata(data)
+            changed = 'CMDDATA'
         elif name.startswith(b'ROUTEDATA'):
             actdata.setroutedata(data)
             changed = 'ROUTEDATA'
@@ -134,6 +137,7 @@ class nodeData:
 
         self.naircraft = 0
         self.acdata = ACDataEvent()
+        self.cmddata = CMDDataEvent()
         self.routedata = RouteDataEvent()
 
         # Per-scenario data
@@ -148,6 +152,9 @@ class nodeData:
 
     def setroutedata(self, data):
         self.routedata = RouteDataEvent(data)
+
+    def setcmddata(self, data):
+        self.cmddata = CMDDataEvent(data)
 
     def settrails(self, swtrails, traillat0, traillon0, traillat1, traillon1):
         if not swtrails:
@@ -192,9 +199,12 @@ class nodeData:
         self.show_wpt      = 0
         self.show_apt      = 0
         self.show_poly     = 1  # 0=invisible, 1=outline, 2=fill
+        self.show_histsymb = True
         self.ssd_all       = False
         self.ssd_conflicts = False
         self.ssd_ownship   = set()
+
+        self.atcmode = 'APP'
 
 
     def siminit(self, shapes, **kwargs):
@@ -359,6 +369,16 @@ class nodeData:
                 self.filteralt = args[1:]
             else:
                 self.filteralt = False
+
+        elif flag == 'HISTORY':
+            self.show_histsymb = not self.show_histsymb
+
+        elif flag == 'ATCMODE':
+            self.atcmode = args
+            if self.atcmode == 'APP':
+                palette.aircraft = (210, 210, 200)
+            else:
+                palette.aircraft = (0,255,0)
 
     def echo(self, text='', flags=0):
         if text:

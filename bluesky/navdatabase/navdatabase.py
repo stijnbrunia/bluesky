@@ -10,13 +10,9 @@ import bluesky as bs
 class Navdatabase:
     """
     Navdatabase class definition : command stack & processing class
-
     Methods:
         Navdatabase()          :  constructor
-
         findid(txt,lat,lon)    : find a nav closest to lat,lon
-
-
     Members:
         wpid                      : list of identifier/short names
         wpname                    : long name
@@ -24,7 +20,6 @@ class Navdatabase:
         wplat                     : latitude
         wplon                     : longitude
         wpco                      : country code
-
         apid                      : list of identifier/short names
         apname                    : long name
         aplat                     : latitude
@@ -33,8 +28,6 @@ class Navdatabase:
         apmaxrwy                  : max rwy length in meters
         apco                      : country code
         apelev                    : country code
-
-
     Created by  : Jacco M. Hoekstra (TU Delft)
     """
 
