@@ -761,7 +761,7 @@ class Traffic(Entity):
 
             # Show a/c info and highlight route of aircraft in radar window
             # and pan to a/c (to show route)
-            # bs.scr.showroute(acid)
+            bs.scr.showroute(acid)
 
             # Select aircraft for acidselect commands
             self.id_select = acid
