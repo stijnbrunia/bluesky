@@ -46,7 +46,9 @@ def process_cmdline(cmdlines):
 
 
 def selected_ac():
-    process_cmdline(Console._instance.id_select)
+    actdata = bs.net.get_nodedata()
+    id_select = actdata.cmddata.idsel
+    process_cmdline(id_select+' ')
 
 
 class Console(QWidget):

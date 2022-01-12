@@ -13,7 +13,8 @@ appmain = [['a1', 'UCO',            'lambda: console.process_cmdline(" UCO")'],
 
            ['b1', 'HDG',            ['lambda: console.process_cmdline(" ; HDG ")',
                                      'lambda: show_basetid("apphdg", "apphdg")']],
-           ['b2', 'POS',            'lambda: show_basetid("apppos", "apppos")'],
+           ['b2', 'POS',            ['lambda: console.selected_ac()',
+                                     'lambda: show_basetid("apppos", "apppos")']],
            ['b3', '',               None],
            ['b4', 'ACM',            'lambda: None'],
 
@@ -194,7 +195,8 @@ apppos = [['a1', '',        None],
           ['a4', '',        None],
 
           ['b1', '',        None],
-          ['b2', '7',       'lambda: None'],
+          ['b2', '7',       ['lambda: console.Console._instance.stack(console.Console._instance.command_line+"POSLABEL UL")',
+                             'lambda: apppos.close()']],
           ['b3', '4',       'lambda: None'],
           ['b4', '1',       'lambda: None'],
 
