@@ -564,6 +564,16 @@ class Traffic(Entity):
                 return -1
 
     def idselect2idx(self):
+        """
+        Function: Get the index of the selected aircraft (when it exists)
+        Args: -
+        Returns:
+            index of the selected aircraft [int] or -1 when there is no index
+
+        Created by: Bob van Dillen
+        Date: 10-12-2021
+        """
+
         if self.id_select != '':
             try:
                 return self.id.index(self.id_select.upper())
