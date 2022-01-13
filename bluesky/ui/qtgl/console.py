@@ -46,7 +46,21 @@ def process_cmdline(cmdlines):
 
 
 def selected_ac():
-    process_cmdline(Console._instance.id_select)
+    """
+    Function: Put the selected aircraft in the command line
+    Args: -
+    Returns: -
+
+    Created by: Bob van Dillen
+    Date: 12-1-2022
+    """
+
+    actdata = bs.net.get_nodedata()
+    id_select = actdata.cmddata.idsel
+    if id_select:
+        Console._instance.set_cmdline(id_select+' ')
+    else:
+        Console._instance.set_cmdline('')
 
 
 class Console(QWidget):

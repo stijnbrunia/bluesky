@@ -159,13 +159,14 @@ class Navdata(glh.RenderObject, layer=-10):
         self.shaderset.enable_wrap(False)
 
         # --- DRAW AIRPORT DETAILS (RUNWAYS, TAXIWAYS, PAVEMENTS) -------------
-        self.runways.draw()
-        self.thresholds.draw()
+        if actdata.show_aptdetails:
+            self.runways.draw()
+            self.thresholds.draw()
 
-        if actdata.zoom >= 1.0:
-            for idx in self.apt_inrange:
-                self.taxiways.draw(first_vertex=idx[0], vertex_count=idx[1])
-                self.pavement.draw(first_vertex=idx[2], vertex_count=idx[3])
+            if actdata.zoom >= 1.0:
+                for idx in self.apt_inrange:
+                    self.taxiways.draw(first_vertex=idx[0], vertex_count=idx[1])
+                    self.pavement.draw(first_vertex=idx[2], vertex_count=idx[3])
 
         self.shaderset.enable_wrap(True)
         self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_SCREEN)

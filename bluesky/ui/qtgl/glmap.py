@@ -11,7 +11,6 @@ from bluesky import settings
 
 settings.set_variable_defaults(gfx_path='data/graphics')
 palette.set_default_colours(
-    background=(0, 0, 0),
     coastlines=(85, 85, 115))
 
 
@@ -66,7 +65,7 @@ class Map(glh.RenderObject, layer=-100):
         # Map and coastlines: don't wrap around in the shader
         self.shaderset.enable_wrap(False)
 
-        if not skipmap:
+        if not skipmap and actdata.show_map:
             self.map.draw()
         shaderset = glh.ShaderSet.selected
         if shaderset.data.wrapdir == 0:

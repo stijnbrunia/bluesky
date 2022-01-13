@@ -177,8 +177,8 @@ class ScreenIO:
         Date: 23-12-2021
         """
 
-        if mode in ['APP', 'ACC']:
-            bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode))
+        if mode.upper() in ['APP', 'ACC', 'TWR', 'BLUESKY']:
+            bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode.upper()))
         else:
             return False, 'SETATCMODE: ATC Mode not recognized'
 
@@ -276,9 +276,11 @@ class ScreenIO:
         data['arr']        = bs.traf.lvnlvars.arr
         data['flighttype'] = bs.traf.lvnlvars.flighttype
         data['sid']        = bs.traf.lvnlvars.sid
+        data['rwy']        = bs.traf.lvnlvars.rwy
         data['uco']        = bs.traf.lvnlvars.uco
         data['rel']        = bs.traf.lvnlvars.rel
         data['wtc']        = bs.traf.lvnlvars.wtc
+        data['lblpos']     = bs.traf.lvnlvars.lblpos
 
         # Transition level as defined in traf
         data['translvl']   = bs.traf.translvl
@@ -295,13 +297,17 @@ class ScreenIO:
 
     def send_command_data(self):
         data = dict()
+        data['arr'] = bs.traf.lvnlvars.arr
         data['id'] = bs.traf.id
         data['idsel'] = bs.traf.id_select
-        data['uco'] = bs.traf.lvnlvars.uco
+        data['lblpos'] = bs.traf.lvnlvars.lblpos
         data['rel'] = bs.traf.lvnlvars.rel
+        data['rwy'] = bs.traf.lvnlvars.rwy
         data['selhdg'] = bs.traf.selhdg
         data['selalt'] = bs.traf.selalt
         data['selspd'] = bs.traf.selspd
+        data['sid'] = bs.traf.lvnlvars.sid
+        data['uco'] = bs.traf.lvnlvars.uco
 
         bs.net.send_stream(b'CMDDATA', data)
 
