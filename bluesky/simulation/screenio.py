@@ -297,14 +297,17 @@ class ScreenIO:
 
     def send_command_data(self):
         data = dict()
+        data['arr'] = bs.traf.lvnlvars.arr
         data['id'] = bs.traf.id
         data['idsel'] = bs.traf.id_select
-        data['uco'] = bs.traf.lvnlvars.uco
+        data['lblpos'] = bs.traf.lvnlvars.lblpos
         data['rel'] = bs.traf.lvnlvars.rel
+        data['rwy'] = bs.traf.lvnlvars.rwy
         data['selhdg'] = bs.traf.selhdg
         data['selalt'] = bs.traf.selalt
         data['selspd'] = bs.traf.selspd
-        data['lblpos'] = bs.traf.lvnlvars.lblpos
+        data['sid'] = bs.traf.lvnlvars.sid
+        data['uco'] = bs.traf.lvnlvars.uco
 
         bs.net.send_stream(b'CMDDATA', data)
 

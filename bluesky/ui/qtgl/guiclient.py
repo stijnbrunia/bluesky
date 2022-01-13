@@ -400,7 +400,7 @@ class nodeData:
                 palette.aircraft = (0, 255, 0)
                 palette.coastlines = (44, 126, 41)
             elif self.atcmode == 'TWR':
-                palette.aircraft = (0, 255, 0)
+                palette.aircraft = (210, 210, 200)
                 palette.coastlines = (0, 0, 0)
             else:
                 palette.aircraft = (0, 255, 0)

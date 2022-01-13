@@ -629,17 +629,21 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     """
 
     if cmddata:
+        arr = cmddata.arr[j]
         uco = cmddata.uco[j]
         rel = cmddata.rel[j]
         selhdg = cmddata.selhdg[j]
         selalt = cmddata.selalt[j]
         selspd = cmddata.selspd[j]
+        sid = cmddata.sid[j]
     else:
+        arr = data.arr[i]
         uco = data.uco[i]
         rel = data.rel[i]
         selhdg = data.selhdg[i]
         selalt = data.selalt[i]
         selspd = data.selspd[i]
+        sid = data.sid[i]
 
     if not rel:
         # Track label
@@ -661,12 +665,12 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
 
             # Line 3
             rawlabel += '%-4s' % str(data.type[i])[:4]
-            if data.flighttype[i] == 'INBOUND' and not uco:
-                rawlabel += '%-3s' % str(data.arr[i]).replace('ARTIP', 'ATP')[:3]
-            elif data.flighttype[i] == 'OUTBOUND' and not uco:
-                rawlabel += '%-3s' % str(data.sid[i])[:3]
-            elif uco and selhdg != 0:
+            if uco and selhdg != 0:
                 rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
+            elif data.flighttype[i] == 'INBOUND':
+                rawlabel += '%-3s' % arr.replace('ARTIP', 'ATP')[:3]
+            elif data.flighttype[i] == 'OUTBOUND':
+                rawlabel += '%-3s' % sid[:3]
             else:
                 rawlabel += '%-3s' % '   '
             rawlabel += '%-1s' % ' '
@@ -809,7 +813,7 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     return rawlabel, rawmlabel, rawssrlabel
 
 
-def twrlabel(rawlabel, actdata, data, i):
+def twrlabel(rawlabel, actdata, data, i, cmddata=None, j=None):
     """
     Function: Create acc label
     Args:
@@ -817,6 +821,8 @@ def twrlabel(rawlabel, actdata, data, i):
         actdata:        node data [class]
         data:           aircraft data [class]
         i:              index for data [int]
+        cmddata:        command data [class]
+        j:              index for cmddata [int]
     Returns:
         rawlabel:       track label string [str]
         rawmlabel:      micro label string [str]
@@ -826,6 +832,13 @@ def twrlabel(rawlabel, actdata, data, i):
     Date: 21-12-2021
     """
 
+    if cmddata:
+        rwy = cmddata.rwy[j]
+        sid = cmddata.sid[j]
+    else:
+        rwy = data.rwy[i]
+        sid = data.sid[i]
+
     # Line 1
     rawlabel += '%-8s' % data.id[i][:8]
     if actdata.show_lbl == 2:
@@ -833,9 +846,9 @@ def twrlabel(rawlabel, actdata, data, i):
         if data.flighttype[i] == "INBOUND":
             rawlabel += 8*' '
         else:
-            rawlabel += '%-5s' % data.sid[i][:5]
+            rawlabel += '%-5s' % sid[:5]
             rawlabel += ' '
-            rawlabel += '%-2s' % data.rwy[i][-2:]
+            rawlabel += '%-2s' % rwy[-2:]
         # Line 3
         rawlabel += '%-8s' % data.type[i][:8]
         # Line 4
