@@ -177,8 +177,8 @@ class ScreenIO:
         Date: 23-12-2021
         """
 
-        if mode in ['APP', 'ACC']:
-            bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode))
+        if mode.upper() in ['APP', 'ACC', 'TWR', 'BLUESKY']:
+            bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode.upper()))
         else:
             return False, 'SETATCMODE: ATC Mode not recognized'
 
@@ -276,6 +276,7 @@ class ScreenIO:
         data['arr']        = bs.traf.lvnlvars.arr
         data['flighttype'] = bs.traf.lvnlvars.flighttype
         data['sid']        = bs.traf.lvnlvars.sid
+        data['rwy']        = bs.traf.lvnlvars.rwy
         data['uco']        = bs.traf.lvnlvars.uco
         data['rel']        = bs.traf.lvnlvars.rel
         data['wtc']        = bs.traf.lvnlvars.wtc

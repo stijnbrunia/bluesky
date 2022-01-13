@@ -71,7 +71,7 @@ def initbasecmds():
             "When a/c at given altitude , execute a command cmd",
         ],
         "ATCMODE": [
-            "ATCMODE APP/ACC",
+            "ATCMODE BLUESKY/APP/ACC",
             'txt',
             bs.scr.setatcmode,
             "Change the ATC mode",
@@ -406,7 +406,7 @@ def initbasecmds():
             "Show state-space diagram (=conflict prevention display/predictive ASAS)",
         ],
         "SWRAD": [
-            "SWRAD GEO/GRID/APT/VOR/WPT/LABEL/ADSBCOVERAGE/TRAIL/POLY/HISTORY [dt]/[value]",
+            "SWRAD GEO/GRID/APT/APTDETAILS/VOR/WPT/LABEL/ADSBCOVERAGE/TRAIL/POLY/HISTORY [dt]/[value]",
             "txt,[float]",
             bs.scr.feature,
             "Switch on/off elements and background of map/radar view",

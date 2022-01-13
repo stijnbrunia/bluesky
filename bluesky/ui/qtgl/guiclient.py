@@ -2,6 +2,7 @@
 from PyQt5.QtCore import QTimer
 import numpy as np
 
+from bluesky import settings
 from bluesky.ui import palette
 from bluesky.ui.polytools import PolygonSet
 from bluesky.ui.qtgl.customevents import ACDataEvent, CMDDataEvent, RouteDataEvent
@@ -190,21 +191,34 @@ class nodeData:
         self.translvl = 4500.*ft
 
         # Display flags
-        self.show_map      = True
         self.show_coast    = True
         self.show_traf     = True
         self.show_pz       = False
         self.show_fir      = True
         self.show_lbl      = 2
-        self.show_wpt      = 0
-        self.show_apt      = 0
         self.show_poly     = 1  # 0=invisible, 1=outline, 2=fill
-        self.show_histsymb = True
+        if settings.atc_mode.upper() == 'BLUESKY':
+            self.show_map = True
+            self.show_aptdetails = True
+            self.show_wpt = 1
+            self.show_apt = 1
+            self.show_histsymb = False
+        else:
+            if settings.atc_mode.upper() == 'TWR':
+                palette.background = (4, 90, 4)
+                self.show_aptdetails = True
+                self.show_histsymb = False
+            else:
+                self.show_aptdetails = False
+                self.show_histsymb = True
+            self.show_map = False
+            self.show_wpt = 0
+            self.show_apt = 0
         self.ssd_all       = False
         self.ssd_conflicts = False
         self.ssd_ownship   = set()
 
-        self.atcmode = 'APP'
+        self.atcmode = settings.atc_mode
 
 
     def siminit(self, shapes, **kwargs):
@@ -333,6 +347,10 @@ class nodeData:
         elif flag == 'APT':
             self.show_apt = not self.show_apt
 
+        # Airport details (runways, taxiways, pavements)
+        elif flag == 'APTDETAILS':
+            self.show_aptdetails = not self.show_aptdetails
+
         # Waypoint: 0 = None, 1 = VOR, 2 = also WPT, 3 = Also terminal area wpts
         elif flag == 'VOR' or flag == 'WPT' or flag == 'WP' or flag == 'NAV':
             self.show_wpt = not self.show_wpt
@@ -377,8 +395,16 @@ class nodeData:
             self.atcmode = args
             if self.atcmode == 'APP':
                 palette.aircraft = (210, 210, 200)
+                palette.coastlines = (44, 126, 41)
+            elif self.atcmode == 'ACC':
+                palette.aircraft = (0, 255, 0)
+                palette.coastlines = (44, 126, 41)
+            elif self.atcmode == 'TWR':
+                palette.aircraft = (0, 255, 0)
+                palette.coastlines = (0, 0, 0)
             else:
-                palette.aircraft = (0,255,0)
+                palette.aircraft = (0, 255, 0)
+                palette.coastlines = (85, 85, 115)
 
     def echo(self, text='', flags=0):
         if text:
