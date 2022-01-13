@@ -602,11 +602,11 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         selalt = cmddata.selalt[j]
         selspd = cmddata.selspd[j]
     else:
-        uco = data.uco[j]
-        rel = data.rel[j]
-        selhdg = data.selhdg[j]
-        selalt = data.selalt[j]
-        selspd = data.selspd[j]
+        uco = data.uco[i]
+        rel = data.rel[i]
+        selhdg = data.selhdg[i]
+        selalt = data.selalt[i]
+        selspd = data.selspd[i]
 
     if not rel:
         # Track label
