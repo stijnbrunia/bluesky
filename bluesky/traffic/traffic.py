@@ -33,7 +33,6 @@ from .activewpdata import ActiveWaypoint
 from .lvnlvariables import LVNLVariables
 from .turbulence import Turbulence
 from .trafficdatafeed import TrafficDataFeed
-from .trafficreplay import TrafficReplay
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
 from .historysymbols import HistorySymbols
@@ -772,7 +771,7 @@ class Traffic(Entity):
 
             # Show a/c info and highlight route of aircraft in radar window
             # and pan to a/c (to show route)
-            bs.scr.showroute(acid)
+            # bs.scr.showroute(acid)
 
             # Select aircraft for acidselect commands
             self.id_select = acid

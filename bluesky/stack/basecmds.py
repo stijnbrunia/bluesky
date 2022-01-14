@@ -7,7 +7,6 @@ from bluesky import settings
 from bluesky.core import select_implementation, simtime, varexplorer as ve
 from bluesky.tools import geo, aero, areafilter, plotter, printer
 from bluesky.tools.calculator import calculator
-from bluesky.traffic import trafficreplay
 from bluesky.stack.cmdparser import append_commands
 from bluesky.stack import simstack
 
