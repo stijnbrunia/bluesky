@@ -18,5 +18,11 @@ class OpenSkySource:
     Date: 14-1-2022
     """
 
+    def __init__(self):
+        self.latmin = 50.564026
+        self.latmax = 54.670686
+        self.lonmin = 2.956581
+        self.lonmax = 7.80055
+
     def update_trackdata(self):
         return
