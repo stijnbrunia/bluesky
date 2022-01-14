@@ -9,6 +9,7 @@ import datetime
 import pandas as pd
 import numpy as np
 import os
+import bluesky as bs
 from bluesky.tools.geo import qdrpos
 from bluesky.tools.aero import kts, ft
 
@@ -403,6 +404,92 @@ class VEMMISRead:
         alt = np.array(self.trackdata['ALTITUDE'])*ft
         spd = np.array(self.trackdata['SPEED'])*kts
         return simt, simt_count, acid, lat, lon, hdg, alt, spd
+
+
+class VEMMISUpdate:
+    def __init__(self):
+        self.i_next = 0
+        self.t_next = 0.
+
+        self.simt = np.array([])
+        self.simt_count = np.array([])
+        self.acid = []
+        self.lat = np.array([])
+        self.lon = np.array([])
+        self.hdg = np.array([])
+        self.alt = np.array([])
+        self.gs = np.array([])
+
+    def update_trackdata(self, simt):
+        # Check if the next data point is reached
+        if self.t_next <= simt:
+            # Track data index
+            ac_count = self.simt_count[self.i_next]
+            i0 = self.i_next  # First index
+            im = self.i_next + ac_count  # Last index + 1 for slicing (e.g. i=1; ac_count=2, therefore [1:3])
+
+            ids = self.acid[i0: im]
+            lat = self.lat[i0: im]
+            lon = self.lon[i0: im]
+            hdg = self.hdg[i0: im]
+            alt = self.alt[i0: im]
+            gs = self.gs[i0: im]
+        else:
+            ids = []
+            lat = np.array([])
+            lon = np.array([])
+            hdg = np.array([])
+            alt = np.array([])
+            gs = np.array([])
+
+        return ids, lat, lon, hdg, alt, gs
+
+    def replay(self, folder, time0=None):
+        """
+        Function: Read and process track data for replay mode
+        Args:
+            folder:     name of the folder containing the files [str]
+            time0:      start time in seconds [int, float]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        # Get path of the directory
+        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
+
+        # Check if directory exists
+        if os.path.isdir(datapath):
+            # Check if it contains the correct files
+            if not files_check(datapath):
+                return False, f"REPLAY: The folder does not contain all the required files"
+
+            # Prepare the data
+            bs.scr.echo('Preparing data from ' + datapath + ' ...')
+            vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
+            # Load flight data
+            bs.scr.echo('Loading flight data ...')
+            commands, commandstime = vemmisdata.get_flightdata()
+            # Load track data
+            bs.scr.echo('Loading track data ...')
+            trackdata = vemmisdata.get_trackdata()
+            self.simt = trackdata[0]
+            self.simt_count = trackdata[1]
+            self.acid = trackdata[2]
+            self.lat = trackdata[3]
+            self.lon = trackdata[4]
+            self.hdg = trackdata[5]
+            self.alt = trackdata[6]
+            self.gs = trackdata[7]
+
+            # Get the index and the SIM_TIME of the next data point
+            self.i_next = 0
+            self.t_next = self.simt[self.i_next]
+
+            return commands, commandstime
+        else:
+            return False, f"REPLAY: Folder does not exist"
 
 
 """
