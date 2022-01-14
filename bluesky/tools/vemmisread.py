@@ -414,7 +414,7 @@ class VEMMISRead:
 
 class VEMMISSource:
     """
-    Class definition: Update traffic data for data feed
+    Class definition: VEMMIS data as data source for data feed
     Methods:
         update_trackdata(): Update the track data for the current simulation time
         initial():          Take initial aircraft positions from data source
@@ -423,6 +423,7 @@ class VEMMISSource:
     Created by: Bob van Dillen
     Date: 14-1-2022
     """
+
     def __init__(self):
         self.i_next = 0
         self.t_next = 0.

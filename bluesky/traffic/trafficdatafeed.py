@@ -134,10 +134,8 @@ class TrafficDataFeed(Entity):
             # Update from previous aircraft states
             self.update_fromtrafprev(itraf_prev, iprev)
 
-            # ---------- Store current states ----------
+            # ---------- Aftermath ----------
             self.store_prev()
-
-            # ---------- Clear track data ----------
             self.trackdata = dict()
         else:
             # Get indices for traffic arrays and previous aircraft states
