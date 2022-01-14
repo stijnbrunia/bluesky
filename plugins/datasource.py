@@ -1,74 +1,113 @@
 """ Feed aircraft states data to simulation from data source """
-from random import randint
-import numpy as np
-import bluesky as bs
-from bluesky import core, stack, traf  #, settings, navdb, sim, scr, tools
 
-### Initialization function of your plugin. Do not change the name of this
-### function, as it is the way BlueSky recognises this file as a plugin.
+import bluesky as bs
+from bluesky import core, stack
+from bluesky.tools import vemmisread
+
+### Initialization function of the plugin
 def init_plugin():
     ''' Plugin initialisation function. '''
-    # Instantiate our example entity
-    example = Example()
+    # Instantiate class
+    datasource = DataSource()
 
     # Configuration parameters
     config = {
-        # The name of your plugin
+        # The name of the plugin
         'plugin_name':     'DATASOURCE',
 
-        # The type of this plugin. For now, only simulation plugins are possible.
+        # The type of the plugin
         'plugin_type':     'sim',
         }
 
-    # init_plugin() should always return a configuration dict.
     return config
 
-def update_trackdata():
-    return
 
-### Entities in BlueSky are objects that are created only once (called singleton)
-### which implement some traffic or other simulation functionality.
-### To define an entity that ADDS functionality to BlueSky, create a class that
-### inherits from bluesky.core.Entity.
-### To replace existing functionality in BlueSky, inherit from the class that
-### provides the original implementation (see for example the asas/eby plugin).
-class Example(core.Entity):
-    ''' Example new entity object for BlueSky. '''
+"""
+Classes
+"""
+
+
+class DataSource(core.Entity):
+    """
+    Class definition: Take data from data source and feed to simulation
+    Methods:
+        setreplay():        Replay scenario from data source
+        setinitial():       Take initial aircraft positions from data source
+        update_trackdata(): Update the track data for the current simulation time
+
+    Created by: Bob van Dillen
+    Date: 14-1-2022
+    """
     def __init__(self):
         super().__init__()
-        # All classes deriving from Entity can register lists and numpy arrays
-        # that hold per-aircraft data. This way, their size is automatically
-        # updated when aircraft are created or deleted in the simulation.
-        with self.settrafarrays():
-            self.npassengers = np.array([])
 
-    def create(self, n=1):
-        ''' This function gets called automatically when new aircraft are created. '''
-        # Don't forget to call the base class create when you reimplement this function!
-        super().create(n)
-        # After base creation we can change the values in our own states for the new aircraft
-        self.npassengers[-n:] = [randint(0, 150) for _ in range(n)]
+        self.swreplay = False
 
-    # Functions that need to be called periodically can be indicated to BlueSky
-    # with the timed_function decorator
-    @core.timed_function(name='example', dt=5)
-    def update(self):
-        ''' Periodic update function for our example entity. '''
-        stack.stack('ECHO Example update: creating a random aircraft')
-        stack.stack('MCRE 1')
+        self.datasource = None
 
-    # You can create new stack commands with the stack.command decorator.
-    # By default, the stack command name is set to the function name.
-    # The default argument type is a case-sensitive word. You can indicate different
-    # types using argument annotations. This is done in the below function:
-    # - The acid argument is a BlueSky-specific argument with type 'acid'.
-    #       This converts callsign to the corresponding index in the traffic arrays.
-    # - The count argument is a regular int.
-    @stack.command
-    def passengers(self, acid: 'acid', count: int = -1):
-        ''' Set the number of passengers on aircraft 'acid' to 'count'. '''
-        if count < 0:
-            return True, f'Aircraft {traf.id[acid]} currently has {self.npassengers[acid]} passengers on board.'
+    @stack.command(name='REPLAY', brief='REPLAY DATATYPE FOLDER (TIME [HH:MM:SS])')
+    def setreplay(self, datatype: str, folder: str, time0: str = ''):
+        """
+        Function: Replay scenario from data source
+        Args:
+            datatype:   data type [str]
+            folder:     folder name [str]
+            time0:      start time [str]
+        Returns: -
 
-        self.npassengers[acid] = count
-        return True, f'The number of passengers on board {traf.id[acid]} is set to {count}.'
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        self.swreplay = True
+
+        if datatype.upper() == 'VEMMIS':
+            self.datasource = vemmisread.VEMMISSource()
+
+        commands, commandstime = self.datasource.replay(folder, time0)
+        stack.set_scendata(commandstime, commands)
+
+    @stack.command(name='INITIAL', brief='INITIAL DATATYPE FOLDER (TIME [HH:MM:SS])')
+    def setinitial(self, datatype: str, folder: str, time0: str = ''):
+        """
+        Function: Take initial aircraft positions from data source
+        Args:
+            datatype:   data type [str]
+            folder:     folder name [str]
+            time0:      start time [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        if datatype.upper() == 'VEMMIS':
+            self.datasource = vemmisread.VEMMISSource()
+
+        commands, commandstime = self.datasource.initial(folder, time0)
+        stack.set_scendata(commandstime, commands)
+
+    @core.timed_function(name='datafeed', dt=0.5)
+    def update_trackdata(self):
+        """
+        Function: Update the track data for the current simulation time
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        if not self.swreplay:
+            return
+
+        ids, lat, lon, hdg, alt, gs = self.datasource.update_trackdata(bs.sim.simt)
+
+        trackdata = {'id': ids,
+                     'lat': lat,
+                     'lon': lon,
+                     'hdg': hdg,
+                     'alt': alt,
+                     'gs': gs}
+
+        bs.traf.trafdatafeed.trackdata = trackdata

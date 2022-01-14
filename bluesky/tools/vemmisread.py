@@ -317,10 +317,11 @@ class VEMMISRead:
         time = datetime_start.strftime("%H:%M:%S")
         return day, month, year, time
 
-    def get_flightdata(self):
+    def get_flightdata(self, swdatafeed):
         """
         Function: Get the commands that need to be executed in the simulation
-        Args: -
+        Args:
+            swdatafeed:     add aircraft to datafeed [bool]
         Returns:
             command:        the commands [lst(str)]
             commandtime:    the time when the command needs to be executed [lst(float)]
@@ -350,22 +351,27 @@ class VEMMISRead:
         acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
         acarr           = self.flightdata['STACK'].astype(str).str.replace('nan', '')
         # Command strings
-        create      = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
-        replay      = list("ADDREPLAY "+acid)
-        arr         = list("ARR "+acid+" "+acarr)
-        sid         = list("SID "+acid+" "+acsid)
-        flighttype  = list("FLIGHTTYPE "+acid+", "+acflighttype)
-        wtc         = list("WTC "+acid+", "+acwtc)
-        origin      = list("ORIG "+acid+", "+self.flightdata['ADEP'])
-        destination = list("DEST "+acid+", "+self.flightdata['DEST'])
-        delete      = list("DEL "+acid)
+        create       = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        arr          = list("ARR "+acid+" "+acarr)
+        sid          = list("SID "+acid+" "+acsid)
+        flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
+        wtc          = list("WTC "+acid+", "+acwtc)
+        origin       = list("ORIG "+acid+", "+self.flightdata['ADEP'])
+        destination  = list("DEST "+acid+", "+self.flightdata['DEST'])
+        lnav         = list("LNAV "+acid+" OFF")
+        delete       = list("DEL "+acid)
+        if swdatafeed:
+            datafeed = list("ADDDATAFEED "+acid)
+        else:
+            datafeed = ['']*len(acid)
         # Time
         tcreate = list(self.flightdata['SIM_START'])
         tset    = list(self.flightdata['SIM_START']+0.01)
+        tlnav   = list(self.flightdata['SIM_START']+0.02)
         tdelete = list(self.flightdata['SIM_END'])
 
-        command     += create + replay + arr + sid + flighttype + wtc + origin + destination + delete
-        commandtime += tcreate + 7*tset + tdelete
+        command     += create+datafeed+arr+sid+flighttype+wtc+origin+destination+lnav+delete
+        commandtime += tcreate + 7*tset + tlnav + tdelete
 
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
@@ -406,7 +412,16 @@ class VEMMISRead:
         return simt, simt_count, acid, lat, lon, hdg, alt, spd
 
 
-class VEMMISUpdate:
+class VEMMISSource:
+    """
+    Class definition: Update traffic data for data feed
+    Methods:
+        update_trackdata(): Update the track data for the current simulation time
+        replay():           Read and process track data for replay mode
+
+    Created by: Bob van Dillen
+    Date: 14-1-2022
+    """
     def __init__(self):
         self.i_next = 0
         self.t_next = 0.
@@ -420,9 +435,25 @@ class VEMMISUpdate:
         self.alt = np.array([])
         self.gs = np.array([])
 
-    def update_trackdata(self, simt):
+    def update_trackdata(self, simtime):
+        """
+        Function: Update the track data for the current simulation time
+        Args:
+            simtime:    simulation time [float]
+        Returns:
+            ids:        callsigns [list]
+            lat:        latitudes [array]
+            lon:        longitudes [array]
+            hdg:        headings [array]
+            alt:        altitudes [array]
+            gs:         ground speeds [array]
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
         # Check if the next data point is reached
-        if self.t_next <= simt:
+        if self.t_next <= simtime:
             # Track data index
             ac_count = self.simt_count[self.i_next]
             i0 = self.i_next  # First index
@@ -434,6 +465,9 @@ class VEMMISUpdate:
             hdg = self.hdg[i0: im]
             alt = self.alt[i0: im]
             gs = self.gs[i0: im]
+
+            self.i_next = im
+            self.t_next = self.simt[im]
         else:
             ids = []
             lat = np.array([])
@@ -444,7 +478,42 @@ class VEMMISUpdate:
 
         return ids, lat, lon, hdg, alt, gs
 
-    def replay(self, folder, time0=None):
+    @staticmethod
+    def initial(folder, time0):
+        """
+        Function: Take initial aircraft positions from data source
+        Args:
+            folder:     name of the folder containing the files [str]
+            time0:      start time in seconds [int, float]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        # Get path of the directory
+        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
+
+        # Check if directory exists
+        if os.path.isdir(datapath):
+            # Check if it contains the correct files
+            if not files_check(datapath):
+                return False, f"REPLAY: The folder does not contain all the required files"
+
+            # Prepare the data
+            bs.scr.echo('Preparing data from ' + datapath + ' ...')
+            vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
+            # Load flight data
+            bs.scr.echo('Loading flight data ...')
+            commands, commandstime = vemmisdata.get_flightdata(swdatafeed=False)
+
+            bs.scr.echo('Done')
+
+            return commands, commandstime
+        else:
+            return False, f"REPLAY: Folder does not exist"
+
+    def replay(self, folder, time0):
         """
         Function: Read and process track data for replay mode
         Args:
@@ -470,7 +539,7 @@ class VEMMISUpdate:
             vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
             # Load flight data
             bs.scr.echo('Loading flight data ...')
-            commands, commandstime = vemmisdata.get_flightdata()
+            commands, commandstime = vemmisdata.get_flightdata(swdatafeed=True)
             # Load track data
             bs.scr.echo('Loading track data ...')
             trackdata = vemmisdata.get_trackdata()
@@ -486,6 +555,8 @@ class VEMMISUpdate:
             # Get the index and the SIM_TIME of the next data point
             self.i_next = 0
             self.t_next = self.simt[self.i_next]
+
+            bs.scr.echo('Done')
 
             return commands, commandstime
         else:

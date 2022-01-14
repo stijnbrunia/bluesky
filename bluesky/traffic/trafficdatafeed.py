@@ -32,6 +32,7 @@ class TrafficDataFeed(Entity):
         store_prev():           Store the previous aircraft states
         indices_update():       Get the indices for the traffic arrays and the trackdata
         setdatafeed():          Add aircraft to datafeed mode
+        uco():                  Stop taking the aircraft state from data sources (simulate the aircraft)
 
     Created by: Bob van Dillen
     Date: 13-1-2022
@@ -298,3 +299,20 @@ class TrafficDataFeed(Entity):
         acid = bs.traf.id[idx]
         self.datafeedids.append(acid)
         self.datafeed[idx] = True
+
+    def uco(self, idx):
+        """
+        Function: Stop taking the aircraft state from data sources (simulate the aircraft)
+        Args:
+            idx:    index for traffic arrays
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        acid = bs.traf.id[idx]
+        if acid in self.datafeedids:
+            self.datafeed = False
+            self.datafeedids.remove(acid)
+            bs.stack.stackbase.del_scencmds(idx)

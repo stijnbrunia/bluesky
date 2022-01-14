@@ -32,6 +32,7 @@ from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
 from .lvnlvariables import LVNLVariables
 from .turbulence import Turbulence
+from .trafficdatafeed import TrafficDataFeed
 from .trafficreplay import TrafficReplay
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
@@ -96,6 +97,8 @@ class Traffic(Entity):
         self.activate_HR = False
 
         self.id_select = ''  # aircraft that previously received a command
+
+        self.trafdatafeed = TrafficDataFeed()
 
         with self.settrafarrays():
             # Aircraft Info
@@ -180,7 +183,7 @@ class Traffic(Entity):
             self.work   = np.array([])  # Work done throughout the flight
 
             # Traffic that is updated from data
-            self.trafreplay = TrafficReplay()
+            # self.trafreplay = TrafficReplay()
 
             # LVNL Variables
             self.lvnlvars = LVNLVariables()  # Variables used by LVNL
@@ -461,7 +464,7 @@ class Traffic(Entity):
         self.update_pos()
 
         # --------- Update from data --------------------------
-        self.trafreplay.update()
+        self.trafdatafeed.update()
 
         #---------- Simulate Turbulence -----------------------
         self.turbulence.update()
