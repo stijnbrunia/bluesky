@@ -479,46 +479,11 @@ class VEMMISSource:
 
         return ids, lat, lon, hdg, alt, gs
 
-    @staticmethod
-    def initial(folder, time0):
-        """
-        Function: Take initial aircraft positions from data source
-        Args:
-            folder:     name of the folder containing the files [str]
-            time0:      start time in seconds [int, float]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 14-1-2022
-        """
-
-        # Get path of the directory
-        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
-
-        # Check if directory exists
-        if os.path.isdir(datapath):
-            # Check if it contains the correct files
-            if not files_check(datapath):
-                return False, f"REPLAY: The folder does not contain all the required files"
-
-            # Prepare the data
-            bs.scr.echo('Preparing data from ' + datapath + ' ...')
-            vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
-            # Load flight data
-            bs.scr.echo('Loading flight data ...')
-            commands, commandstime = vemmisdata.get_flightdata(swdatafeed=False)
-
-            bs.scr.echo('Done')
-
-            return commands, commandstime
-        else:
-            return False, f"REPLAY: Folder does not exist"
-
-    def replay(self, folder, time0):
+    def replay(self, datapath, time0):
         """
         Function: Read and process track data for replay mode
         Args:
-            folder:     name of the folder containing the files [str]
+            datapath:   path to the folder containing the files [str]
             time0:      start time in seconds [int, float]
         Returns: -
 
@@ -526,76 +491,55 @@ class VEMMISSource:
         Date: 14-1-2022
         """
 
-        # Get path of the directory
-        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
+        # Prepare the data
+        bs.scr.echo('Preparing data from ' + datapath + ' ...')
+        vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
+        # Load flight data
+        bs.scr.echo('Loading flight data ...')
+        commands, commandstime = vemmisdata.get_flightdata(swdatafeed=True)
+        # Load track data
+        bs.scr.echo('Loading track data ...')
+        trackdata = vemmisdata.get_trackdata()
+        self.simt = trackdata[0]
+        self.simt_count = trackdata[1]
+        self.acid = trackdata[2]
+        self.lat = trackdata[3]
+        self.lon = trackdata[4]
+        self.hdg = trackdata[5]
+        self.alt = trackdata[6]
+        self.gs = trackdata[7]
 
-        # Check if directory exists
-        if os.path.isdir(datapath):
-            # Check if it contains the correct files
-            if not files_check(datapath):
-                return False, f"REPLAY: The folder does not contain all the required files"
+        # Get the index and the SIM_TIME of the next data point
+        self.i_next = 0
+        self.t_next = self.simt[0]
 
-            # Prepare the data
-            bs.scr.echo('Preparing data from ' + datapath + ' ...')
-            vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
-            # Load flight data
-            bs.scr.echo('Loading flight data ...')
-            commands, commandstime = vemmisdata.get_flightdata(swdatafeed=True)
-            # Load track data
-            bs.scr.echo('Loading track data ...')
-            trackdata = vemmisdata.get_trackdata()
-            self.simt = trackdata[0]
-            self.simt_count = trackdata[1]
-            self.acid = trackdata[2]
-            self.lat = trackdata[3]
-            self.lon = trackdata[4]
-            self.hdg = trackdata[5]
-            self.alt = trackdata[6]
-            self.gs = trackdata[7]
+        bs.scr.echo('Done')
 
-            # Get the index and the SIM_TIME of the next data point
-            self.i_next = 0
-            self.t_next = self.simt[self.i_next]
+        return commands, commandstime
 
-            bs.scr.echo('Done')
+    @staticmethod
+    def initial(datapath, time0):
+        """
+        Function: Take initial aircraft positions from data source
+        Args:
+            datapath:   path to the folder containing the files [str]
+            time0:      start time in seconds [int, float]
+        Returns: -
 
-            return commands, commandstime
-        else:
-            return False, f"REPLAY: Folder does not exist"
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
 
+        # Prepare the data
+        bs.scr.echo('Preparing data from ' + datapath + ' ...')
+        vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
+        # Load flight data
+        bs.scr.echo('Loading flight data ...')
+        commands, commandstime = vemmisdata.get_flightdata(swdatafeed=False)
 
-"""
-Static functions
-"""
+        bs.scr.echo('Done')
 
-
-def files_check(data_path):
-    """
-    Function: Check if the folder contains the required files
-    Args:
-        data_path:  path to the folder [str]
-    Returns:
-        True/False: True if required files are present, else False [bool]
-
-    Created by: Bob van Dillen
-    Date: 15-12-2021
-    """
-
-    file_array = np.array([])
-
-    for root, dirs, files in os.walk(data_path):
-        for file in files:
-            if file.upper().startswith('FLIGHTS'):
-                file_array = np.append(file_array, 'FLIGHTS')
-            elif file.upper().startswith('FLIGHTTIMES'):
-                file_array = np.append(file_array, 'FLIGHTTIMES')
-            elif file.upper().startswith('TRACKS'):
-                file_array = np.append(file_array, 'TRACKS')
-
-    if len(file_array) == 3 and len(np.unique(file_array)) == 3:
-        return True
-
-    return False
+        return commands, commandstime
 
 
 """
