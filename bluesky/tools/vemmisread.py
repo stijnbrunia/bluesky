@@ -89,7 +89,7 @@ class VEMMISRead:
                     self.flights = pd.read_csv(self.data_path+'\\'+file, sep=';')
                 elif file.upper().startswith('FLIGHTTIMES'):
                     self.flighttimes = pd.read_csv(self.data_path+'\\'+file, sep=';')
-                elif file.upper().startswith('TRACKS'):
+                elif file.upper().startswith('TRACK'):
                     self.tracks = pd.read_csv(self.data_path+'\\'+file, sep=';')
                 elif file.upper().startswith('TAKEOFFS'):
                     self.takeoffs = pd.read_csv(self.data_path+'\\'+file, sep=';')

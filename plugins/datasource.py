@@ -178,15 +178,15 @@ def files_check(datatype, datapath):
 
     file_array = np.array([])
 
-    if datatype == 'VEMMIS':
+    if datatype.upper() == 'VEMMIS':
         for root, dirs, files in os.walk(datapath):
             for file in files:
                 if file.upper().startswith('FLIGHTS'):
                     file_array = np.append(file_array, 'FLIGHTS')
                 elif file.upper().startswith('FLIGHTTIMES'):
                     file_array = np.append(file_array, 'FLIGHTTIMES')
-                elif file.upper().startswith('TRACKS'):
-                    file_array = np.append(file_array, 'TRACKS')
+                elif file.upper().startswith('TRACK'):
+                    file_array = np.append(file_array, 'TRACK')
 
         if len(file_array) == 3 and len(np.unique(file_array)) == 3:
             return True
