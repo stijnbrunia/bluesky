@@ -182,9 +182,6 @@ class Traffic(Entity):
             self.eps    = np.array([])  # Small nonzero numbers
             self.work   = np.array([])  # Work done throughout the flight
 
-            # Traffic that is updated from data
-            # self.trafreplay = TrafficReplay()
-
             # LVNL Variables
             self.lvnlvars = LVNLVariables()  # Variables used by LVNL
 
