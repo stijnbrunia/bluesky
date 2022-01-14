@@ -417,6 +417,7 @@ class VEMMISSource:
     Class definition: Update traffic data for data feed
     Methods:
         update_trackdata(): Update the track data for the current simulation time
+        initial():          Take initial aircraft positions from data source
         replay():           Read and process track data for replay mode
 
     Created by: Bob van Dillen
