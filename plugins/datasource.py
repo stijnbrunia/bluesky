@@ -4,7 +4,7 @@ import os
 import numpy as np
 import bluesky as bs
 from bluesky import core, stack
-from bluesky.tools import vemmisread
+from bluesky.tools import livetraffic, vemmisread
 
 ### Initialization function of the plugin
 def init_plugin():
@@ -41,10 +41,11 @@ class DataSource(core.Entity):
     Created by: Bob van Dillen
     Date: 14-1-2022
     """
+
     def __init__(self):
         super().__init__()
 
-        self.swreplay = False
+        self.swupdate = False
         self.datasource = None
 
     def reset(self):
@@ -59,7 +60,7 @@ class DataSource(core.Entity):
 
         super().reset()
 
-        self.swreplay = False
+        self.swupdate = False
         self.datasource = None
 
     @stack.command(name='REPLAY', brief='REPLAY DATATYPE FOLDER (TIME [HH:MM:SS])')
@@ -96,7 +97,7 @@ class DataSource(core.Entity):
         commands, commandstime = self.datasource.replay(datapath, time0)
         stack.set_scendata(commandstime, commands)
         # Set replay
-        self.swreplay = True
+        self.swupdate = True
 
     @stack.command(name='INITIAL', brief='INITIAL DATATYPE FOLDER (TIME [HH:MM:SS])')
     def setinitial(self, datatype: str, folder: str, time0: str = ''):
@@ -132,6 +133,18 @@ class DataSource(core.Entity):
         commands, commandstime = self.datasource.initial(datapath, time0)
         stack.set_scendata(commandstime, commands)
 
+    @stack.command(name='LIVE', brief='LIVE DATATYPE')
+    def setlive(self, datatype: str):
+        if datatype.upper() not in ['OPENSKY']:
+            return False, 'INITIAL: Data type not supported'
+
+        if datatype.upper() == 'OPENSKY':
+            self.datasource = livetraffic.OpenSkySource()
+
+        commands, commandstime = self.datasource.live()
+        stack.set_scendata(commandstime, commands)
+        self.swupdate = True
+
     @core.timed_function(name='datafeed', dt=0.5)
     def update_trackdata(self):
         """
@@ -143,7 +156,7 @@ class DataSource(core.Entity):
         Date: 14-1-2022
         """
 
-        if not self.swreplay:
+        if not self.swupdate:
             return
 
         ids, lat, lon, hdg, alt, gs = self.datasource.update_trackdata(bs.sim.simt)

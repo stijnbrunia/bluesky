@@ -37,6 +37,7 @@ class LVNLVariables(Entity):
             self.arr = []                           # Arrival/Stack
             self.flighttype = []                    # Flight type
             self.lblpos = []                        # Label position
+            self.lblshow = []                       # show labels
             self.rel = np.array([], dtype=np.bool)  # Release
             self.rwy = []                           # Runway
             self.sid = []                           # SID
