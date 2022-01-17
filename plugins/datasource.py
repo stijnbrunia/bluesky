@@ -4,7 +4,8 @@ import os
 import numpy as np
 import bluesky as bs
 from bluesky import core, stack
-from bluesky.tools import livetraffic, vemmisread
+from bluesky.tools import livetraffic, misc, vemmisread
+from bluesky.stack import simstack
 
 ### Initialization function of the plugin
 def init_plugin():
@@ -35,6 +36,7 @@ class DataSource(core.Entity):
     Methods:
         reset():            Reset variables
         setreplay():        Replay scenario from data source
+        setlive():          Load live data into BlueSky
         setinitial():       Take initial aircraft positions from data source
         update_trackdata(): Update the track data for the current simulation time
 
@@ -45,7 +47,9 @@ class DataSource(core.Entity):
     def __init__(self):
         super().__init__()
 
-        self.swupdate = False
+        self.swreplay = False
+        self.swlive = False
+        self.swinitial = False
         self.datasource = None
 
     def reset(self):
@@ -60,7 +64,9 @@ class DataSource(core.Entity):
 
         super().reset()
 
-        self.swupdate = False
+        self.swreplay = False
+        self.swlive = False
+        self.swinitial = False
         self.datasource = None
 
     @stack.command(name='REPLAY', brief='REPLAY DATATYPE FOLDER (TIME [HH:MM:SS])')
@@ -78,6 +84,13 @@ class DataSource(core.Entity):
         """
 
         # --------------- Check inputs ---------------
+        # Modes
+        if self.swreplay:
+            return False, 'REPLAY: Already in REPLAY mode'
+        if self.swlive:
+            return False, 'REPLAY: Already in LIVE mode'
+        if self.swinitial:
+            return False, 'REPLAY: Already in INITIAL mode'
         # Data type
         if datatype.upper() not in ['VEMMIS']:
             return False, 'REPLAY: Data type not supported'
@@ -95,9 +108,43 @@ class DataSource(core.Entity):
             self.datasource = vemmisread.VEMMISSource()
         # Get commands data
         commands, commandstime = self.datasource.replay(datapath, time0)
-        stack.set_scendata(commandstime, commands)
+        simstack.stack_commands(commandstime, commands)
         # Set replay
-        self.swupdate = True
+        self.swreplay = True
+
+    @stack.command(name='LIVE', brief='LIVE DATATYPE')
+    def setlive(self, datatype: str):
+        """
+        Function: Load live data into BlueSky
+        Args:
+            datatype:   data type [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 15-1-2022
+        """
+
+        # --------------- Check inputs ---------------
+        # Modes
+        if self.swreplay:
+            return False, 'LIVE: Already in REPLAY mode'
+        if self.swlive:
+            return False, 'LIVE: Already in LIVE mode'
+        if self.swinitial:
+            return False, 'LIVE: Already in INITIAL mode'
+        # Data type
+        if datatype.upper() not in ['OPENSKY']:
+            return False, 'LIVE: Data type not supported'
+
+        # --------------- Access data ---------------
+        # Get data type
+        if datatype.upper() == 'OPENSKY':
+            self.datasource = livetraffic.OpenSkySource()
+        # Get commands data
+        commands, commandstime = self.datasource.live()
+        simstack.stack_commands(commandstime, commands)
+        # Set live
+        self.swlive = True
 
     @stack.command(name='INITIAL', brief='INITIAL DATATYPE FOLDER (TIME [HH:MM:SS])')
     def setinitial(self, datatype: str, folder: str, time0: str = ''):
@@ -114,8 +161,15 @@ class DataSource(core.Entity):
         """
 
         # --------------- Check inputs ---------------
+        # Modes
+        if self.swreplay:
+            return False, 'INITIAL: Already in REPLAY mode'
+        if self.swlive:
+            return False, 'INITIAL: Already in LIVE mode'
+        if self.swinitial:
+            return False, 'INITIAL: Already in INITIAL mode'
         # Data type
-        if datatype.upper() not in ['VEMMIS']:
+        if datatype.upper() not in ['VEMMIS', 'OPENSKY']:
             return False, 'INITIAL: Data type not supported'
         # Folder
         datapath = os.getcwd() + "\\scenario\\" + folder.lower()
@@ -129,21 +183,11 @@ class DataSource(core.Entity):
         # Get data type
         if datatype.upper() == 'VEMMIS':
             self.datasource = vemmisread.VEMMISSource()
+        elif datatype.upper() == 'OPENSKY':
+            self.datasource = livetraffic.OpenSkySource()
         # Get commands data
         commands, commandstime = self.datasource.initial(datapath, time0)
-        stack.set_scendata(commandstime, commands)
-
-    @stack.command(name='LIVE', brief='LIVE DATATYPE')
-    def setlive(self, datatype: str):
-        if datatype.upper() not in ['OPENSKY']:
-            return False, 'INITIAL: Data type not supported'
-
-        if datatype.upper() == 'OPENSKY':
-            self.datasource = livetraffic.OpenSkySource()
-
-        commands, commandstime = self.datasource.live()
-        stack.set_scendata(commandstime, commands)
-        self.swupdate = True
+        simstack.stack_commands(commandstime, commands)
 
     @core.timed_function(name='datafeed', dt=0.5)
     def update_trackdata(self):
@@ -156,11 +200,14 @@ class DataSource(core.Entity):
         Date: 14-1-2022
         """
 
-        if not self.swupdate:
+        # Check if update is needed
+        if not self.swreplay and not self.swlive:
             return
 
-        ids, lat, lon, hdg, alt, gs = self.datasource.update_trackdata(bs.sim.simt)
+        # Get data
+        cmds, ids, lat, lon, hdg, alt, gs = self.datasource.update_trackdata(bs.sim.simt)
 
+        # Create track data
         trackdata = {'id': ids,
                      'lat': lat,
                      'lon': lon,
@@ -168,7 +215,12 @@ class DataSource(core.Entity):
                      'alt': alt,
                      'gs': gs}
 
+        # Send trackdata
         bs.traf.trafdatafeed.trackdata = trackdata
+
+        # Stack commands
+        for cmd in cmds:
+            bs.stack.stack(cmd)
 
 
 """

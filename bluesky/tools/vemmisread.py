@@ -416,9 +416,10 @@ class VEMMISSource:
     """
     Class definition: VEMMIS data as data source for data feed
     Methods:
-        update_trackdata(): Update the track data for the current simulation time
-        initial():          Take initial aircraft positions from data source
+        reset():            Reset variables
         replay():           Read and process track data for replay mode
+        initial():          Take initial aircraft positions from VEMMIS
+        update_trackdata(): Update the track data for the current simulation time
 
     Created by: Bob van Dillen
     Date: 14-1-2022
@@ -437,48 +438,27 @@ class VEMMISSource:
         self.alt = np.array([])
         self.gs = np.array([])
 
-    def update_trackdata(self, simtime):
+    def reset(self):
         """
-        Function: Update the track data for the current simulation time
-        Args:
-            simtime:    simulation time [float]
-        Returns:
-            ids:        callsigns [list]
-            lat:        latitudes [array]
-            lon:        longitudes [array]
-            hdg:        headings [array]
-            alt:        altitudes [array]
-            gs:         ground speeds [array]
+        Function: Reset variables
+        Args: -
+        Returns: -
 
         Created by: Bob van Dillen
-        Date: 14-1-2022
+        Date: 17-1-2022
         """
 
-        # Check if the next data point is reached
-        if self.t_next <= simtime:
-            # Track data index
-            ac_count = self.simt_count[self.i_next]
-            i0 = self.i_next  # First index
-            im = self.i_next + ac_count  # Last index + 1 for slicing (e.g. i=1; ac_count=2, therefore [1:3])
+        self.i_next = 0
+        self.t_next = 0.
 
-            ids = self.acid[i0: im]
-            lat = self.lat[i0: im]
-            lon = self.lon[i0: im]
-            hdg = self.hdg[i0: im]
-            alt = self.alt[i0: im]
-            gs = self.gs[i0: im]
-
-            self.i_next = im
-            self.t_next = self.simt[im]
-        else:
-            ids = []
-            lat = np.array([])
-            lon = np.array([])
-            hdg = np.array([])
-            alt = np.array([])
-            gs = np.array([])
-
-        return ids, lat, lon, hdg, alt, gs
+        self.simt = np.array([])
+        self.simt_count = np.array([])
+        self.acid = []
+        self.lat = np.array([])
+        self.lon = np.array([])
+        self.hdg = np.array([])
+        self.alt = np.array([])
+        self.gs = np.array([])
 
     def replay(self, datapath, time0):
         """
@@ -521,7 +501,7 @@ class VEMMISSource:
     @staticmethod
     def initial(datapath, time0):
         """
-        Function: Take initial aircraft positions from data source
+        Function: Take initial aircraft positions from VEMMIS
         Args:
             datapath:   path to the folder containing the files [str]
             time0:      start time in seconds [int, float]
@@ -541,6 +521,53 @@ class VEMMISSource:
         bs.scr.echo('Done')
 
         return commands, commandstime
+
+    def update_trackdata(self, simtime):
+        """
+        Function: Update the track data for the current simulation time
+        Args:
+            simtime:    simulation time [float]
+        Returns:
+            ids:        callsigns [list]
+            lat:        latitudes [array]
+            lon:        longitudes [array]
+            hdg:        headings [array]
+            alt:        altitudes [array]
+            gs:         ground speeds [array]
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        # Check if the next data point is reached
+        if self.t_next <= simtime:
+            # Commands
+            cmds = []
+
+            # Track data index
+            ac_count = self.simt_count[self.i_next]
+            i0 = self.i_next  # First index
+            im = self.i_next + ac_count  # Last index + 1 for slicing (e.g. i=1; ac_count=2, therefore [1:3])
+
+            ids = self.acid[i0: im]
+            lat = self.lat[i0: im]
+            lon = self.lon[i0: im]
+            hdg = self.hdg[i0: im]
+            alt = self.alt[i0: im]
+            gs = self.gs[i0: im]
+
+            self.i_next = im
+            self.t_next = self.simt[im]
+        else:
+            cmds = []
+            ids = []
+            lat = np.array([])
+            lon = np.array([])
+            hdg = np.array([])
+            alt = np.array([])
+            gs = np.array([])
+
+        return cmds, ids, lat, lon, hdg, alt, gs
 
 
 """

@@ -450,8 +450,10 @@ def get_indices(arr, items):
     Date: 1-12-2021
     """
 
-    if isinstance(items, (str, int, float)):
-        i = np.nonzero(np.array([items])[:, None] == arr)[1]
+    if len(items) == 0:
+        i = np.array([]).astype(int)
+    elif isinstance(items, (str, int, float)):
+        i = np.nonzero(np.array([items])[:, None] == arr)[1].astype(int)
     else:
-        i = np.nonzero(np.array(items)[:, None] == arr)[1]
+        i = np.nonzero(np.array(items)[:, None] == arr)[1].astype(int)
     return i
