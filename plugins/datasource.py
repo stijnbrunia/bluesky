@@ -147,7 +147,7 @@ class DataSource(core.Entity):
         self.swlive = True
 
     @stack.command(name='INITIAL', brief='INITIAL DATATYPE FOLDER (TIME [HH:MM:SS])')
-    def setinitial(self, datatype: str, folder: str, time0: str = ''):
+    def setinitial(self, datatype: str, folder: str = '', time0: str = ''):
         """
         Function: Take initial aircraft positions from data source
         Args:
@@ -173,11 +173,12 @@ class DataSource(core.Entity):
             return False, 'INITIAL: Data type not supported'
         # Folder
         datapath = os.getcwd() + "\\scenario\\" + folder.lower()
-        if not os.path.isdir(datapath):
-            return False, 'INITIAL: Folder does not exist'
-        # Files
-        if not files_check(datatype, datapath):
-            return False, 'INITIAL: The folder does not contain all the required files'
+        if datatype.upper() != 'OPENSKY':
+            if not os.path.isdir(datapath):
+                return False, 'INITIAL: Folder does not exist'
+            # Files
+            if not files_check(datatype, datapath):
+                return False, 'INITIAL: The folder does not contain all the required files'
 
         # --------------- Access data ---------------
         # Get data type

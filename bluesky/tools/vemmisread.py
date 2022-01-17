@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import os
 import bluesky as bs
+from bluesky.tools import aero
 from bluesky.tools.geo import qdrpos
 from bluesky.tools.aero import kts, ft
 
@@ -345,7 +346,9 @@ class VEMMISRead:
         aclon           = self.flightdata['LONGITUDE'].astype(str)
         achdg           = self.flightdata['HEADING'].astype(str)
         acalt           = self.flightdata['ALTITUDE'].astype(str)
-        acspd           = self.flightdata['SPEED'].astype(str)
+        self.flightdata['CAS'] = aero.vtas2cas(self.flightdata['SPEED']*aero.kts,
+                                               self.flightdata['ALTITUDE']*aero.ft)/aero.kts
+        acspd           = self.flightdata['CAS'].astype(str)
         acflighttype    = self.flightdata['FLIGHT_TYPE']
         acwtc           = self.flightdata['WTC']
         acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
@@ -407,8 +410,8 @@ class VEMMISRead:
         lat = np.array(self.trackdata['LATITUDE'])
         lon = np.array(self.trackdata['LONGITUDE'])
         hdg = np.array(self.trackdata['HEADING'])
-        alt = np.array(self.trackdata['ALTITUDE'])*ft
-        spd = np.array(self.trackdata['SPEED'])*kts
+        alt = np.array(self.trackdata['ALTITUDE'])*aero.ft
+        spd = np.array(self.trackdata['SPEED'])*aero.kts
         return simt, simt_count, acid, lat, lon, hdg, alt, spd
 
 

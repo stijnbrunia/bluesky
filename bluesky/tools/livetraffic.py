@@ -91,7 +91,8 @@ class OpenSkySource:
             aclon = data_df['lon'].astype(str)
             achdg = data_df['true_track'].astype(str)
             acalt = (data_df['baro_altitude']/aero.ft).astype(str)
-            acspd = (data_df['velocity']/aero.kts).astype(str)
+            data_df['cas'] = aero.vtas2cas(data_df['velocity'], data_df['baro_altitude'])/aero.kts  # Assume GS = TAS
+            acspd = data_df['cas'].astype(str)
 
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
@@ -110,7 +111,7 @@ class OpenSkySource:
 
         return commands, commandstime
 
-    def initial(self):
+    def initial(self, datapath, time0):
         """
         Function: Take initial aircraft positions from live data
         Args: -
@@ -141,7 +142,8 @@ class OpenSkySource:
             aclon = data_df['lon'].astype(str)
             achdg = data_df['true_track'].astype(str)
             acalt = (data_df['baro_altitude']/aero.ft).astype(str)
-            acspd = (data_df['velocity']/aero.kts).astype(str)
+            data_df['cas'] = aero.vtas2cas(data_df['velocity'], data_df['baro_altitude'])/aero.kts  # Assume GS = TAS
+            acspd = data_df['cas'].astype(str)
 
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
