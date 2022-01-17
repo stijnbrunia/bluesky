@@ -78,6 +78,7 @@ class OpenSkySource:
             # Process data
             data_df = pd.DataFrame(data['states'], columns=self.cols)
             data_df['callsign'] = data_df['callsign'].str.strip()
+            data_df['callsign'].replace('', float('NaN'), inplace=True)
             data_df.dropna(subset=['callsign', 'lon', 'lat', 'baro_altitude', 'velocity', 'true_track'],
                            inplace=True)
 
@@ -129,6 +130,7 @@ class OpenSkySource:
             # Process data
             data_df = pd.DataFrame(data['states'], columns=self.cols)
             data_df['callsign'] = data_df['callsign'].str.strip()
+            data_df['callsign'].replace('', float('NaN'), inplace=True)
             data_df.dropna(subset=['callsign', 'lon', 'lat', 'baro_altitude', 'velocity', 'true_track'],
                            inplace=True)
 
@@ -186,6 +188,7 @@ class OpenSkySource:
                 # Process data
                 data_df = pd.DataFrame(data['states'], columns=self.cols)
                 data_df['callsign'] = data_df['callsign'].str.strip()
+                data_df['callsign'].replace('', float('NaN'), inplace=True)
                 data_df.dropna(subset=['callsign', 'lon', 'lat', 'baro_altitude', 'velocity', 'true_track'],
                                inplace=True)
             except:
@@ -262,12 +265,12 @@ class OpenSkySource:
             if mode == 'LIVE':
                 cmds.append("ADDDATAFEED "+acid)
 
-            # Remove aircraft from track data
-            ids.pop(i)
-            lat = np.delete(lat, i)
-            lon = np.delete(lon, i)
-            hdg = np.delete(hdg, i)
-            alt = np.delete(alt, i)
-            gs = np.delete(gs, i)
+        # Remove aircraft from track data
+        ids = list(np.delete(ids, inew))
+        lat = np.delete(lat, inew)
+        lon = np.delete(lon, inew)
+        hdg = np.delete(hdg, inew)
+        alt = np.delete(alt, inew)
+        gs = np.delete(gs, inew)
 
         return cmds, ids, lat, lon, hdg, alt, gs
