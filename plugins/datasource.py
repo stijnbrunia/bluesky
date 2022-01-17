@@ -188,6 +188,8 @@ class DataSource(core.Entity):
         # Get commands data
         commands, commandstime = self.datasource.initial(datapath, time0)
         simstack.stack_commands(commandstime, commands)
+        # Set initial
+        self.swinitial = True
 
     @core.timed_function(name='datafeed', dt=0.5)
     def update_trackdata(self):
