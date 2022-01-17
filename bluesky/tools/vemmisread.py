@@ -164,6 +164,24 @@ class VEMMISRead:
 
             self.tracks = self.tracks.loc[self.tracks['ACTUAL_TIME'] >= self.time0]
 
+    def get_credeltime(self):
+        """
+        Function: Get the create and delete time
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 17-1-2022
+        """
+
+        time_create = self.tracks[['FLIGHT_ID', 'ACTUAL_TIME']].drop_duplicates(subset='FLIGHT_ID', keep='first')
+        time_create.rename(columns={'ACTUAL_TIME': 'TIME_START'}, inplace=True)
+        time_delete = self.tracks[['FLIGHT_ID', 'ACTUAL_TIME']].drop_duplicates(subset='FLIGHT_ID', keep='last')
+        time_delete.rename(columns={'ACTUAL_TIME': 'TIME_END'}, inplace=True)
+
+        self.flights = pd.merge(self.flights, time_create, on='FLIGHT_ID')
+        self.flights = pd.merge(self.flights, time_delete, on='FLIGHT_ID')
+
     def get_coordinates(self):
         """
         Function: Calculate coordinates from x and y position
@@ -364,7 +382,7 @@ class VEMMISRead:
         lnav         = list("LNAV "+acid+" OFF")
         delete       = list("DEL "+acid)
         if swdatafeed:
-            datafeed = list("ADDDATAFEED "+acid)
+            datafeed = list("ADDDATAFEED "+acid+" VEMMIS")
         else:
             datafeed = ['']*len(acid)
         # Time
@@ -477,7 +495,7 @@ class VEMMISSource:
 
         # Prepare the data
         bs.scr.echo('Preparing data from ' + datapath + ' ...')
-        vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
+        vemmisdata = VEMMISRead(datapath, time0, deltat=0.5)
         # Load flight data
         bs.scr.echo('Loading flight data ...')
         commands, commandstime = vemmisdata.get_flightdata(swdatafeed=True)
@@ -516,7 +534,8 @@ class VEMMISSource:
 
         # Prepare the data
         bs.scr.echo('Preparing data from ' + datapath + ' ...')
-        vemmisdata = VEMMISRead(datapath, time0, deltat=bs.sim.simdt)
+        vemmisdata = VEMMISRead(datapath, time0, deltat=0.5)
+
         # Load flight data
         bs.scr.echo('Loading flight data ...')
         commands, commandstime = vemmisdata.get_flightdata(swdatafeed=False)
@@ -580,4 +599,4 @@ Run
 
 if __name__ == '__main__':
     path = os.path.expanduser("~") + r"\PycharmProjects\bluesky\scenario\vemmis1209"
-    v = VEMMISRead(path, deltat=0.05)
+    v = VEMMISRead(path, deltat=0.5)

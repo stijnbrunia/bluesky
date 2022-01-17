@@ -50,6 +50,8 @@ class TrafficDataFeed(Entity):
 
         with self.settrafarrays():
             self.datafeed = np.array([], dtype=np.bool)
+            self.source = []
+            self.lastupdate = np.array([])  # Time since the last update
 
     def reset(self):
         """
@@ -135,6 +137,8 @@ class TrafficDataFeed(Entity):
             self.update_fromtrafprev(itraf_prev, iprev)
 
             # ---------- Aftermath ----------
+            self.lastupdate[itraf_update] = 0.
+            self.lastupdate[itraf_prev] += bs.sim.simdt
             self.store_prev()
             self.trackdata = dict()
         else:
@@ -143,6 +147,8 @@ class TrafficDataFeed(Entity):
             iprev = misc.get_indices(self.trafprev['id'], self.datafeedids)
             # Update from previous aircraft states
             self.update_fromtrafprev(itraf_prev, iprev)
+            # Update last update time
+            self.lastupdate[itraf_prev] += bs.sim.simdt
 
         # Update other speeds (wind)
         self.update_speed()
@@ -282,12 +288,13 @@ class TrafficDataFeed(Entity):
 
         return itraf_update, itrackdata_update, ireplay
 
-    @stack.command(name='ADDDATAFEED', brief='ADDDATAFEED CALLSIGN')
-    def setdatafeed(self, idx: 'acid'):
+    @stack.command(name='ADDDATAFEED', brief='ADDDATAFEED CALLSIGN (SOURCE)')
+    def setdatafeed(self, idx: 'acid', source: str = ''):
         """
         Function: Add aircraft to datafeed mode
         Args:
             idx:    index for traffic arrays [int]
+            source: source [str]
         Returns: -
 
         Created by: Bob van Dillen
@@ -297,6 +304,7 @@ class TrafficDataFeed(Entity):
         acid = bs.traf.id[idx]
         self.datafeedids.append(acid)
         self.datafeed[idx] = True
+        self.source[idx] = source
 
     def uco(self, idx):
         """
@@ -311,6 +319,7 @@ class TrafficDataFeed(Entity):
 
         acid = bs.traf.id[idx]
         if acid in self.datafeedids:
-            self.datafeed = False
+            self.datafeed[idx] = False
+            self.source[idx] = ''
             self.datafeedids.remove(acid)
             bs.stack.stackbase.del_scencmds(idx)

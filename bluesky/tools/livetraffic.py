@@ -97,7 +97,7 @@ class OpenSkySource:
 
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
-            datafeed = list("ADDDATAFEED "+acid)
+            datafeed = list("ADDDATAFEED "+acid+" OPENSKY")
 
             commands += create + datafeed
             commandstime += [0.]*len(create) + [0.01]*len(datafeed)
@@ -206,6 +206,7 @@ class OpenSkySource:
 
             # Create new aircraft commands
             cmds, ids, lat, lon, hdg, alt, gs = self.create_new(cmds, ids, lat, lon, hdg, alt, gs, mode=self.mode)
+            self.delete_old(cmds)
 
             # Set new previous time
             self.t_prev = simtime
@@ -263,7 +264,7 @@ class OpenSkySource:
             # Create commands
             cmds.append("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
             if mode == 'LIVE':
-                cmds.append("ADDDATAFEED "+acid)
+                cmds.append("ADDDATAFEED "+acid+" OPENSKY")
 
         # Remove aircraft from track data
         ids = list(np.delete(ids, inew))
@@ -274,3 +275,28 @@ class OpenSkySource:
         gs = np.delete(gs, inew)
 
         return cmds, ids, lat, lon, hdg, alt, gs
+
+    @staticmethod
+    def delete_old(cmds):
+        """
+        Function: Delete old aircraft
+        Args:
+            cmds:   commands [list]
+        Returns:
+            cmds:   commands [list]
+
+        Created by: Bob van Dillen
+        Date: 17-1-2022
+        """
+
+        ilive = np.nonzero(np.array(bs.traf.trafdatafeed.source) == 'OPENSKY')[0]
+        iold = np.nonzero(bs.traf.trafdatafeed.lastupdate >= 3*60.)[0]
+
+        idelete = np.intersect1d(ilive, iold)
+        ids = np.array(bs.traf.id)[idelete]
+
+        for acid in ids:
+            cmds.append("DEL "+acid)
+
+        return cmds
+

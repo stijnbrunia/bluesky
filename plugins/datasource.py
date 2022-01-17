@@ -91,13 +91,16 @@ class DataSource(core.Entity):
             return False, 'REPLAY: Already in LIVE mode'
         if self.swinitial:
             return False, 'REPLAY: Already in INITIAL mode'
+
         # Data type
         if datatype.upper() not in ['VEMMIS']:
             return False, 'REPLAY: Data type not supported'
+
         # Folder
         datapath = os.getcwd() + "\\scenario\\" + folder.lower()
         if not os.path.isdir(datapath):
             return False, 'REPLAY: Folder does not exist'
+
         # Files
         if not files_check(datatype, datapath):
             return False, 'REPLAY: The folder does not contain all the required files'
@@ -106,9 +109,11 @@ class DataSource(core.Entity):
         # Get data type
         if datatype.upper() == 'VEMMIS':
             self.datasource = vemmisread.VEMMISSource()
+
         # Get commands data
         commands, commandstime = self.datasource.replay(datapath, time0)
         simstack.stack_commands(commandstime, commands)
+
         # Set replay
         self.swreplay = True
 
@@ -132,6 +137,7 @@ class DataSource(core.Entity):
             return False, 'LIVE: Already in LIVE mode'
         if self.swinitial:
             return False, 'LIVE: Already in INITIAL mode'
+
         # Data type
         if datatype.upper() not in ['OPENSKY']:
             return False, 'LIVE: Data type not supported'
@@ -140,9 +146,11 @@ class DataSource(core.Entity):
         # Get data type
         if datatype.upper() == 'OPENSKY':
             self.datasource = livetraffic.OpenSkySource()
+
         # Get commands data
         commands, commandstime = self.datasource.live()
         simstack.stack_commands(commandstime, commands)
+
         # Set live
         self.swlive = True
 
@@ -168,14 +176,17 @@ class DataSource(core.Entity):
             return False, 'INITIAL: Already in LIVE mode'
         if self.swinitial:
             return False, 'INITIAL: Already in INITIAL mode'
+
         # Data type
         if datatype.upper() not in ['VEMMIS', 'OPENSKY']:
             return False, 'INITIAL: Data type not supported'
+
         # Folder
         datapath = os.getcwd() + "\\scenario\\" + folder.lower()
-        if datatype.upper() != 'OPENSKY':
+        if datatype.upper() not in ['OPENSKY']:
             if not os.path.isdir(datapath):
                 return False, 'INITIAL: Folder does not exist'
+
             # Files
             if not files_check(datatype, datapath):
                 return False, 'INITIAL: The folder does not contain all the required files'
@@ -186,9 +197,11 @@ class DataSource(core.Entity):
             self.datasource = vemmisread.VEMMISSource()
         elif datatype.upper() == 'OPENSKY':
             self.datasource = livetraffic.OpenSkySource()
+
         # Get commands data
         commands, commandstime = self.datasource.initial(datapath, time0)
         simstack.stack_commands(commandstime, commands)
+
         # Set initial
         self.swinitial = True
 
