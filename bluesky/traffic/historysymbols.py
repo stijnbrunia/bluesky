@@ -69,7 +69,7 @@ class HistorySymbols(Entity):
 
         super().reset()
 
-        self.active = False
+        self.active = True
 
         self.lat = np.array([])
         self.lon = np.array([])

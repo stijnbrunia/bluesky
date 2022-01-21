@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5 import uic
 from bluesky.ui.qtgl import console
 from bluesky.ui.qtgl.TIDS import *
+from bluesky.tools import misc
 import platform
 import os
 
@@ -40,3 +41,51 @@ def tidclose(command, dialogname):
     lambda: command
     globals()[str(dialogname)].close()
     bs.ui.qtgl.console.Console._instance.stack(bs.ui.qtgl.console.Console._instance.command_line)
+
+
+def tid_cmds(tidcmd):
+    """
+    Function: Process commands coming from the TID
+    Args:
+        tidcmd: command [str]
+    Returns: -
+
+    Created by: Bob van Dillen
+    Date: 21-1-2022
+    """
+
+    # Get simulation data
+    actdata = bs.net.get_nodedata()
+    id_select = actdata.cmddata.idsel
+
+    # Get command line
+    cmdline = console.get_cmdline()
+
+    # Split the command line
+    cmdlinelst = cmdline.split(';')
+    cmdlst = []
+    argslst = []
+    # Loop over the command lines
+    for line in cmdlinelst:
+        # Get command and arguments
+        cmd, args = misc.cmdsplit(line, actdata.acdata.id)
+        cmdlst.append(cmd)
+        argslst.append(args)
+
+    # Previous command is finished
+    if cmdlst[-1].upper() in ['HDG', 'ALT', 'SPD'] and len(argslst[-1]) > 1:
+        # Altitude command
+        if tidcmd.upper() == 'ALT':
+            cmdline += ' ; ' + id_select + ' ' + tidcmd + ' FL'
+        # Other commands
+        else:
+            cmdline += ' ; ' + id_select + ' ' + tidcmd + ' '
+    # Leave out last command
+    else:
+        cmdline = ''
+        for i in range(len(cmdlinelst)-1):
+            cmdline += cmdlinelst[i] + ' ; '
+        cmdline += id_select + ' ' + tidcmd + ' '
+
+    # Set the command line
+    console.Console._instance.set_cmdline(cmdline)

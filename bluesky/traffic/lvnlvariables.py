@@ -7,6 +7,7 @@ Date: 24-12-2021
 
 
 import numpy as np
+import bluesky as bs
 from bluesky.core import Entity
 from bluesky import stack
 
@@ -59,21 +60,26 @@ class LVNLVariables(Entity):
 
         self.lblpos[-n:] = ['CR']
 
-    @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK', aliases=('STACK',))
-    def setarr(self, idx: 'acid', arr: str = ''):
+    @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
+    def setarr(self, idx: 'acid', arr: str = '', addwpts: 'onoff' = True):
         """
         Function: Set the arrival/stack
         Args:
-            idx:    index for traffic arrays [int]
-            arr:    arrival/stack [str]
+            idx:        index for traffic arrays [int]
+            arr:        arrival/stack [str]
+            addwpts:    add waypoints [bool]
         Returns: -
 
         Created by: Bob van Dillen
         Date: 21-12-2021
         """
 
-        if isinstance(arr, str):
-            self.arr[idx] = arr.upper()
+        self.arr[idx] = arr.upper()
+
+        if addwpts:
+            acid = bs.traf.id[idx]
+            cmd = 'PCALL LVNL/Routes/ARR/'+arr.upper()+' '+acid
+            stack.stack(cmd)
 
     @stack.command(name='FLIGHTTYPE', brief='FLIGHTTYPE CALLSIGN TYPE')
     def setflighttype(self, idx: 'acid', flighttype: str):

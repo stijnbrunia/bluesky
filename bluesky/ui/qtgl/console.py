@@ -144,7 +144,7 @@ class Console(QWidget):
         actdata = bs.net.get_nodedata()
 
         self.command_line = text
-        self.cmd, self.args = cmdsplit(self.command_line)
+        self.cmd, self.args = cmdsplit(self.command_line, actdata.acdata.id)
         self.cmd = self.cmd.upper()
 
         hintline = ''

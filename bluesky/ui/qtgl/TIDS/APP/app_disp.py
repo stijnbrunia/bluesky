@@ -8,7 +8,8 @@ Date: 9-12-2021
 
 appmaps = [['a1',    'ALS\n10NM',     ['lambda: appmaps.close()',
                                        'lambda: show_basetid("als10nm","als10nm")']],
-           ['a2',    '',              None],
+           ['a2',    'T-BAR',         ['lambda: appmaps.close()',
+                                       'lambda: show_basetid("tbar","tbar")']],
            ['a3',    'VMT\nAREAS',    ['lambda: appmaps.close()',
                                        'lambda: show_basetid("vmt", "vmt")']],
            ['a4',    'NIGHT\nMAPS',   'lambda: None'],
@@ -378,3 +379,37 @@ favareas = [['a1',    'FAVA\n18R',     'lambda: console.Console._instance.stack(
             ['f3',    'MAPS\nAPP',     ['lambda: favareas.close()',
                                         'lambda: show_basetid("appmaps", "appmaps")']],
             ['f4',    '',              None]]
+
+
+tbar = [['a1',    'NIRSI',         'lambda: console.Console._instance.stack("MAP NIRSI")'],
+        ['a2',    'SOKS2',         'lambda: console.Console._instance.stack("MAP SOKS2")'],
+        ['a3',    'GALIS',         'lambda: console.Console._instance.stack("MAP GALIS")'],
+        ['a4',    '',              None],
+
+        ['b1',    '',              None],
+        ['b2',    '',              None],
+        ['b3',    '',              None],
+        ['b4',    '',              None],
+
+        ['c1',    '',              None],
+        ['c2',    '',              None],
+        ['c3',    '',              None],
+        ['c4',    '',              None],
+
+        ['d1',    '',              None],
+        ['d2',    '',              None],
+        ['d3',    '',              None],
+        ['d4',    '',              None],
+
+        ['e1',    '',              None],
+        ['e2',    '',              None],
+        ['e3',    '',              None],
+        ['e4',    '',              None],
+
+        ['f1',    '',              None],
+        ['f2',    'MAIN',          ['lambda: tbar.close()',
+                                    'lambda: show_basetid("appmain", "appmain")']],
+        ['f3',    'MAPS\nAPP',     ['lambda: tbar.close()',
+                                    'lambda: show_basetid("appmaps", "appmaps")']],
+        ['f4',    '',              None]
+        ]

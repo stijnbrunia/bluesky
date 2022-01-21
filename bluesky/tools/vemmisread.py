@@ -190,6 +190,9 @@ class VEMMISRead:
         # Cancelled flights
         indx_delete = self.flights.index[self.flights['STATUS'].str.contains('CANCELLED')]
         self.flights.drop(indx_delete, inplace=True)
+        # Drop duplicates
+        self.flights.drop_duplicates(subset='FLIGHT_ID', keep='first', inplace=True)
+        self.flights = self.flights.loc[self.flights['FLIGHT_TYPE'] == 'INBOUND']  # For now
 
         # Waypoints
         self.flighttimes = self.flighttimes.loc[self.flighttimes['TIME_TYPE'] == 'ACTUAL']
@@ -422,17 +425,17 @@ class VEMMISRead:
         acarr           = self.flightdata['STACK'].astype(str).str.replace('nan', '')
 
         # Commands
-        create       = list("CRE "+acid+" "+actype+" " + aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
-        arr          = list("ARR "+acid+" "+acarr)
-        sid          = list("SID "+acid+" "+acsid)
-        flighttype   = list("FLIGHTTYPE "+acid+" "+acflighttype)
-        wtc          = list("WTC "+acid+" "+acwtc)
-        origin       = list("ORIG "+acid+" "+self.flightdata['ADEP'])
-        destination  = list("DEST "+acid+" "+self.flightdata['DEST'])
-        lnav         = list("LNAV "+acid+" OFF")
+        create       = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        arr          = list("ARR "+acid+", "+acarr+", OFF")
+        sid          = list("SID "+acid+", "+acsid)
+        flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
+        wtc          = list("WTC "+acid+", "+acwtc)
+        origin       = list("ORIG "+acid+", "+self.flightdata['ADEP'])
+        destination  = list("DEST "+acid+", "+self.flightdata['DEST'])
+        lnav         = list("LNAV "+acid+", OFF")
         delete       = list("DEL "+acid)
         if swdatafeed:
-            datafeed = list("ADDDATAFEED "+acid+" VEMMIS")
+            datafeed = list("ADDDATAFEED "+acid+", VEMMIS")
         else:
             datafeed = ['']*len(acid)
 
