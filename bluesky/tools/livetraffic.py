@@ -112,10 +112,11 @@ class OpenSkySource:
 
         return commands, commandstime
 
-    def initial(self, datapath, time0):
+    def initial(self, datapath, date0, time0):
         """
         Function: Take initial aircraft positions from live data
-        Args: -
+        Args:
+            (arguments are not used)
         Returns:
             commands:       initial commands [list]
             commandstime:   initial commands time [list]
