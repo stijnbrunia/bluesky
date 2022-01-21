@@ -7,7 +7,6 @@ from bluesky import settings
 from bluesky.core import select_implementation, simtime, varexplorer as ve
 from bluesky.tools import geo, aero, areafilter, plotter, printer
 from bluesky.tools.calculator import calculator
-from bluesky.traffic import trafficreplay
 from bluesky.stack.cmdparser import append_commands
 from bluesky.stack import simstack
 
@@ -385,13 +384,6 @@ def initbasecmds():
             "[bool]",
             bs.sim.realtime,
             "En-/disable realtime running allowing a variable timestep."],
-        "REPLAY": [
-            "REPLAY type, folder, (time0 (HH:MM:SS))",
-            "txt,txt,[txt]",
-            trafficreplay.read_replay,
-            "Load replay scenario (e.g. VEMMIS data)" + \
-            "and provide the name of the folder in the scenario folder & start time"
-        ],
         "RESET": ["RESET", "", bs.sim.reset, "Reset simulation"],
         "SEED": [
             "SEED value",

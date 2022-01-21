@@ -243,6 +243,47 @@ def pcall(fname, *pcall_arglst):
         return False, f"PCALL: File not found'{e.filename}'"
 
 
+def stack_commands(cmdstime, cmds):
+    """
+    Function: Stack multiple commands at specified simulation times
+    Args:
+        cmdstime:   time of the commands [list]
+        cmds:       commands [list]
+    Returns: -
+
+    Created by: Bob van Dillen
+    Date: 17-1-2022
+    """
+
+    if len(cmdstime) != len(cmds):
+        raise IndexError('stack_commands(): length of commands time and commands does not match')
+
+    t_offset = bs.sim.simt
+    insidx = 0
+    instime = bs.sim.simt
+
+    for i in range(len(cmdstime)):
+        cmdtime = cmdstime[i] + t_offset
+        cmdline = cmds[i]
+
+        if not Stack.scentime or cmdtime >= Stack.scentime[-1]:
+            Stack.scentime.append(cmdtime)
+            Stack.scencmd.append(cmdline)
+        else:
+            if cmdtime > instime:
+                insidx, instime = next(
+                    ((j, t) for j, t in enumerate(Stack.scentime) if t >= cmdtime),
+                    (len(Stack.scentime), Stack.scentime[-1]),
+                )
+            Stack.scentime.insert(insidx, cmdtime)
+            Stack.scencmd.insert(insidx, cmdline)
+            insidx += 1
+
+    # stack any commands that are already due
+    checkscen()
+
+
+
 def maptoggle_func(fname):
     t_offset = bs.sim.simt
     # Read the scenario file

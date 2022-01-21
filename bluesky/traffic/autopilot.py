@@ -627,7 +627,7 @@ class Autopilot(Entity, replaceable=True):
         bs.traf.swvnavspd[idx] = True
 
         # bs.traf.mnual(idx, 'ON')
-        bs.traf.trafreplay.uco_replay(idx)
+        bs.traf.trafdatafeed.uco(idx)
         bs.traf.lvnlvars.uco[idx] = True
         bs.traf.lvnlvars.rel[idx] = False
 
@@ -723,7 +723,7 @@ class Autopilot(Entity, replaceable=True):
             return False, (self.orig[acidx] + " not found.")
 
     @stack.command(name='LNAV')
-    def setLNAV(self, idx: 'acid', flag: bool=None):
+    def setLNAV(self, idx: 'acid', flag: 'onoff' = None):
         """ LNAV acid,[ON/OFF]
         
             LNAV (lateral FMS mode) switch for autopilot """
@@ -754,7 +754,7 @@ class Autopilot(Entity, replaceable=True):
             return True, '\n'.join(output)
 
     @stack.command(name='VNAV')
-    def setVNAV(self, idx: 'acid', flag:bool=None):
+    def setVNAV(self, idx: 'acid', flag: 'onoff' = None):
         """ VNAV acid,[ON/OFF]
         
             Switch on/off VNAV mode, the vertical FMS mode (autopilot) """

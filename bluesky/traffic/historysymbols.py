@@ -34,6 +34,11 @@ class HistorySymbols(Entity):
 
         self.t_prev = 0.
 
+        if bs.settings.screendt < 3.:
+            self.maxdeltat = 3.
+        else:
+            self.maxdeltat = bs.settings.screendt
+
         with self.settrafarrays():
             self.swhistory = np.array([], dtype=np.bool)
 
@@ -64,7 +69,7 @@ class HistorySymbols(Entity):
 
         super().reset()
 
-        self.active = True
+        self.active = False
 
         self.lat = np.array([])
         self.lon = np.array([])
@@ -89,26 +94,26 @@ class HistorySymbols(Entity):
             self.lat = self.lat[self.lat != 0.]
             self.lon = self.lon[self.lon != 0.]
 
-            # Replay/playback traffic
-            if len(bs.traf.trafreplay.replayid) > 0:
-                itrafreplay = misc.get_indices(bs.traf.id, bs.traf.trafreplay.replayid)
-                # Replay traffic that received an update
+            # Data feed traffic
+            if len(bs.traf.trafdatafeed.datafeedids) > 0:
+                itrafdatafeed = misc.get_indices(bs.traf.id, bs.traf.trafdatafeed.datafeedids)
+                # Data feed traffic that received an update
                 itrafnew = np.nonzero(bs.traf.lat != self.lat1)[0]
-                ireplay_new = np.intersect1d(itrafreplay, itrafnew, assume_unique=True)
+                itrafdatafeed_new = np.intersect1d(itrafdatafeed, itrafnew, assume_unique=True)
             else:
-                itrafreplay = np.array([])
-                ireplay_new = np.array([])
+                itrafdatafeed = np.array([])
+                itrafdatafeed_new = np.array([])
 
             # Simulated traffic
             deltat = bs.sim.simt - self.t_prev
-            if deltat >= bs.settings.screendt:
-                itraf_new = np.setdiff1d(np.arange(bs.traf.ntraf), itrafreplay)
+            if deltat >= self.maxdeltat:
+                itraf_new = np.setdiff1d(np.arange(bs.traf.ntraf), itrafdatafeed)
                 self.t_prev = bs.sim.simt
             else:
                 itraf_new = np.array([])
 
             # Merge indices and update history
-            i_new = np.append(ireplay_new, itraf_new)
+            i_new = np.append(itrafdatafeed_new, itraf_new)
             i_new = i_new.astype(np.int32)
 
             # Every other position gets a history symbol

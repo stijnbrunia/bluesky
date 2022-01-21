@@ -32,7 +32,7 @@ from .autopilot import Autopilot
 from .activewpdata import ActiveWaypoint
 from .lvnlvariables import LVNLVariables
 from .turbulence import Turbulence
-from .trafficreplay import TrafficReplay
+from .trafficdatafeed import TrafficDataFeed
 from .trafficgroups import TrafficGroups
 from .performance.perfbase import PerfBase
 from .historysymbols import HistorySymbols
@@ -87,8 +87,6 @@ class Traffic(Entity):
         self.turbulence = Turbulence()
         self.translvl = 5000.*ft # [m] Default transition level
 
-        self.lvnlvars = LVNLVariables()  # Variables used by LVNL
-
         self.HighRes = False
         self.Wind_DB = ""
 
@@ -98,6 +96,8 @@ class Traffic(Entity):
         self.activate_HR = False
 
         self.id_select = ''  # aircraft that previously received a command
+
+        self.trafdatafeed = TrafficDataFeed()
 
         with self.settrafarrays():
             # Aircraft Info
@@ -112,7 +112,7 @@ class Traffic(Entity):
             self.hdg     = np.array([])  # traffic heading [deg]
             self.trk     = np.array([])  # track angle [deg]
 
-            #Timestamps
+            # Timestamps
             self.prev_timestamp = 0
             self.next_timestamp = 0
 
@@ -181,8 +181,8 @@ class Traffic(Entity):
             self.eps    = np.array([])  # Small nonzero numbers
             self.work   = np.array([])  # Work done throughout the flight
 
-            # Traffic that is updated from data
-            self.trafreplay = TrafficReplay()
+            # LVNL Variables
+            self.lvnlvars = LVNLVariables()  # Variables used by LVNL
 
         # Default bank angles per flight phase
         self.bphase = np.deg2rad(np.array([15, 35, 35, 35, 15, 45]))
@@ -460,7 +460,7 @@ class Traffic(Entity):
         self.update_pos()
 
         # --------- Update from data --------------------------
-        self.trafreplay.update()
+        self.trafdatafeed.update()
 
         #---------- Simulate Turbulence -----------------------
         self.turbulence.update()
@@ -771,7 +771,7 @@ class Traffic(Entity):
 
             # Show a/c info and highlight route of aircraft in radar window
             # and pan to a/c (to show route)
-            bs.scr.showroute(acid)
+            # bs.scr.showroute(acid)
 
             # Select aircraft for acidselect commands
             self.id_select = acid
