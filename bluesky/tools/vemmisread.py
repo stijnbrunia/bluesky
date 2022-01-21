@@ -43,9 +43,10 @@ class VEMMISRead:
     Date: 22-11-2021
     """
 
-    def __init__(self, data_path, time0=None, deltat=None):
+    def __init__(self, data_path, date0=None, time0=None, deltat=None):
         self.data_path = data_path
 
+        self.date0 = date0
         self.time0 = time0
 
         self.deltat = deltat
@@ -67,9 +68,11 @@ class VEMMISRead:
         self.read_data()
         self.delete_nan()
         self.convert_data()
+        self.get_credeltime()
         self.relevant_data()
         self.get_coordinates()
         self.get_altitude()
+        self.get_cas()
         self.merge_data()
         self.sort_data()
         self.get_simtime()
@@ -137,6 +140,30 @@ class VEMMISRead:
 
         self.tracks['ACTUAL_TIME'] = self.tracks['T_START'] + self.tracks['TIME']
 
+    def get_credeltime(self):
+        """
+        Function: Get the create and delete time
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 17-1-2022
+        """
+
+        # Sort on time
+        self.tracks = self.tracks.sort_values(by=['ACTUAL_TIME'])
+
+        # Get time first data point
+        time_create = self.tracks[['FLIGHT_ID', 'ACTUAL_TIME']].drop_duplicates(subset='FLIGHT_ID', keep='first')
+        time_create.rename(columns={'ACTUAL_TIME': 'TIME_START'}, inplace=True)
+        # Get time last data point
+        time_delete = self.tracks[['FLIGHT_ID', 'ACTUAL_TIME']].drop_duplicates(subset='FLIGHT_ID', keep='last')
+        time_delete.rename(columns={'ACTUAL_TIME': 'TIME_END'}, inplace=True)
+
+        # Add to create and delete time to flights data
+        self.flights = pd.merge(self.flights, time_create, on='FLIGHT_ID')
+        self.flights = pd.merge(self.flights, time_delete, on='FLIGHT_ID')
+
     def relevant_data(self):
         """
         Function: Select relevant data
@@ -156,31 +183,16 @@ class VEMMISRead:
         self.flighttimes = self.flighttimes.loc[self.flighttimes['LOCATION_TYPE'] == 'RP']
 
         # Start time
-        if self.time0:
+        if self.date0 and self.time0:
             # Convert to datetime
-            datetime0 = min(self.flights['T0'])
+            self.date0 = self.date0.split('-')
             self.time0 = datetime.datetime.strptime(self.time0, '%H:%M:%S')
-            self.time0 = self.time0.replace(year=datetime0.year, month=datetime0.month, day=datetime0.day)
+            self.time0 = self.time0.replace(year=int(self.date0[2]),
+                                            month=int(self.date0[1]),
+                                            day=int(self.date0[0]))
 
+            # Apply start time
             self.tracks = self.tracks.loc[self.tracks['ACTUAL_TIME'] >= self.time0]
-
-    def get_credeltime(self):
-        """
-        Function: Get the create and delete time
-        Args: -
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 17-1-2022
-        """
-
-        time_create = self.tracks[['FLIGHT_ID', 'ACTUAL_TIME']].drop_duplicates(subset='FLIGHT_ID', keep='first')
-        time_create.rename(columns={'ACTUAL_TIME': 'TIME_START'}, inplace=True)
-        time_delete = self.tracks[['FLIGHT_ID', 'ACTUAL_TIME']].drop_duplicates(subset='FLIGHT_ID', keep='last')
-        time_delete.rename(columns={'ACTUAL_TIME': 'TIME_END'}, inplace=True)
-
-        self.flights = pd.merge(self.flights, time_create, on='FLIGHT_ID')
-        self.flights = pd.merge(self.flights, time_delete, on='FLIGHT_ID')
 
     def get_coordinates(self):
         """
@@ -213,6 +225,18 @@ class VEMMISRead:
 
         self.tracks['ALTITUDE'] = self.tracks['MODE_C']*100
 
+    def get_cas(self):
+        """
+        Function: Determine the calibrated airspeed
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 20-1-2022
+        """
+
+        self.tracks['CAS'] = aero.vtas2cas(self.tracks['SPEED']*aero.kts, self.tracks['ALTITUDE']*aero.ft)/aero.kts
+
     def merge_data(self):
         """
         Function: Merge flights data into the other data, to get e.g. callsign
@@ -223,16 +247,20 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
-        self.flightdata = pd.merge(self.flights, self.tracks[['FLIGHT_ID', 'ACTUAL_TIME', 'T_END', 'LATITUDE',
-                                                              'LONGITUDE', 'HEADING', 'ALTITUDE', 'SPEED']],
-                                   on='FLIGHT_ID')
-        self.flightdata = self.flightdata.sort_values(by=['ACTUAL_TIME'])
+        # Add first data point to flight data
+        self.flightdata = pd.merge(self.flights, self.tracks[['FLIGHT_ID', 'ACTUAL_TIME', 'LATITUDE', 'LONGITUDE',
+                                                              'HEADING', 'ALTITUDE', 'CAS']], on='FLIGHT_ID')
+        self.flightdata.sort_values(by=['ACTUAL_TIME'], inplace=True)
         self.flightdata.drop_duplicates(subset='FLIGHT_ID', keep='first', inplace=True)
+        # Add SID to flight data
         self.flightdata = pd.merge(self.flightdata, self.takeoffs[['FLIGHT_ID', 'SID']], on='FLIGHT_ID', how='left')
+        # Add ARR to flight data
         self.flightdata = pd.merge(self.flightdata, self.landings[['FLIGHT_ID', 'STACK']], on='FLIGHT_ID', how='left')
 
+        # Add callsign to route data
         self.routedata = pd.merge(self.flighttimes, self.flights[['FLIGHT_ID', 'CALLSIGN']], on='FLIGHT_ID')
 
+        # Add callsign to track data
         self.trackdata = pd.merge(self.tracks, self.flights[['FLIGHT_ID', 'CALLSIGN']], on='FLIGHT_ID')
 
     def sort_data(self):
@@ -255,7 +283,7 @@ class VEMMISRead:
         self.flightdata = self.flightdata.loc[self.flightdata['FLIGHT_ID'].isin(flightids)]
 
         # Sort
-        self.flightdata = self.flightdata.sort_values(by=['ACTUAL_TIME'])
+        self.flightdata = self.flightdata.sort_values(by=['TIME_START'])
         self.trackdata = self.trackdata.sort_values(by=['ACTUAL_TIME'])
 
     def get_simtime(self):
@@ -268,10 +296,11 @@ class VEMMISRead:
         Date = 22-11-2021
         """
 
-        self.datetime0 = min(self.flightdata['ACTUAL_TIME'])
+        self.datetime0 = min(self.trackdata['ACTUAL_TIME'])
 
-        self.flightdata['SIM_START'] = (self.flightdata['ACTUAL_TIME'] - self.datetime0).dt.total_seconds()
-        self.flightdata['SIM_END'] = (self.flightdata['T_END'] - self.datetime0).dt.total_seconds()
+        self.flightdata['SIM_START'] = (self.flightdata['TIME_START'] - self.datetime0).dt.total_seconds()
+        self.flightdata['SIM_START'][self.flightdata['SIM_START'] < 0] = 0
+        self.flightdata['SIM_END'] = (self.flightdata['TIME_END'] - self.datetime0).dt.total_seconds()
         self.trackdata['SIM_TIME'] = (self.trackdata['ACTUAL_TIME'] - self.datetime0).dt.total_seconds()
 
         if self.deltat:
@@ -336,19 +365,15 @@ class VEMMISRead:
         time = datetime_start.strftime("%H:%M:%S")
         return day, month, year, time
 
-    def get_flightdata(self, swdatafeed):
+    def get_initial(self, swdatafeed):
         """
-        Function: Get the commands that need to be executed in the simulation
+        Function: Get the initial commands
         Args:
             swdatafeed:     add aircraft to datafeed [bool]
-        Returns:
-            command:        the commands [lst(str)]
-            commandtime:    the time when the command needs to be executed [lst(float)]
-
-        Remark: this function needs to be executed before get_trackdata()
+        Returns: -
 
         Created by: Bob van Dillen
-        Date = 22-11-2021
+        Date: 20-1-2022
         """
 
         simday, simmonth, simyear, simtime = self.get_datetime()
@@ -357,43 +382,44 @@ class VEMMISRead:
         command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
         commandtime = [0.]
 
-        # Create commands
+        # Flight data
         acid            = self.flightdata['CALLSIGN']
         actype          = self.flightdata['ICAO_ACTYPE']
         aclat           = self.flightdata['LATITUDE'].astype(str)
         aclon           = self.flightdata['LONGITUDE'].astype(str)
         achdg           = self.flightdata['HEADING'].astype(str)
         acalt           = self.flightdata['ALTITUDE'].astype(str)
-        self.flightdata['CAS'] = aero.vtas2cas(self.flightdata['SPEED']*aero.kts,
-                                               self.flightdata['ALTITUDE']*aero.ft)/aero.kts
         acspd           = self.flightdata['CAS'].astype(str)
         acflighttype    = self.flightdata['FLIGHT_TYPE']
         acwtc           = self.flightdata['WTC']
         acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
         acarr           = self.flightdata['STACK'].astype(str).str.replace('nan', '')
-        # Command strings
-        create       = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+
+        # Commands
+        create       = list("CRE "+acid+" "+actype+" " + aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
         arr          = list("ARR "+acid+" "+acarr)
         sid          = list("SID "+acid+" "+acsid)
-        flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
-        wtc          = list("WTC "+acid+", "+acwtc)
-        origin       = list("ORIG "+acid+", "+self.flightdata['ADEP'])
-        destination  = list("DEST "+acid+", "+self.flightdata['DEST'])
+        flighttype   = list("FLIGHTTYPE "+acid+" "+acflighttype)
+        wtc          = list("WTC "+acid+" "+acwtc)
+        origin       = list("ORIG "+acid+" "+self.flightdata['ADEP'])
+        destination  = list("DEST "+acid+" "+self.flightdata['DEST'])
         lnav         = list("LNAV "+acid+" OFF")
         delete       = list("DEL "+acid)
         if swdatafeed:
             datafeed = list("ADDDATAFEED "+acid+" VEMMIS")
         else:
             datafeed = ['']*len(acid)
-        # Time
+
+        # Commands time
         tcreate = list(self.flightdata['SIM_START'])
-        tset    = list(self.flightdata['SIM_START']+0.01)
-        tlnav   = list(self.flightdata['SIM_START']+0.02)
+        tset    = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
+        tlnav   = list(self.flightdata['SIM_START']+0.02)  # Add 0.02 to ensure right order
         tdelete = list(self.flightdata['SIM_END'])
 
+        # Create lists
         command     += create+datafeed+arr+sid+flighttype+wtc+origin+destination+lnav+delete
         commandtime += tcreate + 7*tset + tlnav + tdelete
-
+        # Sort
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
 
@@ -481,12 +507,13 @@ class VEMMISSource:
         self.alt = np.array([])
         self.gs = np.array([])
 
-    def replay(self, datapath, time0):
+    def replay(self, datapath, date0, time0):
         """
         Function: Read and process track data for replay mode
         Args:
             datapath:   path to the folder containing the files [str]
-            time0:      start time in seconds [int, float]
+            date0:      start date [str]
+            time0:      start time [str]
         Returns: -
 
         Created by: Bob van Dillen
@@ -495,10 +522,10 @@ class VEMMISSource:
 
         # Prepare the data
         bs.scr.echo('Preparing data from ' + datapath + ' ...')
-        vemmisdata = VEMMISRead(datapath, time0, deltat=0.5)
+        vemmisdata = VEMMISRead(datapath, date0, time0, deltat=0.5)
         # Load flight data
         bs.scr.echo('Loading flight data ...')
-        commands, commandstime = vemmisdata.get_flightdata(swdatafeed=True)
+        commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
         # Load track data
         bs.scr.echo('Loading track data ...')
         trackdata = vemmisdata.get_trackdata()
@@ -520,7 +547,7 @@ class VEMMISSource:
         return commands, commandstime
 
     @staticmethod
-    def initial(datapath, time0):
+    def initial(datapath, date0, time0):
         """
         Function: Take initial aircraft positions from VEMMIS
         Args:
@@ -534,11 +561,11 @@ class VEMMISSource:
 
         # Prepare the data
         bs.scr.echo('Preparing data from ' + datapath + ' ...')
-        vemmisdata = VEMMISRead(datapath, time0, deltat=0.5)
+        vemmisdata = VEMMISRead(datapath, date0, time0, deltat=0.5)
 
         # Load flight data
         bs.scr.echo('Loading flight data ...')
-        commands, commandstime = vemmisdata.get_flightdata(swdatafeed=False)
+        commands, commandstime = vemmisdata.get_initial(swdatafeed=False)
 
         bs.scr.echo('Done')
 

@@ -69,13 +69,14 @@ class DataSource(core.Entity):
         self.swinitial = False
         self.datasource = None
 
-    @stack.command(name='REPLAY', brief='REPLAY DATATYPE FOLDER (TIME [HH:MM:SS])')
-    def setreplay(self, datatype: str, folder: str, time0: str = ''):
+    @stack.command(name='REPLAY', brief='REPLAY DATATYPE FOLDER (DATE [dd-mm-yyyy] TIME [HH:MM:SS])')
+    def setreplay(self, datatype: 'txt', folder: 'txt', date0: 'txt' = '', time0: 'txt' = ''):
         """
         Function: Replay scenario from data source
         Args:
             datatype:   data type [str]
             folder:     folder name [str]
+            date0:      start date [str]
             time0:      start time [str]
         Returns: -
 
@@ -111,7 +112,7 @@ class DataSource(core.Entity):
             self.datasource = vemmisread.VEMMISSource()
 
         # Get commands data
-        commands, commandstime = self.datasource.replay(datapath, time0)
+        commands, commandstime = self.datasource.replay(datapath, date0, time0)
         simstack.stack_commands(commandstime, commands)
 
         # Set replay
@@ -154,13 +155,14 @@ class DataSource(core.Entity):
         # Set live
         self.swlive = True
 
-    @stack.command(name='INITIAL', brief='INITIAL DATATYPE FOLDER (TIME [HH:MM:SS])')
-    def setinitial(self, datatype: str, folder: str = '', time0: str = ''):
+    @stack.command(name='INITIAL', brief='INITIAL DATATYPE FOLDER (DATE [dd-mm-yyyy] TIME [HH:MM:SS])')
+    def setinitial(self, datatype: str, folder: str = '', date0: str = '', time0: str = ''):
         """
         Function: Take initial aircraft positions from data source
         Args:
             datatype:   data type [str]
             folder:     folder name [str]
+            date0:      start date [str]
             time0:      start time [str]
         Returns: -
 
@@ -199,7 +201,7 @@ class DataSource(core.Entity):
             self.datasource = livetraffic.OpenSkySource()
 
         # Get commands data
-        commands, commandstime = self.datasource.initial(datapath, time0)
+        commands, commandstime = self.datasource.initial(datapath, date0, time0)
         simstack.stack_commands(commandstime, commands)
 
         # Set initial
