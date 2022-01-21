@@ -97,8 +97,8 @@ class Traffic(glh.RenderObject, layer=100):
         # self.leaderlines_uc = glh.VertexArrayObject(glh.gl.GL_LINES)
         # self.leaderlines_ur = glh.VertexArrayObject(glh.gl.GL_LINES)
 
-        self.ssrlabels = glh.Text(0.85*settings.text_size, (7, 3))
-        self.microlabels = glh.Text(0.85*settings.text_size, (3, 1))
+        self.ssrlabels = glh.Text(settings.text_size, (7, 3))
+        self.microlabels = glh.Text(settings.text_size, (3, 1))
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 

@@ -433,11 +433,12 @@ class VEMMISRead:
         origin       = list("ORIG "+acid+", "+self.flightdata['ADEP'])
         destination  = list("DEST "+acid+", "+self.flightdata['DEST'])
         lnav         = list("LNAV "+acid+", OFF")
-        delete       = list("DEL "+acid)
         if swdatafeed:
             datafeed = list("ADDDATAFEED "+acid+", VEMMIS")
+            delete   = list("DEL " + acid)
         else:
             datafeed = ['']*len(acid)
+            delete = ['']*len(acid)
 
         # Commands time
         tcreate = list(self.flightdata['SIM_START'])
