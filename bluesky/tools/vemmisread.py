@@ -774,5 +774,5 @@ Run
 
 
 if __name__ == '__main__':
-    path = os.path.expanduser("~") + r"\PycharmProjects\bluesky\scenario\vemmis1209"
+    path = os.path.expanduser("~") + r"\PycharmProjects\bluesky\scenario\vemmis212207"
     v = VEMMISRead(path, deltat=0.5)
