@@ -473,7 +473,7 @@ class VEMMISRead:
 
     def get_initial_tbar(self):
         """
-        Function: Get the initial commands
+        Function: Get the initial commands for the T-Bar simulation
         Args:
             swdatafeed:     add aircraft to datafeed [bool]
             typesim:        flighttypes that need to be simulated (no data feed) [list]
@@ -531,18 +531,18 @@ class VEMMISRead:
         # Arrival
         arrsec1    = list("ARR "+sector1['CALLSIGN']+", NIRSI_AM603")
         tarrsec1   = list(sector1['SIM_START']+0.01)
-        am601sec2  = list("ADDWPT "+sector2['CALLSIGN']+", AM601")
-        tam601sec2 = list(sector2['SIM_START']+0.01)
         arrsec2    = list("ARR "+sector2['CALLSIGN']+", NIRSI_AM603")
-        tarrsec2   = list(sector2['SIM_START']+0.02)
+        tarrsec2   = list(sector2['SIM_START']+0.01)
+        am601sec2  = list(sector2['CALLSIGN']+" BEFORE AM603 ADDWPT AM601")
+        tam601sec2 = list(sector2['SIM_START']+0.1)
         arrsec34   = list("ARR "+sector34['CALLSIGN']+", NIRSI_GAL01")
         tarrsec34  = list(sector34['SIM_START']+0.01)
         arrsec5    = list("ARR "+sector5['CALLSIGN']+", NIRSI_GAL02")
         tarrsec5   = list(sector5['SIM_START']+0.01)
         arrother   = list("ARR "+other['CALLSIGN']+", "+other['STACK'].astype(str).str.replace('nan', '')+", OFF")
         tarrother  = list(other['SIM_START']+0.01)
-        arr  = arrsec1  + am601sec2  + arrsec2  + arrsec34  + arrsec5  + arrother
-        tarr = tarrsec1 + tam601sec2 + tarrsec2 + tarrsec34 + tarrsec5 + tarrother
+        arr  = arrsec1  + arrsec2  + am601sec2  + arrsec34  + arrsec5  + arrother
+        tarr = tarrsec1 + tarrsec2 + tam601sec2 + tarrsec34 + tarrsec5 + tarrother
 
         setdatafeed  = list("SETDATAFEED "+other['CALLSIGN']+", VEMMIS")
         tsetdatafeed = list(other['SIM_START']+0.01)
@@ -619,6 +619,7 @@ class VEMMISSource:
         self.t_next = 0.
 
         self.i_max = 0
+        self.running = False
 
         self.simt = np.array([])
         self.simt_count = np.array([])
@@ -643,6 +644,7 @@ class VEMMISSource:
         self.t_next = 0.
 
         self.i_max = 0
+        self.running = False
 
         self.simt = np.array([])
         self.simt_count = np.array([])
@@ -691,6 +693,7 @@ class VEMMISSource:
 
         # Last data point
         self.i_max = len(self.simt) - 1
+        self.running = True
 
         bs.scr.echo('Done')
 
@@ -740,7 +743,7 @@ class VEMMISSource:
         """
 
         # Check if the next data point is reached
-        if self.t_next <= simtime:
+        if self.t_next <= simtime and self.running:
             # Commands
             cmds = []
 
@@ -756,8 +759,12 @@ class VEMMISSource:
             alt = self.alt[i0: im]
             gs = self.gs[i0: im]
 
-            self.i_next = im
-            self.t_next = self.simt[im]
+            if im <= self.i_max:
+                self.i_next = im
+                self.t_next = self.simt[im]
+            else:
+                bs.scr.echo("VEMMIS: Last data point is reached")
+                self.running = False
         else:
             cmds = []
             ids = []
