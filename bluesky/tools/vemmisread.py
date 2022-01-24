@@ -394,11 +394,12 @@ class VEMMISRead:
 
         return day, month, year, time
 
-    def get_initial(self, swdatafeed):
+    def get_initial(self, swdatafeed, typesim=[]):
         """
         Function: Get the initial commands
         Args:
             swdatafeed:     add aircraft to datafeed [bool]
+            typesim:        flighttypes that need to be simulated (no data feed) [list]
         Returns: -
 
         Created by: Bob van Dillen
@@ -433,18 +434,29 @@ class VEMMISRead:
         origin       = list("ORIG "+acid+", "+self.flightdata['ADEP'])
         destination  = list("DEST "+acid+", "+self.flightdata['DEST'])
         lnav         = list("LNAV "+acid+", OFF")
+        datafeed     = []
+        delete       = []
+
+        aciddf = self.flightdata[['CALLSIGN', 'FLIGHT_TYPE', 'SIM_START', 'SIM_END']]
         if swdatafeed:
             datafeed = list("ADDDATAFEED "+acid+", VEMMIS")
             delete   = list("DEL " + acid)
-        else:
-            datafeed = ['']*len(acid)
-            delete = ['']*len(acid)
+        if 'INBOUND' in typesim:
+            aciddf = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'INBOUND']
+        if 'OUTBOUND' in typesim:
+            aciddf = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'OUTBOUND']
+        if 'REGIONAL' in typesim:
+            aciddf = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'REGIONAL']
+
+        datafeed = list("ADDDATAFEED "+aciddf['CALLSIGN']+", VEMMIS") + ['']*(len(acid)-len(aciddf))
+        delete = list("DEL "+aciddf['CALLSIGN']) + ['']*(len(acid)-len(aciddf))
 
         # Commands time
         tcreate = list(self.flightdata['SIM_START'])
+        tdf     = list(aciddf['SIM_START']+0.01)
         tset    = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
         tlnav   = list(self.flightdata['SIM_START']+0.02)  # Add 0.02 to ensure right order
-        tdelete = list(self.flightdata['SIM_END'])
+        tdelete = list(self.flightdata['SIM_END']) # TODO fix tdelete
 
         # Create lists
         command     += create+datafeed+arr+sid+flighttype+wtc+origin+destination+lnav+delete
