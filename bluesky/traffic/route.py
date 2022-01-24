@@ -349,8 +349,8 @@ class Route(Replaceable):
             return False, "Waypoint " + name + " not added."
 
         # check for presence of orig/dest
-        norig = int(bs.traf.ap.orig[acidx] != "") # 1 if orig is present in route
-        ndest = int(bs.traf.ap.dest[acidx] != "") # 1 if dest is present in route
+        norig = int(bs.traf.ap.orig[acidx] in acrte.wpname) # 1 if orig is present in route
+        ndest = int(bs.traf.ap.dest[acidx] in acrte.wpname) # 1 if dest is present in route
 
         # Check whether this is first 'real' waypoint (not orig & dest),
         # And if so, make active
@@ -360,7 +360,6 @@ class Route(Replaceable):
             bs.traf.swlnav[acidx] = True
 
         if afterwp and acrte.wpname.count(afterwp) == 0:
-            print(afterwp, acrte.wpname)
             return True, "Waypoint " + afterwp + " not found\n" + \
                 "waypoint added at end of route"
         else:
