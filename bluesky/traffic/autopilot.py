@@ -609,18 +609,10 @@ class Autopilot(Entity, replaceable=True):
     def selucocmd(self, idx: 'acid', efl: 'alt'=None, hdg: 'hdg'=None, spd: 'spd'=None):  # UCO command
         if efl:
             bs.traf.ap.selaltcmd(idx, efl)
-        else:
-            bs.traf.selalt[idx] = 0.
-
         if hdg:
             bs.traf.ap.selhdgcmd(idx, hdg)
-        else:
-            bs.traf.selhdg[idx] = 0.
-
         if spd:
             bs.traf.ap.selspdcmd(idx, spd)
-        else:
-            bs.traf.selspd[idx] = 0.
 
         bs.traf.swlnav[idx] = True
         bs.traf.swvnav[idx] = True

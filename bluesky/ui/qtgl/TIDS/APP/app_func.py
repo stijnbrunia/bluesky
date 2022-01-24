@@ -41,8 +41,7 @@ appmain = [['a1', 'UCO',            'lambda: tid_cmds("UCO")'],
            ['f2', 'MAIN 2',         'lambda: None'],
            ['f3', 'APP\nMAPS',      ['lambda: appmain.close()',
                                      'lambda: show_basetid("appmaps", "appmaps")']],
-           ['f4', 'EXQ',            ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
-                                     'lambda: console.selected_ac()']]
+           ['f4', 'EXQ',            ['lambda: console.Console._instance.stack(console.Console._instance.command_line)']]
            ]
 
 
@@ -79,7 +78,6 @@ apphdg = [['a1', 'ARTIP',       'lambda: console.process_cmdline("RIVER ")'],
                              'lambda: apphdg.close()',
                              'lambda: show_basetid("appspd", "appspd")']],
           ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
-                             'lambda: console.selected_ac()',
                              'lambda: apphdg.close()']]
           ]
 
@@ -220,7 +218,6 @@ appefl = [['a1', '',        None],
                              'lambda: appefl.close()',
                              'lambda: show_basetid("appspd", "appspd")']],
           ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
-                             'lambda: console.selected_ac()',
                              'lambda: appefl.close()']]
           ]
 
@@ -258,7 +255,6 @@ appspd = [['a1', '250',     'lambda: console.process_cmdline("250 ")'],
                              'lambda: appspd.close()',
                              'lambda: show_basetid("appefl", "appefl")']],
           ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
-                             'lambda: console.selected_ac()',
                              'lambda: appspd.close()']]
           ]
 
@@ -331,6 +327,5 @@ apprwy = [['a1', '06',      'lambda: console.process_cmdline("06")'],
           ['f2', '',        None],
           ['f3', '',        None],
           ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
-                             'lambda: console.selected_ac()',
                              'lambda: apprwy.close()']]
           ]
