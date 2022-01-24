@@ -288,7 +288,7 @@ class TrafficDataFeed(Entity):
 
         return itraf_update, itrackdata_update, ireplay
 
-    @stack.command(name='ADDDATAFEED', brief='ADDDATAFEED CALLSIGN (SOURCE)')
+    @stack.command(name='SETDATAFEED', brief='SETDATAFEED CALLSIGN (SOURCE)')
     def setdatafeed(self, idx: 'acid', source: str = ''):
         """
         Function: Add aircraft to datafeed mode

@@ -192,7 +192,6 @@ class VEMMISRead:
         self.flights.drop(indx_delete, inplace=True)
         # Drop duplicates
         self.flights.drop_duplicates(subset='FLIGHT_ID', keep='first', inplace=True)
-        self.flights = self.flights.loc[self.flights['FLIGHT_TYPE'] == 'INBOUND']  # For now
 
         # Waypoints
         self.flighttimes = self.flighttimes.loc[self.flighttimes['TIME_TYPE'] == 'ACTUAL']
@@ -400,7 +399,9 @@ class VEMMISRead:
         Args:
             swdatafeed:     add aircraft to datafeed [bool]
             typesim:        flighttypes that need to be simulated (no data feed) [list]
-        Returns: -
+        Returns:
+            command:        initial commands [list]
+            commandtime:    simulation time of the initial commands [list]
 
         Created by: Bob van Dillen
         Date: 20-1-2022
@@ -424,6 +425,8 @@ class VEMMISRead:
         acwtc           = self.flightdata['WTC']
         acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
         acarr           = self.flightdata['STACK'].astype(str).str.replace('nan', '')
+        acorigin        = self.flightdata['ADEP']
+        acdestination   = self.flightdata['DEST']
 
         # Commands
         create       = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
@@ -431,36 +434,37 @@ class VEMMISRead:
         sid          = list("SID "+acid+", "+acsid)
         flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
         wtc          = list("WTC "+acid+", "+acwtc)
-        origin       = list("ORIG "+acid+", "+self.flightdata['ADEP'])
-        destination  = list("DEST "+acid+", "+self.flightdata['DEST'])
+        origin       = list("ORIG "+acid+", "+acorigin)
+        destination  = list("DEST "+acid+", "+acdestination)
         lnav         = list("LNAV "+acid+", OFF")
-        datafeed     = []
-        delete       = []
-
-        aciddf = self.flightdata[['CALLSIGN', 'FLIGHT_TYPE', 'SIM_START', 'SIM_END']]
+        # Data feed dependent commands
         if swdatafeed:
-            datafeed = list("ADDDATAFEED "+acid+", VEMMIS")
-            delete   = list("DEL " + acid)
-        if 'INBOUND' in typesim:
-            aciddf = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'INBOUND']
-        if 'OUTBOUND' in typesim:
-            aciddf = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'OUTBOUND']
-        if 'REGIONAL' in typesim:
-            aciddf = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'REGIONAL']
-
-        datafeed = list("ADDDATAFEED "+aciddf['CALLSIGN']+", VEMMIS") + ['']*(len(acid)-len(aciddf))
-        delete = list("DEL "+aciddf['CALLSIGN']) + ['']*(len(acid)-len(aciddf))
+            datafeed = self.flightdata[['CALLSIGN', 'FLIGHT_TYPE', 'SIM_START', 'SIM_END']]
+            # Take out flights that need to be simulated
+            if 'INBOUND' in typesim:
+                datafeed = datafeed.loc[datafeed['FLIGHT_TYPE'] != 'INBOUND']
+            if 'OUTBOUND' in typesim:
+                datafeed = datafeed.loc[datafeed['FLIGHT_TYPE'] != 'OUTBOUND']
+            if 'REGIONAL' in typesim:
+                datafeed = datafeed.loc[datafeed['FLIGHT_TYPE'] != 'REGIONAL']
+            # Create commands for data feed flights
+            setdatafeed = list("SETDATAFEED "+datafeed['CALLSIGN']+", VEMMIS")
+            delete      = list("DEL "+datafeed['CALLSIGN'])
+        else:
+            datafeed = pd.DataFrame(columns=['CALLSIGN', 'FLIGHT_TYPE', 'SIM_START', 'SIM_END'])
+            setdatafeed = []
+            delete      = []
 
         # Commands time
-        tcreate = list(self.flightdata['SIM_START'])
-        tdf     = list(aciddf['SIM_START']+0.01)
-        tset    = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
-        tlnav   = list(self.flightdata['SIM_START']+0.02)  # Add 0.02 to ensure right order
-        tdelete = list(self.flightdata['SIM_END']) # TODO fix tdelete
+        tcreate      = list(self.flightdata['SIM_START'])
+        tsetdatafeed = list(datafeed['SIM_START'] + 0.01)
+        tset         = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
+        tlnav        = list(self.flightdata['SIM_START']+0.02)  # Add 0.02 to ensure right order
+        tdelete      = list(datafeed['SIM_END'])
 
         # Create lists
-        command     += create+datafeed+arr+sid+flighttype+wtc+origin+destination+lnav+delete
-        commandtime += tcreate + 7*tset + tlnav + tdelete
+        command     += create  + setdatafeed  + arr + sid + flighttype + wtc + origin + destination + lnav + delete
+        commandtime += tcreate + tsetdatafeed + 6*tset + tlnav + tdelete
         # Sort
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
@@ -542,6 +546,8 @@ class VEMMISSource:
         self.i_next = 0
         self.t_next = 0.
 
+        self.i_max = 0
+
         self.simt = np.array([])
         self.simt_count = np.array([])
         self.acid = []
@@ -569,7 +575,7 @@ class VEMMISSource:
         vemmisdata = VEMMISRead(datapath, date0, time0, deltat=0.5)
         # Load flight data
         bs.scr.echo('Loading flight data ...')
-        commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
+        commands, commandstime = vemmisdata.get_initial(swdatafeed=True, typesim=['INBOUND'])
         # Load track data
         bs.scr.echo('Loading track data ...')
         trackdata = vemmisdata.get_trackdata()

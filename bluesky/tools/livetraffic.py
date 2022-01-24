@@ -97,7 +97,7 @@ class OpenSkySource:
 
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
-            datafeed = list("ADDDATAFEED "+acid+" OPENSKY")
+            datafeed = list("SETDATAFEED "+acid+" OPENSKY")
 
             commands += create + datafeed
             commandstime += [0.]*len(create) + [0.01]*len(datafeed)
@@ -265,7 +265,7 @@ class OpenSkySource:
             # Create commands
             cmds.append("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
             if mode == 'LIVE':
-                cmds.append("ADDDATAFEED "+acid+" OPENSKY")
+                cmds.append("SETDATAFEED "+acid+" OPENSKY")
 
         # Remove aircraft from track data
         ids = list(np.delete(ids, inew))
