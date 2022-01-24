@@ -97,8 +97,8 @@ class Traffic(glh.RenderObject, layer=100):
         # self.leaderlines_uc = glh.VertexArrayObject(glh.gl.GL_LINES)
         # self.leaderlines_ur = glh.VertexArrayObject(glh.gl.GL_LINES)
 
-        self.ssrlabels = glh.Text(settings.text_size, (7, 3))
-        self.microlabels = glh.Text(settings.text_size, (3, 1))
+        self.ssrlabels = glh.Text(0.95*settings.text_size, (7, 3))
+        self.microlabels = glh.Text(0.95*settings.text_size, (3, 1))
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
@@ -209,7 +209,7 @@ class Traffic(glh.RenderObject, layer=100):
                                 instanced=True)
 
         self.ssrlabels.create(self.ssrlbl, self.lat, self.lon, self.color,
-                              (ac_size, -0.5*ac_size), instanced=True)
+                              (ac_size, -1.1*ac_size), instanced=True)
         self.microlabels.create(self.mlbl, self.lat, self.lon, self.color,
                                 (-3*0.8*text_size-ac_size, 0.5*ac_size), instanced=True)
 
@@ -631,89 +631,112 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     if cmddata:
         arr = cmddata.arr[j]
         uco = cmddata.uco[j]
-        rel = cmddata.rel[j]
         selhdg = cmddata.selhdg[j]
         selalt = cmddata.selalt[j]
         selspd = cmddata.selspd[j]
         sid = cmddata.sid[j]
+        ssrlbl = cmddata.ssrlbl[j]
+        tracklbl = cmddata.tracklbl[j]
+        mlbl = cmddata.mlbl[j]
+        rwy = cmddata.rwy[j]
     else:
         arr = data.arr[i]
         uco = data.uco[i]
-        rel = data.rel[i]
         selhdg = data.selhdg[i]
         selalt = data.selalt[i]
         selspd = data.selspd[i]
         sid = data.sid[i]
+        ssrlbl = data.ssrlbl[i]
+        tracklbl = data.tracklbl[i]
+        mlbl = data.mlbl[i]
+        rwy = data.rwy[i]
 
-    if not rel:
-        # Track label
+    # Track label
+    if tracklbl:
         # Line 1
         rawlabel += '%-8s' % data.id[i][:8]
 
-        if actdata.show_lbl == 2:  # and flighttype in ['INBOUND', 'OUTBOUND']:
-            # Line 2
-            rawlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
-            if data.alt[i] < actdata.translvl:
-                rawlabel += '%-1s' % 'A'
-            else:
-                rawlabel += '%-1s' % ' '
-            if uco and selalt != 0:
-                rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
-            else:
-                rawlabel += '%-3s' % '   '
+        # Line 2
+        rawlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
+        if data.alt[i] < actdata.translvl:
+            rawlabel += '%-1s' % 'A'
+        else:
             rawlabel += '%-1s' % ' '
+        if uco and selalt != 0:
+            rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
+        else:
+            rawlabel += '%-3s' % '   '
+        rawlabel += '%-1s' % ' '
 
-            # Line 3
-            rawlabel += '%-4s' % str(data.type[i])[:4]
-            if uco and selhdg != 0:
-                rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
-            elif data.flighttype[i] == 'INBOUND':
-                rawlabel += '%-3s' % arr.replace('ARTIP', 'ATP')[:3]
-            elif data.flighttype[i] == 'OUTBOUND':
-                rawlabel += '%-3s' % sid[:3]
-            else:
-                rawlabel += '%-3s' % '   '
+        # Line 3
+        rawlabel += '%-4s' % str(data.type[i])[:4]
+        if uco and selhdg != 0:
+            rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
+        elif data.flighttype[i] == 'INBOUND':
+            rawlabel += '%-3s' % arr.replace('ARTIP', 'ATP')[:3]
+        elif data.flighttype[i] == 'OUTBOUND':
+            rawlabel += '%-3s' % sid[:3]
+        else:
+            rawlabel += '%-3s' % '   '
+        rawlabel += '%-1s' % ' '
+
+        # Line 4
+        rawlabel += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
+        if data.wtc[i].upper() == 'H' or data.wtc[i].upper() == 'J':
+            rawlabel += '%-1s' % str(data.wtc[i])[:1]
+        else:
             rawlabel += '%-1s' % ' '
-
-            # Line 4
-            rawlabel += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
-            if data.wtc[i].upper() == 'H' or data.wtc[i].upper() == 'J':
-                rawlabel += '%-1s' % str(data.wtc[i])[:1]
-            else:
-                rawlabel += '%-1s' % ' '
-            if uco and selspd != 0:
-                rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
-            else:
-                rawlabel += '%-3s' % 'SPD'
-            rawlabel += '%-1s' % ' '
-
-        # Micro label
-        rawmlabel += '   '
-
-        # SSR label
-        rawssrlabel += 7*3*' '
-
+        if uco and selspd != 0:
+            rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
+        else:
+            rawlabel += '%-3s' % 'SPD'
+        rawlabel += '%-1s' % ' '
     else:
-        # Track label
         rawlabel += 8*4*' '
 
-        # Micro label
+    # Micro label
+    if mlbl:
+        if data.flighttype[i].upper() == 'OUTBOUND':
+            rawmlabel += '  '+chr(30)
+        else:
+            rawmlabel += '%-3s' % rwy[:3]
+    else:
         rawmlabel += 3*' '
 
-        # SSR Label
+    # SSR label
+    # No labels
+    if ssrlbl == 0:
+        rawssrlabel += 7*3*' '
+    # 1 Line
+    elif ssrlbl == 1:
+        # Line 1-3
+        rawssrlabel += 7*3*' '
+    # 2 Lines
+    elif ssrlbl == 2:
         # Line 1
-        rawssrlabel += '%-7s' % '       '
-
+        rawssrlabel += 7*' '
         # Line 2
-        rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
-
+        rawssrlabel += '%-3s' % leading_zeros(data.alt[i] / ft / 100)[:3]
         if data.alt[i] < actdata.translvl:
             rawssrlabel += '%-4s' % 'A   '
         else:
             rawssrlabel += '%-4s' % '    '
-
+        # Line 3
+        rawssrlabel += 7*' '
+    # 3 Lines
+    elif ssrlbl == 3:
+        # Line 1
+        rawssrlabel += 7*' '
+        # Line 2
+        rawssrlabel += '%-3s' % leading_zeros(data.alt[i] / ft / 100)[:3]
+        if data.alt[i] < actdata.translvl:
+            rawssrlabel += '%-4s' % 'A   '
+        else:
+            rawssrlabel += '%-4s' % '    '
         # Line 3
         rawssrlabel += '%-7s' % data.id[i][:7]
+    else:
+        rawssrlabel += 7*3*' '
 
     return rawlabel, rawmlabel, rawssrlabel
 
@@ -741,74 +764,94 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
 
     if cmddata:
         uco = cmddata.uco[j]
-        rel = cmddata.rel[j]
-        selhdg = cmddata.selhdg[j]
         selalt = cmddata.selalt[j]
         selspd = cmddata.selspd[j]
+        ssrlbl = cmddata.ssrlbl[j]
+        tracklbl = cmddata.tracklbl[j]
+        mlbl = cmddata.mlbl[j]
     else:
         uco = data.uco[j]
-        rel = data.rel[j]
-        selhdg = data.selhdg[j]
         selalt = data.selalt[j]
         selspd = data.selspd[j]
+        ssrlbl = data.ssrlbl[i]
+        tracklbl = data.tracklbl[i]
+        mlbl = data.mlbl[i]
 
-    if not rel:
+    # Track label
+    if tracklbl:
         # Line 1
         rawlabel += '%-8s' % data.id[i][:8]
 
-        if actdata.show_lbl == 2:
-            # Line 2
-            rawlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
-            if data.alt[i] < actdata.translvl:
-                rawlabel += '%-1s' % 'A'
-            else:
-                rawlabel += '%-1s' % ' '
-            if uco and selalt != 0:
-                rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
-            else:
-                rawlabel += '%-3s' % '   '
+        # Line 2
+        rawlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
+        if data.alt[i] < actdata.translvl:
+            rawlabel += '%-1s' % 'A'
+        else:
+            rawlabel += '%-1s' % ' '
+        if uco and selalt != 0:
+            rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
+        else:
+            rawlabel += '%-3s' % '   '
+        rawlabel += '%-1s' % ' '
+
+        # Line 3
+        rawlabel += '%-3s' % '...'
+        rawlabel += '%-1s' % ' '
+        rawlabel += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
+        if data.wtc[i].upper() == 'H' or data.wtc[i].upper() == 'J':
+            rawlabel += '%-1s' % str(data.wtc[i])[:1]
+        else:
             rawlabel += '%-1s' % ' '
 
-            # Line 3
-            rawlabel += '%-3s' % '...'
-            rawlabel += '%-1s' % ' '
-            rawlabel += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
-            if data.wtc[i].upper() == 'H' or data.wtc[i].upper() == 'J':
-                rawlabel += '%-1s' % str(data.wtc[i])[:1]
-            else:
-                rawlabel += '%-1s' % ' '
-
-            # Line 4
-            if uco and selspd != 0:
-                rawlabel += '%-1s' % 'I'
-                rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
-            else:
-                rawlabel += '%-4s' % '    '
-            rawlabel += '%-4s' % data.type[i][:4]
-
-            rawmlabel += 3*' '
-            rawssrlabel += 7*3*' '
+        # Line 4
+        if uco and selspd != 0:
+            rawlabel += '%-1s' % 'I'
+            rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
+        else:
+            rawlabel += '%-4s' % '    '
+        rawlabel += '%-4s' % data.type[i][:4]
     else:
-        # Track label
         rawlabel += 8*4*' '
 
-        # Micro label
+    # Micro label
+    if mlbl:
+        if data.flighttype[i].upper() == 'INBOUND':
+            rawmlabel += '  '+chr(31)
+        else:
+            rawmlabel += 3*' '
+    else:
         rawmlabel += 3*' '
 
-        # SSR Label
+    # SSR label
+    # No labels
+    if ssrlbl == 0:
+        rawssrlabel += 7*3*' '
+    # 1 Line
+    elif ssrlbl == 1:
         # Line 1
-        rawssrlabel += '%-7s' % '       '
-
+        rawssrlabel += data.id[i][:7]
+        # Line 2-3
+        rawssrlabel += 7*2*' '
+    # 2 Lines
+    elif ssrlbl == 2:
+        # Line 1
+        rawssrlabel += data.id[i][:7]
+        # Line 2-3
+        rawssrlabel += 7*2*' '
+    # 3 Lines
+    elif ssrlbl == 3:
+        # Line 1
+        rawssrlabel += '%-7s' % data.id[i][:7]
         # Line 2
+        rawssrlabel += 7*' '
+        # Line 3
         rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
-
         if data.alt[i] < actdata.translvl:
             rawssrlabel += '%-4s' % 'A   '
         else:
             rawssrlabel += '%-4s' % '    '
-
-        # Line 3
-        rawssrlabel += '%-7s' % '       '
+    else:
+        rawssrlabel += 7*3*' '
 
     return rawlabel, rawmlabel, rawssrlabel
 
@@ -818,10 +861,10 @@ def twrlabel(rawlabel, actdata, data, i, cmddata=None, j=None):
     Function: Create acc label
     Args:
         rawlabel:       string to add label [str]
-        actdata:        node data [class]
-        data:           aircraft data [class]
+        actdata:        node data [dict]
+        data:           aircraft data [dict]
         i:              index for data [int]
-        cmddata:        command data [class]
+        cmddata:        command data [dict]
         j:              index for cmddata [int]
     Returns:
         rawlabel:       track label string [str]
@@ -853,6 +896,8 @@ def twrlabel(rawlabel, actdata, data, i, cmddata=None, j=None):
         rawlabel += '%-8s' % data.type[i][:8]
         # Line 4
         rawlabel += 8*' '
+    else:
+        rawlabel += 8*3*' '
 
     return rawlabel
 

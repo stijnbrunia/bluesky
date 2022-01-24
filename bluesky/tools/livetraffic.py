@@ -97,10 +97,12 @@ class OpenSkySource:
 
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
-            datafeed = list("SETDATAFEED "+acid+" OPENSKY")
+            datafeed = list("SETDATAFEED "+acid+", OPENSKY")
+            tracklabel = list("TRACKLABEL "+acid)
+            ssrlabel = list("SSRLABEL "+acid+", 3")
 
-            commands += create + datafeed
-            commandstime += [0.]*len(create) + [0.01]*len(datafeed)
+            commands += create + datafeed + tracklabel + ssrlabel
+            commandstime += [0.]*len(create) + [0.01]*3*len(datafeed)
 
             # Set Mode
             self.mode = 'LIVE'

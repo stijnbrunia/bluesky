@@ -35,15 +35,17 @@ class LVNLVariables(Entity):
         super().__init__()
 
         with self.settrafarrays():
-            self.arr = []                           # Arrival/Stack
-            self.flighttype = []                    # Flight type
-            self.lblpos = []                        # Label position
-            self.lblshow = []                       # show labels
-            self.rel = np.array([], dtype=np.bool)  # Release
-            self.rwy = []                           # Runway
-            self.sid = []                           # SID
-            self.uco = np.array([], dtype=np.bool)  # Under Control
-            self.wtc = []                           # Wake Turbulence Category
+            self.arr = []                                # Arrival/Stack
+            self.flighttype = []                         # Flight type
+            self.lblpos = []                             # Label position
+            self.mlbl = np.array([], dtype=np.bool)      # Show micro label
+            self.rel = np.array([], dtype=np.bool)       # Release
+            self.rwy = []                                # Runway
+            self.sid = []                                # SID
+            self.ssrlbl = np.array([], dtype=np.int)     # Show SSR label
+            self.tracklbl = np.array([], dtype=np.bool)  # Show track label
+            self.uco = np.array([], dtype=np.bool)       # Under Control
+            self.wtc = []                                # Wake Turbulence Category
 
     def create(self, n=1):
         """
@@ -59,6 +61,9 @@ class LVNLVariables(Entity):
         super().create(n)
 
         self.lblpos[-n:] = ['CR']
+        self.tracklbl[-n:] = True
+        self.ssrlbl[-n:] = 0
+        self.mlbl[-n:] = False
 
     @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
     def setarr(self, idx: 'acid', arr: str = '', addwpts: 'onoff' = True):
@@ -162,3 +167,46 @@ class LVNLVariables(Entity):
             self.lblpos[idx] = labelposition.upper()
         else:
             return False, 'POSLABEL: Not a valid label position'
+
+    @stack.command(name='TRACKLABEL', brief='TRACKLABEL CALLSIGN')
+    def settracklabel(self, idx: 'acid'):
+        """
+        Function: Set the track label
+        Args:
+            idx:        index for traffic arrays [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 24-1-2022
+        """
+
+        self.tracklbl[idx] = not self.tracklbl[idx]
+
+    @stack.command(name='MICROLABEL', brief='MICROLABEL CALLSIGN')
+    def setmlabel(self, idx: 'acid'):
+        """
+        Function: Set the micro label
+        Args:
+            idx:    index for traffic arrays [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 24-1-2022
+        """
+
+        self.mlbl[idx] = not self.mlbl[idx]
+
+    @stack.command(name='SSRLABEL', brief='SSRLABEL CALLSIGN LINES')
+    def setssrlabel(self, idx: 'acid', ssrlabel: int):
+        """
+        Function: Set the SSR label
+        Args:
+            idx:        index for traffic arrays [int]
+            ssrlabel:   ssr label lines [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 24-1-2022
+        """
+
+        self.ssrlbl[idx] = ssrlabel

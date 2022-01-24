@@ -8,7 +8,7 @@ Date: 9-12-2021
 
 appmain = [['a1', 'UCO',            'lambda: tid_cmds("UCO")'],
            ['a2', '36',             'lambda: None'],
-           ['a3', '18',             'lambda: None'],
+           ['a3', '48',             'lambda: None'],
            ['a4', 'REL',            'lambda: tid_cmds("REL")'],
 
            ['b1', 'HDG',            ['lambda: tid_cmds("HDG")',
@@ -16,24 +16,25 @@ appmain = [['a1', 'UCO',            'lambda: tid_cmds("UCO")'],
            ['b2', 'POS',            ['lambda: console.selected_ac()',
                                      'lambda: console.process_cmdline("POSLABEL ")',
                                      'lambda: show_basetid("apppos", "apppos")']],
-           ['b3', '',               None],
+           ['b3', 'PBP',            'lambda: console.Console._instance.stack("HOLD")'],
            ['b4', 'ACM',            'lambda: None'],
 
            ['c1', 'EFL',            ['lambda: tid_cmds("ALT")',
                                      'lambda: show_basetid("appefl", "appefl")']],
            ['c2', 'TFL',            'lambda: None'],
-           ['c3', 'LBL',            'lambda: None'],
+           ['c3', 'LBL',            'lambda: tid_cmds("TRACKLABEL")'],
            ['c4', 'ERA',            'lambda: None'],
 
            ['d1', 'SPD',            ['lambda: tid_cmds("SPD")',
                                      'lambda: show_basetid("appspd", "appspd")']],
            ['d2', 'DPL',            'lambda: None'],
-           ['d3', '',               None],
-           ['d4', 'RWY',            'lambda: None'],
+           ['d3', 'PBR',            'lambda: console.Console._instance.stack("OP")'],
+           ['d4', 'RWY',            ['lambda: tid_cmds("RWY")',
+                                     'lambda: show_basetid("apprwy", "apprwy")']],
 
            ['e1', 'REL',            'lambda: tid_cmds("REL")'],
-           ['e2', '',               None],
-           ['e3', 'ATTN',           'lambda: None'],
+           ['e2', 'FORCE\nUCO',     'lambda: None'],
+           ['e3', 'RNAV\nATTN',     'lambda: None'],
            ['e4', 'UCO',            'lambda: tid_cmds("UCO")'],
 
            ['f1', 'COR',            'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
@@ -299,4 +300,37 @@ apppos = [['a1', '',        None],
           ['f2', '',        None],
           ['f3', '',        None],
           ['f4', '',        None]
+          ]
+
+apprwy = [['a1', '06',      'lambda: console.process_cmdline("06")'],
+          ['a2', '18C',     'lambda: console.process_cmdline("18C")'],
+          ['a3', '27',      'lambda: console.process_cmdline("27")'],
+          ['a4', '36R',     'lambda: console.process_cmdline("36R")'],
+
+          ['b1', '24',      'lambda: console.process_cmdline("24")'],
+          ['b2', '36C',     'lambda: console.process_cmdline("36C")'],
+          ['b3', '09',      'lambda: console.process_cmdline("09")'],
+          ['b4', '18L',     'lambda: console.process_cmdline("18L")'],
+
+          ['c1', '18R',     'lambda: console.process_cmdline("18R")'],
+          ['c2', '04',      'lambda: console.process_cmdline("04")'],
+          ['c3', '',        None],
+          ['c4', '',        None],
+
+          ['d1', '36L',     'lambda: console.process_cmdline("36L")'],
+          ['d2', '22',      'lambda: console.process_cmdline("22")'],
+          ['d3', '',        None],
+          ['d4', '',        None],
+
+          ['e1', '',        None],
+          ['e2', 'HEL',     'lambda: console.process_cmdline("HEL")'],
+          ['e3', '',        None],
+          ['e4', '24\nRD',  'lambda: None'],
+
+          ['f1', 'COR',     'lambda: console.Console._instance.set_cmdline(console.Console._instance.command_line[:-1])'],
+          ['f2', '',        None],
+          ['f3', '',        None],
+          ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
+                             'lambda: console.selected_ac()',
+                             'lambda: apprwy.close()']]
           ]
