@@ -529,18 +529,20 @@ class VEMMISRead:
         sector5 = sector5.loc[sector5['LONGITUDE'] < 4.764166666666667]
 
         # Arrival
-        arrsec1   = list("ARR "+sector1['CALLSIGN']+", NIRSI_AM603")
-        tarrsec1  = list(sector1['SIM_START']+0.01)
-        arrsec2   = list("ARR "+sector2['CALLSIGN']+", NIRSI_AM603")
-        tarrsec2  = list(sector2['SIM_START']+0.01)
-        arrsec34  = list("ARR "+sector34['CALLSIGN']+", NIRSI_GAL01")
-        tarrsec34 = list(sector34['SIM_START']+0.01)
-        arrsec5   = list("ARR "+sector5['CALLSIGN']+", NIRSI_GAL02")
-        tarrsec5  = list(sector5['SIM_START']+0.01)
-        arrother  = list("ARR "+other['CALLSIGN']+", "+other['STACK'].astype(str).str.replace('nan', '')+", OFF")
-        tarrother = list(other['SIM_START']+0.01)
-        arr  = arrsec1  + arrsec2  + arrsec34  + arrsec5  + arrother
-        tarr = tarrsec1 + tarrsec2 + tarrsec34 + tarrsec5 + tarrother
+        arrsec1    = list("ARR "+sector1['CALLSIGN']+", NIRSI_AM603")
+        tarrsec1   = list(sector1['SIM_START']+0.01)
+        am601sec2  = list("ADDWPT "+sector2['CALLSIGN']+", AM601")
+        tam601sec2 = list(sector2['SIM_START']+0.01)
+        arrsec2    = list("ARR "+sector2['CALLSIGN']+", NIRSI_AM603")
+        tarrsec2   = list(sector2['SIM_START']+0.02)
+        arrsec34   = list("ARR "+sector34['CALLSIGN']+", NIRSI_GAL01")
+        tarrsec34  = list(sector34['SIM_START']+0.01)
+        arrsec5    = list("ARR "+sector5['CALLSIGN']+", NIRSI_GAL02")
+        tarrsec5   = list(sector5['SIM_START']+0.01)
+        arrother   = list("ARR "+other['CALLSIGN']+", "+other['STACK'].astype(str).str.replace('nan', '')+", OFF")
+        tarrother  = list(other['SIM_START']+0.01)
+        arr  = arrsec1  + am601sec2  + arrsec2  + arrsec34  + arrsec5  + arrother
+        tarr = tarrsec1 + tam601sec2 + tarrsec2 + tarrsec34 + tarrsec5 + tarrother
 
         setdatafeed  = list("SETDATAFEED "+other['CALLSIGN']+", VEMMIS")
         tsetdatafeed = list(other['SIM_START']+0.01)
