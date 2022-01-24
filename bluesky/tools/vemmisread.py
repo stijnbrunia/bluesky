@@ -544,6 +544,9 @@ class VEMMISRead:
 
         setdatafeed  = list("SETDATAFEED "+other['CALLSIGN']+", VEMMIS")
         tsetdatafeed = list(other['SIM_START']+0.01)
+        tracklabel   = list("TRACKLABEL "+other['CALLSIGN'])
+        ssrlabel     = list("SSRLABEL "+other['CALLSIGN']+", 3")
+        tlabel       = list(other['SIM_START']+0.01)
         lnav         = list("LNAV "+other['CALLSIGN']+", OFF")
         tlnav        = list(other['SIM_START']+0.02)
         delete       = list("DEL "+other['CALLSIGN'])
@@ -554,8 +557,8 @@ class VEMMISRead:
         tset         = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
 
         # Create lists
-        command     += create  + setdatafeed  + arr  + sid + flighttype + wtc + origin + destination + lnav + delete
-        commandtime += tcreate + tsetdatafeed + tarr + 5*tset + tlnav + tdelete
+        command     += create  + setdatafeed  + arr  + sid + flighttype + wtc + origin + destination + tracklabel + ssrlabel + lnav + delete
+        commandtime += tcreate + tsetdatafeed + tarr + 5*tset + 2*tlabel + tlnav + tdelete
         # Sort
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
@@ -666,8 +669,8 @@ class VEMMISSource:
         vemmisdata = VEMMISRead(datapath, date0, time0, deltat=0.5)
         # Load flight data
         bs.scr.echo('Loading flight data ...')
-        commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
-        #  commands, commandstime = vemmisdata.get_initial_tbar()
+        # commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
+        commands, commandstime = vemmisdata.get_initial_tbar()
         # Load track data
         bs.scr.echo('Loading track data ...')
         trackdata = vemmisdata.get_trackdata()
