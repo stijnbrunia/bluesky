@@ -72,18 +72,35 @@ def tid_cmds(tidcmd):
         cmdlst.append(cmd)
         argslst.append(args)
 
-    # Previous command is finished
-    if cmdlst[-1].upper() in ['HDG', 'ALT', 'SPD'] and len(argslst[-1]) > 1:
+    # Commands that need more than 1 input
+    if cmdlst[-1].upper() in ['HDG', 'ALT', 'SPD', 'SSRLABEL']:
+        if len(argslst[-1]) > 1:
+            # Altitude command
+            if tidcmd.upper() == 'ALT':
+                cmdline += ' ; ' + id_select + ' ' + tidcmd + ' FL'
+            # Other commands
+            else:
+                cmdline += ' ; ' + id_select + ' ' + tidcmd + ' '
+        # Leave out last command
+        else:
+            cmdline = ''
+            for i in range(len(cmdlinelst)-1):
+                cmdline += cmdlinelst[i] + ' ; '
+            cmdline += id_select + ' ' + tidcmd + ' '
+
+    # Commands that only need 1 input
+    elif len(argslst[-1]) > 0:
         # Altitude command
         if tidcmd.upper() == 'ALT':
             cmdline += ' ; ' + id_select + ' ' + tidcmd + ' FL'
         # Other commands
         else:
             cmdline += ' ; ' + id_select + ' ' + tidcmd + ' '
+
     # Leave out last command
     else:
         cmdline = ''
-        for i in range(len(cmdlinelst)-1):
+        for i in range(len(cmdlinelst) - 1):
             cmdline += cmdlinelst[i] + ' ; '
         cmdline += id_select + ' ' + tidcmd + ' '
 

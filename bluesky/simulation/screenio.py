@@ -281,6 +281,9 @@ class ScreenIO:
         data['rel']        = bs.traf.lvnlvars.rel
         data['wtc']        = bs.traf.lvnlvars.wtc
         data['lblpos']     = bs.traf.lvnlvars.lblpos
+        data['mlbl']       = bs.traf.lvnlvars.mlbl
+        data['ssrlbl']     = bs.traf.lvnlvars.ssrlbl
+        data['tracklbl']   = bs.traf.lvnlvars.tracklbl
 
         # Transition level as defined in traf
         data['translvl']   = bs.traf.translvl
@@ -301,12 +304,15 @@ class ScreenIO:
         data['id'] = bs.traf.id
         data['idsel'] = bs.traf.id_select
         data['lblpos'] = bs.traf.lvnlvars.lblpos
+        data['mlbl'] = bs.traf.lvnlvars.mlbl
         data['rel'] = bs.traf.lvnlvars.rel
         data['rwy'] = bs.traf.lvnlvars.rwy
         data['selhdg'] = bs.traf.selhdg
         data['selalt'] = bs.traf.selalt
         data['selspd'] = bs.traf.selspd
         data['sid'] = bs.traf.lvnlvars.sid
+        data['ssrlbl'] = bs.traf.lvnlvars.ssrlbl
+        data['tracklbl'] = bs.traf.lvnlvars.tracklbl
         data['uco'] = bs.traf.lvnlvars.uco
 
         bs.net.send_stream(b'CMDDATA', data)
