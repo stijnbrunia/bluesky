@@ -770,9 +770,9 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         tracklbl = cmddata.tracklbl[j]
         mlbl = cmddata.mlbl[j]
     else:
-        uco = data.uco[j]
-        selalt = data.selalt[j]
-        selspd = data.selspd[j]
+        uco = data.uco[i]
+        selalt = data.selalt[i]
+        selspd = data.selspd[i]
         ssrlbl = data.ssrlbl[i]
         tracklbl = data.tracklbl[i]
         mlbl = data.mlbl[i]
