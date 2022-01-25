@@ -117,7 +117,8 @@ class VEMMISRead:
         """
 
         # Flight data
-        self.flights = self.flights.dropna(subset=['FLIGHT_ID', 'CALLSIGN', 'ICAO_ACTYPE', 'ADEP', 'DEST', 'STATUS'])
+        self.flights = self.flights.dropna(subset=['FLIGHT_ID', 'CALLSIGN', 'SSR', 'ICAO_ACTYPE', 'ADEP', 'DEST',
+                                                   'STATUS'])
 
         # Track data
         self.tracks = self.tracks.dropna(subset=['TIME', 'X', 'Y', 'MODE_C', 'SPEED', 'HEADING',
@@ -140,7 +141,7 @@ class VEMMISRead:
         # Flight data
         self.flights['T_UPDATE'] = pd.to_datetime(self.flights['T_UPDATE'], format="%d-%m-%Y %H:%M:%S")
         self.flights['T0'] = pd.to_datetime(self.flights['T0'], format="%d-%m-%Y %H:%M:%S")
-        # self.flights['SSR'] = self.flights['SSR'].astype(int)
+        self.flights['SSR'] = self.flights['SSR'].astype(int)
 
         # Track data
         self.tracks['TIME'] = pd.to_timedelta(self.tracks['TIME']/100, unit='seconds')
@@ -404,8 +405,8 @@ class VEMMISRead:
             swdatafeed:     add aircraft to datafeed [bool]
             typesim:        flighttypes that need to be simulated (no data feed) [list]
         Returns:
-            command:        initial commands [list]
-            commandtime:    simulation time of the initial commands [list]
+            cmds:           initial commands [list]
+            cmdst:          simulation time of the initial commands [list]
 
         Created by: Bob van Dillen
         Date: 20-1-2022
@@ -414,38 +415,66 @@ class VEMMISRead:
         simday, simmonth, simyear, simtime = self.get_datetime()
 
         # Initial commands
-        command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
-        commandtime = [0.]
+        cmds = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
+        cmdst = [0.]
 
         # Flight data
-        acid            = self.flightdata['CALLSIGN']
-        actype          = self.flightdata['ICAO_ACTYPE']
-        aclat           = self.flightdata['LATITUDE'].astype(str)
-        aclon           = self.flightdata['LONGITUDE'].astype(str)
-        achdg           = self.flightdata['HEADING'].astype(str)
-        acalt           = self.flightdata['ALTITUDE'].astype(str)
-        acspd           = self.flightdata['CAS'].astype(str)
-        acflighttype    = self.flightdata['FLIGHT_TYPE']
-        acwtc           = self.flightdata['WTC']
-        acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
-        acarr           = self.flightdata['STACK'].astype(str).str.replace('nan', '')
-        acssr           = self.flightdata['SSR'].astype(str)
-        acorigin        = self.flightdata['ADEP']
-        acdestination   = self.flightdata['DEST']
+        acid         = self.flightdata['CALLSIGN']
+        actype       = self.flightdata['ICAO_ACTYPE']
+        aclat        = self.flightdata['LATITUDE'].astype(str)
+        aclon        = self.flightdata['LONGITUDE'].astype(str)
+        achdg        = self.flightdata['HEADING'].astype(str)
+        acalt        = self.flightdata['ALTITUDE'].astype(str)
+        acspd        = self.flightdata['CAS'].astype(str)
+        acorig       = self.flightdata['ADEP']
+        acdest       = self.flightdata['DEST']
+        acflighttype = self.flightdata['FLIGHT_TYPE']
+        acwtc        = self.flightdata['WTC']
+        acssr        = self.flightdata['SSR'].astype(str)
 
         # Commands
-        create       = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
-        arr          = list("ARR "+acid+", "+acarr+", OFF")
-        sid          = list("SID "+acid+", "+acsid)
-        flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
-        wtc          = list("WTC "+acid+", "+acwtc)
-        ssr          = list("SSRCODE "+acid+", "+acssr)
-        origin       = list("ORIG "+acid+", "+acorigin)
-        destination  = list("DEST "+acid+", "+acdestination)
-        lnav         = list("LNAV "+acid+", OFF")
+        # Create
+        cmds  += list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        cmdst += list(self.flightdata['SIM_START'])
+
+        # Origin
+        cmds  += list("ORIG "+acid+", "+acorig)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # Destination
+        cmds  += list("DEST "+acid+", "+acdest)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # Flight type
+        cmds  += list("FLIGHTTYPE "+acid+", "+acflighttype)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # WTC
+        cmds  += list("WTC "+acid+", "+acwtc)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # SSR Code
+        cmds  += list("SSRCODE "+acid+", "+acssr)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # SID
+        outbound = self.flightdata.dropna(subset=['SID'])
+        cmds    += list("SID "+outbound['CALLSIGN']+", "+outbound['SID']+", OFF")
+        cmdst   += list(outbound['SIM_START'] + 0.01)
+
+        # ARR
+        inbound = self.flightdata.dropna(subset=['STACK'])
+        cmds   += list("ARR "+inbound['CALLSIGN']+", "+inbound['STACK']+", OFF")
+        cmdst  += list(inbound['SIM_START'] + 0.01)
+
+        # Delete route
+        cmds  += list("DELRTE "+acid)
+        cmdst += list(self.flightdata['SIM_START'] + 0.02)
+
         # Data feed dependent commands
         if swdatafeed:
             datafeed = self.flightdata[['CALLSIGN', 'FLIGHT_TYPE', 'SIM_START', 'SIM_END']]
+
             # Take out flights that need to be simulated
             if 'INBOUND' in typesim:
                 datafeed = datafeed.loc[datafeed['FLIGHT_TYPE'] != 'INBOUND']
@@ -453,39 +482,31 @@ class VEMMISRead:
                 datafeed = datafeed.loc[datafeed['FLIGHT_TYPE'] != 'OUTBOUND']
             if 'REGIONAL' in typesim:
                 datafeed = datafeed.loc[datafeed['FLIGHT_TYPE'] != 'REGIONAL']
+
             # Create commands for data feed flights
-            setdatafeed = list("SETDATAFEED "+datafeed['CALLSIGN']+", VEMMIS")
-            delete      = list("DEL "+datafeed['CALLSIGN'])
-        else:
-            datafeed = pd.DataFrame(columns=['CALLSIGN', 'FLIGHT_TYPE', 'SIM_START', 'SIM_END'])
-            setdatafeed = []
-            delete      = []
+            # Set data feed
+            cmds        += list("SETDATAFEED "+datafeed['CALLSIGN']+", VEMMIS")
+            cmdst       += list(datafeed['SIM_START'] + 0.01)
 
-        # Commands time
-        tcreate      = list(self.flightdata['SIM_START'])
-        tsetdatafeed = list(datafeed['SIM_START'] + 0.01)
-        tset         = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
-        tlnav        = list(self.flightdata['SIM_START']+0.02)  # Add 0.02 to ensure right order
-        tdelete      = list(datafeed['SIM_END'])
+            # Delete
+            cmds   += list("DEL "+datafeed['CALLSIGN'])
+            cmdst  += list(datafeed['SIM_END'])
 
-        # Create lists
-        command     += create  + setdatafeed  + arr + sid + flighttype + wtc + ssr + origin + destination + lnav + delete
-        commandtime += tcreate + tsetdatafeed + 7*tset + tlnav + tdelete
         # Sort
-        command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
+        command_df = pd.DataFrame({'COMMAND': cmds, 'TIME': cmdst})
         command_df = command_df.sort_values(by=['TIME'])
+        cmds = list(command_df['COMMAND'])
+        cmdst = list(command_df['TIME'])
 
-        return list(command_df['COMMAND']), list(command_df['TIME'])
+        return cmds, cmdst
 
     def get_initial_tbar(self):
         """
         Function: Get the initial commands for the T-Bar simulation
-        Args:
-            swdatafeed:     add aircraft to datafeed [bool]
-            typesim:        flighttypes that need to be simulated (no data feed) [list]
+        Args: -
         Returns:
-            command:        initial commands [list]
-            commandtime:    simulation time of the initial commands [list]
+            cmds:   initial commands [list]
+            cmdst:  simulation time of the initial commands [list]
 
         Created by: Bob van Dillen
         Date: 20-1-2022
@@ -494,36 +515,59 @@ class VEMMISRead:
         simday, simmonth, simyear, simtime = self.get_datetime()
 
         # Initial commands
-        command = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
-        commandtime = [0.]
+        cmds = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
+        cmdst = [0.]
 
         # Flight data
         self.flightdata = self.flightdata.loc[self.flightdata['RUNWAY_OUT'] != '36L']  # No 36L departure
-        acid            = self.flightdata['CALLSIGN']
-        actype          = self.flightdata['ICAO_ACTYPE']
-        aclat           = self.flightdata['LATITUDE'].astype(str)
-        aclon           = self.flightdata['LONGITUDE'].astype(str)
-        achdg           = self.flightdata['HEADING'].astype(str)
-        acalt           = self.flightdata['ALTITUDE'].astype(str)
-        acspd           = self.flightdata['CAS'].astype(str)
-        acflighttype    = self.flightdata['FLIGHT_TYPE']
-        acwtc           = self.flightdata['WTC']
-        acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
-        acorigin        = self.flightdata['ADEP']
-        acdestination   = self.flightdata['DEST']
-        acssr           = self.flightdata['SSR'].astype(str)
+        acid         = self.flightdata['CALLSIGN']
+        actype       = self.flightdata['ICAO_ACTYPE']
+        aclat        = self.flightdata['LATITUDE'].astype(str)
+        aclon        = self.flightdata['LONGITUDE'].astype(str)
+        achdg        = self.flightdata['HEADING'].astype(str)
+        acalt        = self.flightdata['ALTITUDE'].astype(str)
+        acspd        = self.flightdata['CAS'].astype(str)
+        acorig       = self.flightdata['ADEP']
+        acdest       = self.flightdata['DEST']
+        acflighttype = self.flightdata['FLIGHT_TYPE']
+        acwtc        = self.flightdata['WTC']
+        acssr        = self.flightdata['SSR'].astype(str)
 
         # Commands
-        create       = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
-        sid          = list("SID "+acid+", "+acsid)
-        flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
-        wtc          = list("WTC "+acid+", "+acwtc)
-        ssr          = list("SSRCODE "+acid+", "+acssr)
-        origin       = list("ORIG "+acid+", "+acorigin)
-        destination  = list("DEST "+acid+", "+acdestination)
-        # Data feed dependent commands
+        # Create
+        cmds  += list("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        cmdst += list(self.flightdata['SIM_START'])
+
+        # Origin
+        cmds  += list("ORIG "+acid+", "+acorig)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # Destination
+        cmds  += list("DEST "+acid+", "+acdest)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # Flight type
+        cmds  += list("FLIGHTTYPE "+acid+", "+acflighttype)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # WTC
+        cmds  += list("WTC "+acid+", "+acwtc)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # SSR Code
+        cmds  += list("SSRCODE "+acid+", "+acssr)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # SID
+        outbound = self.flightdata.dropna(subset=['SID'])
+        cmds    += list("SID "+outbound['CALLSIGN']+", "+outbound['SID']+", OFF")
+        cmdst   += list(outbound['SIM_START'] + 0.01)
+
+        # Split into inbound and other traffic
         inbound = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] == 'INBOUND']
         other = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'INBOUND']
+
+        # Split into entry sectors
         # Sector 1
         sector1 = inbound.loc[inbound['LATITUDE'] >= 52.51121388888889]
         sector1 = sector1.loc[sector1['LONGITUDE'] >= 4.764166666666667]
@@ -538,43 +582,49 @@ class VEMMISRead:
         sector5 = sector5.loc[sector5['LONGITUDE'] < 4.764166666666667]
 
         # Arrival
-        arrsec1    = list("ARR "+sector1['CALLSIGN']+", NIRSI_AM603")
-        tarrsec1   = list(sector1['SIM_START']+0.01)
-        arrsec2    = list("ARR "+sector2['CALLSIGN']+", NIRSI_AM603")
-        tarrsec2   = list(sector2['SIM_START']+0.01)
-        am601sec2  = list(sector2['CALLSIGN']+" BEFORE AM603 ADDWPT AM601")
-        tam601sec2 = list(sector2['SIM_START']+0.1)
-        arrsec34   = list("ARR "+sector34['CALLSIGN']+", NIRSI_GAL01")
-        tarrsec34  = list(sector34['SIM_START']+0.01)
-        arrsec5    = list("ARR "+sector5['CALLSIGN']+", NIRSI_GAL02")
-        tarrsec5   = list(sector5['SIM_START']+0.01)
-        arrother   = list("ARR "+other['CALLSIGN']+", "+other['STACK'].astype(str).str.replace('nan', '')+", OFF")
-        tarrother  = list(other['SIM_START']+0.01)
-        arr  = arrsec1  + arrsec2  + am601sec2  + arrsec34  + arrsec5  + arrother
-        tarr = tarrsec1 + tarrsec2 + tam601sec2 + tarrsec34 + tarrsec5 + tarrother
+        cmds  += list("ARR "+sector1['CALLSIGN']+", NIRSI_AM603")
+        cmdst += list(sector1['SIM_START'] + 0.01)
 
-        setdatafeed  = list("SETDATAFEED "+other['CALLSIGN']+", VEMMIS")
-        tsetdatafeed = list(other['SIM_START']+0.01)
-        tracklabel   = list("TRACKLABEL "+other['CALLSIGN'])
-        ssrlabel     = list("SSRLABEL "+other['CALLSIGN']+", 3")
-        tlabel       = list(other['SIM_START']+0.01)
-        lnav         = list("LNAV "+other['CALLSIGN']+", OFF")
-        tlnav        = list(other['SIM_START']+0.02)
-        delete       = list("DEL "+other['CALLSIGN'])
-        tdelete      = list(other['SIM_END'])
+        cmds  += list("ARR "+sector2['CALLSIGN']+", NIRSI_GAL01")
+        cmdst += list(sector2['SIM_START'] + 0.01)
 
-        # Commands time
-        tcreate      = list(self.flightdata['SIM_START'])
-        tset         = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
+        cmds  += list("ARR "+sector34['CALLSIGN']+", NIRSI_GAL01")
+        cmdst += list(sector34['SIM_START'] + 0.01)
 
-        # Create lists
-        command     += create  + setdatafeed  + arr  + sid + flighttype + wtc + ssr + origin + destination + tracklabel + ssrlabel + lnav + delete
-        commandtime += tcreate + tsetdatafeed + tarr + 6*tset + 2*tlabel + tlnav + tdelete
+        cmds  += list("ARR "+sector5['CALLSIGN']+", NIRSI_GAL02")
+        cmdst += list(sector5['SIM_START'] + 0.01)
+
+        inother = other.dropna(subset=['STACK'])
+        cmds   += list("ARR "+inother['CALLSIGN']+", "+inother['STACK']+", OFF")
+        cmdst  += list(inother['SIM_START'] + 0.01)
+
+        # Data feed dependent commands
+        cmds  += list("SETDATAFEED "+other['CALLSIGN']+", VEMMIS")
+        cmdst += list(other['SIM_START'] + 0.01)
+
+        # Track label
+        cmds  += list("TRACKLABEL "+other['CALLSIGN'])
+        cmdst += list(other['SIM_START'] + 0.01)
+
+        # SSR label
+        cmds  += list("SSRLABEL "+other['CALLSIGN']+", 3")
+        cmdst += list(other['SIM_START'] + 0.01)
+
+        # Delete route
+        cmds  += list("DELRTE "+other['CALLSIGN'])
+        cmdst += list(other['SIM_START'] + 0.02)
+
+        # Delete
+        cmds  += list("DEL "+other['CALLSIGN'])
+        cmdst += list(other['SIM_END'])
+
         # Sort
-        command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
+        command_df = pd.DataFrame({'COMMAND': cmds, 'TIME': cmdst})
         command_df = command_df.sort_values(by=['TIME'])
+        cmds = list(command_df['COMMAND'])
+        cmdst = list(command_df['TIME'])
 
-        return list(command_df['COMMAND']), list(command_df['TIME'])
+        return cmds, cmdst
 
     def get_trackdata(self):
         """

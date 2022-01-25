@@ -103,6 +103,38 @@ class LVNLVariables(Entity):
         if isinstance(flighttype, str):
             self.flighttype[idx] = flighttype.upper()
 
+    @stack.command(name='POSLABEL', brief='POSLABEL CALLSIGN LL/LC/LR/CL/CR/UL/UC/UR')
+    def poslabel(self, idx: 'acid', labelposition: str):
+        """
+        Function: Set position of the label
+        Args:
+            idx:            index for traffic arrays [int]
+            labelposition:  position of the label [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 12-1-2021
+        """
+
+        if labelposition.upper() in ['LL', 'LC', 'LR', 'CL', 'CR', 'UL', 'UC', 'UR']:
+            self.lblpos[idx] = labelposition.upper()
+        else:
+            return False, 'POSLABEL: Not a valid label position'
+
+    @stack.command(name='MICROLABEL', brief='MICROLABEL CALLSIGN')
+    def setmlabel(self, idx: 'acid'):
+        """
+        Function: Set the micro label
+        Args:
+            idx:    index for traffic arrays [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 24-1-2022
+        """
+
+        self.mlbl[idx] = not self.mlbl[idx]
+
     @stack.command(name='RWY', brief='RWY CALLSIGN RUNWAY', aliases=('RW',))
     def setrwy(self, idx: 'acid', rwy: str):
         """
@@ -120,7 +152,7 @@ class LVNLVariables(Entity):
             self.rwy[idx] = rwy.upper()
 
     @stack.command(name='SID', brief='SID CALLSIGN SID')
-    def setsid(self, idx: 'acid', sid: str = ''):
+    def setsid(self, idx: 'acid', sid: str = '', addwpts: 'onoff' = True):
         """
         Function: Set the SID
         Args:
@@ -132,70 +164,27 @@ class LVNLVariables(Entity):
         Date: 21-12-2021
         """
 
-        if isinstance(sid, str):
-            self.sid[idx] = sid.upper()
+        self.sid[idx] = sid.upper()
 
-    @stack.command(name='WTC', brief='WTC CALLSIGN WTC')
-    def setwtc(self, idx: 'acid', wtc: str = ''):
+        if addwpts:
+            acid = bs.traf.id[idx]
+            cmd = 'PCALL LVNL/Routes/ARR/'+sid.upper()+' '+acid
+            stack.stack(cmd)
+
+    @stack.command(name='SSRCODE', brief='SSRCODE CALLSIGN SSR')
+    def setssr(self, idx: 'acid', ssr: float):
         """
-        Function: Set the wtc
+        Function: Set the SSR code
         Args:
             idx:    index for traffic arrays [int]
-            wtc:    wtc [str]
+            ssr:    SSR code [int]
         Returns: -
 
         Created by: Bob van Dillen
-        Date: 21-12-2021
+        Date: 25-1-2022
         """
 
-        if isinstance(wtc, str):
-            self.wtc[idx] = wtc.upper()
-
-    @stack.command(name='POSLABEL', brief='POSLABEL CALLSIGN LL/LC/LR/CL/CR/UL/UC/UR')
-    def poslabel(self, idx: 'acidselect', labelposition: str):
-        """
-        Function: Set position of the label
-        Args:
-            idx:            index for traffic arrays [int]
-            labelposition:  position of the label [str]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 12-1-2021
-        """
-
-        if labelposition.upper() in ['LL', 'LC', 'LR', 'CL', 'CR', 'UL', 'UC', 'UR']:
-            self.lblpos[idx] = labelposition.upper()
-        else:
-            return False, 'POSLABEL: Not a valid label position'
-
-    @stack.command(name='TRACKLABEL', brief='TRACKLABEL CALLSIGN')
-    def settracklabel(self, idx: 'acid'):
-        """
-        Function: Set the track label
-        Args:
-            idx:        index for traffic arrays [int]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 24-1-2022
-        """
-
-        self.tracklbl[idx] = not self.tracklbl[idx]
-
-    @stack.command(name='MICROLABEL', brief='MICROLABEL CALLSIGN')
-    def setmlabel(self, idx: 'acid'):
-        """
-        Function: Set the micro label
-        Args:
-            idx:    index for traffic arrays [int]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 24-1-2022
-        """
-
-        self.mlbl[idx] = not self.mlbl[idx]
+        self.ssr[idx] = int(ssr)
 
     @stack.command(name='SSRLABEL', brief='SSRLABEL CALLSIGN LINES')
     def setssrlabel(self, idx: 'acid', ssrlabel: int):
@@ -212,17 +201,32 @@ class LVNLVariables(Entity):
 
         self.ssrlbl[idx] = ssrlabel
 
-    @stack.command(name='SSRCODE', brief='SSRCODE CALLSIGN SSR')
-    def setssr(self, idx: 'acid', ssr: float):
+    @stack.command(name='TRACKLABEL', brief='TRACKLABEL CALLSIGN')
+    def settracklabel(self, idx: 'acid'):
         """
-        Function: Set the SSR code
+        Function: Set the track label
         Args:
-            idx:    index for traffic arrays [int]
-            ssr:    SSR code [int]
+            idx:        index for traffic arrays [int]
         Returns: -
 
         Created by: Bob van Dillen
-        Date: 25-1-2022
+        Date: 24-1-2022
         """
 
-        self.ssr[idx] = int(ssr)
+        self.tracklbl[idx] = not self.tracklbl[idx]
+
+    @stack.command(name='WTC', brief='WTC CALLSIGN WTC')
+    def setwtc(self, idx: 'acid', wtc: str = ''):
+        """
+        Function: Set the wtc
+        Args:
+            idx:    index for traffic arrays [int]
+            wtc:    wtc [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 21-12-2021
+        """
+
+        if isinstance(wtc, str):
+            self.wtc[idx] = wtc.upper()
