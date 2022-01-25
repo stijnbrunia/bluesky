@@ -440,12 +440,8 @@ class Traffic(glh.RenderObject, layer=100):
             selssd = np.zeros(naircraft, dtype=np.uint8)
             confidx = 0
 
-            zdata = zip(data.alt, data.arr, data.cas, data.flighttype, data.gs, data.id, data.inconf,
-                        data.ingroup, data.lat, data.lblpos, data.lon, data.rel, data.selalt, data.selhdg, data.selspd,
-                        data.sid, data.tcpamax, data.trk, data.type, data.uco, data.vs, data.wtc)
-            for i, (alt, arr, cas, flighttype, gs, acid, inconf,
-                    ingroup, lat, lblpos, lon, rel, selalt, selhdg, selspd,
-                    sid, tcpa, trk, actype, uco, vs, wtc) in enumerate(zdata):
+            zdata = zip(data.gs, data.id, data.inconf, data.ingroup, data.lat, data.lon, data.tcpamax, data.trk)
+            for i, (gs, acid, inconf, ingroup, lat, lon, tcpa, trk) in enumerate(zdata):
 
                 if i >= MAX_NAIRCRAFT:
                     break
@@ -488,6 +484,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.cpalines.update(vertex=cpalines)
             self.color.update(color)
 
+            # Update track label
             self.lbl_ll.update(np.array(rawlabels[5].encode('utf8'), dtype=np.string_))
             self.lbl_lc.update(np.array(rawlabels[6].encode('utf8'), dtype=np.string_))
             self.lbl_lr.update(np.array(rawlabels[7].encode('utf8'), dtype=np.string_))
@@ -496,8 +493,9 @@ class Traffic(glh.RenderObject, layer=100):
             self.lbl_ul.update(np.array(rawlabels[0].encode('utf8'), dtype=np.string_))
             self.lbl_uc.update(np.array(rawlabels[1].encode('utf8'), dtype=np.string_))
             self.lbl_ur.update(np.array(rawlabels[2].encode('utf8'), dtype=np.string_))
-
+            # Update SSR label
             self.ssrlbl.update(np.array(rawssrlabel.encode('utf8'), dtype=np.string_))
+            # Update micro label
             self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
             
             # If there is a visible route, update the start position
@@ -531,48 +529,40 @@ def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i, cmddata)
     Date: 12-1-2022
     """
 
+    # Check if aircraft is in cmddata
     if data.id[i] in cmddata.id:
         j = misc.get_indices(cmddata.id, data.id[i])[0]
-
-        lbl_i = get_lblpos(cmddata.lblpos[j])
-        for n in range(len(rawlabels)):
-            if n != lbl_i:
-                rawlabels[n] += 8*4*' '
-
-        if actdata.atcmode == 'APP':
-            rawlabels[lbl_i], rawmlabel, rawssrlabel = applabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                                data, i, cmddata=cmddata, j=j)
-        elif actdata.atcmode == 'ACC':
-            rawlabels[lbl_i], rawmlabel, rawssrlabel = acclabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                                data, i, cmddata=cmddata, j=j)
-        elif actdata.atcmode == 'TWR':
-            rawlabels[lbl_i] = twrlabel(rawlabels[lbl_i], actdata, data, i)
-            rawmlabel += 3*' '
-            rawssrlabel += 7*3*' '
-        else:
-            rawlabels[lbl_i] = baselabel(rawlabels[lbl_i], actdata, data, i)
-            rawmlabel += 3*' '
-            rawssrlabel += 7*3*' '
-
+        lblpos = cmddata.lblpos[j]
     else:
-        lbl_i = get_lblpos(data.lblpos[i])
-        for n in range(len(rawlabels)):
-            if n != lbl_i:
-                rawlabels[n] += 8*4*' '
-        if actdata.atcmode == 'APP':
-            rawlabels[lbl_i], rawmlabel, rawssrlabel = applabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                                data, i)
-        elif actdata.atcmode == 'ACC':
-            rawlabels[lbl_i], rawmlabel, rawssrlabel = acclabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                                data, i)
-        elif actdata.atcmode == 'TWR':
-            rawlabels[lbl_i] = twrlabel(rawlabels[lbl_i], actdata, data, i)
-            rawmlabel += 3*' '
-            rawssrlabel += 7*3*' '
-        else:
-            rawlabels[lbl_i] = baselabel(rawlabels[lbl_i], actdata, data, i)
-            rawmlabel += 3*' '
-            rawssrlabel += 7*3*' '
+        cmddata = None
+        j = None
+        lblpos = data.lblpos[i]
+
+    # Get track label position
+    lbl_i = get_lblpos(lblpos)
+    # Other track label positions are empty
+    for n in range(len(rawlabels)):
+        if n != lbl_i:
+            rawlabels[n] += 8*4*' '
+
+    # APP mode
+    if actdata.atcmode == 'APP':
+        rawlabels[lbl_i], rawmlabel, rawssrlabel = applabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
+                                                            data, i, cmddata=cmddata, j=j)
+    # ACC mode
+    elif actdata.atcmode == 'ACC':
+        rawlabels[lbl_i], rawmlabel, rawssrlabel = acclabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
+                                                            data, i, cmddata=cmddata, j=j)
+    # TWR mode
+    elif actdata.atcmode == 'TWR':
+        rawlabels[lbl_i] = twrlabel(rawlabels[lbl_i], actdata, data, i)
+        rawmlabel += 3*' '
+        rawssrlabel += 7*3*' '
+    # BlueSky mode
+    else:
+        rawlabels[lbl_i] = baselabel(rawlabels[lbl_i], actdata, data, i)
+        rawmlabel += 3*' '
+        rawssrlabel += 7*3*' '
 
     return rawlabels, rawmlabel, rawssrlabel
 
@@ -628,28 +618,29 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     Date: 21-12-2021
     """
 
+    # Check for cmddata
     if cmddata:
-        arr = cmddata.arr[j]
-        uco = cmddata.uco[j]
-        selhdg = cmddata.selhdg[j]
-        selalt = cmddata.selalt[j]
-        selspd = cmddata.selspd[j]
-        sid = cmddata.sid[j]
-        ssrlbl = cmddata.ssrlbl[j]
+        arr      = cmddata.arr[j]
+        mlbl     = cmddata.mlbl[j]
+        rwy      = cmddata.rwy[j]
+        selalt   = cmddata.selalt[j]
+        selhdg   = cmddata.selhdg[j]
+        selspd   = cmddata.selspd[j]
+        sid      = cmddata.sid[j]
+        ssrlbl   = cmddata.ssrlbl[j]
         tracklbl = cmddata.tracklbl[j]
-        mlbl = cmddata.mlbl[j]
-        rwy = cmddata.rwy[j]
+        uco      = cmddata.uco[j]
     else:
-        arr = data.arr[i]
-        uco = data.uco[i]
-        selhdg = data.selhdg[i]
-        selalt = data.selalt[i]
-        selspd = data.selspd[i]
-        sid = data.sid[i]
-        ssrlbl = data.ssrlbl[i]
+        arr      = data.arr[i]
+        mlbl     = data.mlbl[i]
+        rwy      = data.rwy[i]
+        selalt   = data.selalt[i]
+        selhdg   = data.selhdg[i]
+        selspd   = data.selspd[i]
+        sid      = data.sid[i]
+        ssrlbl   = data.ssrlbl[i]
         tracklbl = data.tracklbl[i]
-        mlbl = data.mlbl[i]
-        rwy = data.rwy[i]
+        uco      = data.uco[i]
 
     # Track label
     if tracklbl:
