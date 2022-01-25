@@ -273,9 +273,12 @@ class VEMMISRead:
         self.flightdata.sort_values(by=['ACTUAL_TIME'], inplace=True)
         self.flightdata.drop_duplicates(subset='FLIGHT_ID', keep='first', inplace=True)
         # Add SID to flight data
-        self.flightdata = pd.merge(self.flightdata, self.takeoffs[['FLIGHT_ID', 'SID']], on='FLIGHT_ID', how='left')
+        self.flightdata = pd.merge(self.flightdata, self.takeoffs[['FLIGHT_ID', 'SID', 'RUNWAY']],
+                                   on='FLIGHT_ID', how='left')
+        self.flightdata.rename(columns={'RUNWAY': 'RUNWAY_OUT'}, inplace=True)
         # Add ARR to flight data
-        self.flightdata = pd.merge(self.flightdata, self.landings[['FLIGHT_ID', 'STACK']], on='FLIGHT_ID', how='left')
+        self.flightdata = pd.merge(self.flightdata, self.landings[['FLIGHT_ID', 'STACK']],
+                                   on='FLIGHT_ID', how='left')
 
         # Add callsign to route data
         self.routedata = pd.merge(self.flighttimes, self.flights[['FLIGHT_ID', 'CALLSIGN']], on='FLIGHT_ID')
@@ -515,6 +518,8 @@ class VEMMISRead:
         # Data feed dependent commands
         inbound = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] == 'INBOUND']
         other = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'INBOUND']
+        # No take-offs from 36L
+        other = other.loc[other['RUNWAY_OUT'] != '36L']
         # Sector 1
         sector1 = inbound.loc[inbound['LATITUDE'] >= 52.51121388888889]
         sector1 = sector1.loc[sector1['LONGITUDE'] >= 4.764166666666667]
