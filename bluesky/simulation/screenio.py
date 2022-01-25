@@ -8,6 +8,8 @@ from bluesky import stack
 from bluesky.tools import areafilter
 from bluesky.core.walltime import Timer
 
+bs.settings.set_variable_defaults(screendt=0.2)
+
 class ScreenIO:
     """Class within sim task which sends/receives data to/from GUI task"""
 

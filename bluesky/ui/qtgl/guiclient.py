@@ -10,6 +10,8 @@ from bluesky.network.client import Client
 from bluesky.core import Signal
 from bluesky.tools.aero import ft
 
+settings.set_variable_defaults(atc_mode='BLUESKY')
+
 # Globals
 UPDATE_ALL = ['SHAPE', 'TRAILS', 'CUSTWPT', 'PANZOOM', 'ECHOTEXT']
 ACTNODE_TOPICS = [b'ACDATA', b'CMDDATA', b'PLOT*', b'ROUTEDATA*']
