@@ -20,6 +20,7 @@ class Map(glh.RenderObject, layer=-100):
         super().__init__(parent)
 
         self.map = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
+        self.maptrans = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)  # Transparant map
         self.coastlines = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.coastindices = []
         self.vcount_coast = 0
@@ -45,9 +46,14 @@ class Map(glh.RenderObject, layer=-100):
             if max_texture_size >= i:
                 fname = path.join(settings.gfx_path,
                                   'world.%dx%d.dds' % (i, i // 2))
+                fnametrans = path.join(settings.gfx_path,
+                                       'transparent.%dx%d.dds' % (i, i // 2))
                 print('Loading texture ' + fname)
+                print('Loading texture ' + fnametrans)
                 self.map.create(vertex=mapvertices,
                                 texcoords=texcoords, texture=fname)
+                self.maptrans.create(vertex=mapvertices,
+                                     texcoords=texcoords, texture=fnametrans)
                 break
 
     def draw(self, skipmap=False):
@@ -65,8 +71,11 @@ class Map(glh.RenderObject, layer=-100):
         # Map and coastlines: don't wrap around in the shader
         self.shaderset.enable_wrap(False)
 
-        if not skipmap and actdata.show_map:
-            self.map.draw()
+        if not skipmap:
+            if actdata.show_map:
+                self.map.draw()
+            else:
+                self.maptrans.draw()
         shaderset = glh.ShaderSet.selected
         if shaderset.data.wrapdir == 0:
             # Normal case, no wrap around

@@ -936,7 +936,7 @@ class Texture(QOpenGLTexture):
         ''' Load the texture into GPU memory. '''
         if fname[-3:].lower() == 'dds':
             tex = DDSTexture(fname)
-            self.setFormat(QOpenGLTexture.RGB_DXT1)
+            self.setFormat(QOpenGLTexture.RGBA_DXT1)
             self.setSize(tex.width, tex.height)
             self.setWrapMode(QOpenGLTexture.Repeat)
             self.allocateStorage()
