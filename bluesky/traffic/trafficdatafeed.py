@@ -10,7 +10,7 @@ import numpy as np
 import bluesky as bs
 from bluesky import stack
 from bluesky.core import Entity
-from bluesky.tools import aero, misc
+from bluesky.tools import aero, geo, misc
 
 
 """
@@ -165,6 +165,12 @@ class TrafficDataFeed(Entity):
         Date: 13-1-2022
         """
 
+        bs.traf.distflown[itraf_update] -= bs.traf.gs[itraf_update]*bs.sim.simdt
+        bs.traf.distflown[itraf_update] += geo.kwikdist_matrix(bs.traf.lat[itraf_update],
+                                                               bs.traf.lon[itraf_update],
+                                                               self.trackdata['lat'][itrackdata_update],
+                                                               self.trackdata['lon'][itrackdata_update])*aero.nm
+
         bs.traf.lat[itraf_update] = self.trackdata['lat'][itrackdata_update]
         bs.traf.lon[itraf_update] = self.trackdata['lon'][itrackdata_update]
         bs.traf.hdg[itraf_update] = self.trackdata['hdg'][itrackdata_update]
@@ -188,10 +194,11 @@ class TrafficDataFeed(Entity):
         bs.traf.hdg[itraf_prev] = self.trafprev['hdg'][iprev]
         bs.traf.alt[itraf_prev] = self.trafprev['alt'][iprev]
         bs.traf.gs[itraf_prev] = self.trafprev['gs'][iprev]
+        bs.traf.distflown[itraf_prev] = self.trafprev['distflown'][iprev]
 
     def update_speed(self):
         """
-        Function: Calculate the different speeds
+        Function: Update speed variables
         Args: -
         Returns: -
 
@@ -265,6 +272,7 @@ class TrafficDataFeed(Entity):
         self.trafprev['hdg'] = copy.deepcopy(bs.traf.hdg)
         self.trafprev['alt'] = copy.deepcopy(bs.traf.alt)
         self.trafprev['gs'] = copy.deepcopy(bs.traf.gs)
+        self.trafprev['distflown'] = copy.deepcopy(bs.traf.distflown)
 
     def indices_update(self, ids_trackdata):
         """
