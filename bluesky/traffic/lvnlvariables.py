@@ -42,6 +42,7 @@ class LVNLVariables(Entity):
             self.rel = np.array([], dtype=np.bool)       # Release
             self.rwy = []                                # Runway
             self.sid = []                                # SID
+            self.ssr = np.array([], dtype=np.int)        # SSR code
             self.ssrlbl = np.array([], dtype=np.int)     # Show SSR label
             self.tracklbl = np.array([], dtype=np.bool)  # Show track label
             self.uco = np.array([], dtype=np.bool)       # Under Control
@@ -210,3 +211,18 @@ class LVNLVariables(Entity):
         """
 
         self.ssrlbl[idx] = ssrlabel
+
+    @stack.command(name='SSRCODE', brief='SSRCODE CALLSIGN SSR')
+    def setssr(self, idx: 'acid', ssr: float):
+        """
+        Function: Set the SSR code
+        Args:
+            idx:    index for traffic arrays [int]
+            ssr:    SSR code [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 25-1-2022
+        """
+
+        self.ssr[idx] = int(ssr)

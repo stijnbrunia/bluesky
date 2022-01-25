@@ -94,15 +94,17 @@ class OpenSkySource:
             acalt = (data_df['baro_altitude']/aero.ft).astype(str)
             data_df['cas'] = aero.vtas2cas(data_df['velocity'], data_df['baro_altitude'])/aero.kts  # Assume GS = TAS
             acspd = data_df['cas'].astype(str)
+            acssr = data_df['squawk'].astype(str)
 
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
             datafeed = list("SETDATAFEED "+acid+", OPENSKY")
             tracklabel = list("TRACKLABEL "+acid)
             ssrlabel = list("SSRLABEL "+acid+", 3")
+            ssr = list("SSRCODE "+acid+", "+acssr)
 
-            commands += create + datafeed + tracklabel + ssrlabel
-            commandstime += [0.]*len(create) + [0.01]*3*len(datafeed)
+            commands += create + datafeed + tracklabel + ssrlabel + ssr
+            commandstime += [0.]*len(create) + [0.01]*4*len(create)
 
             # Set Mode
             self.mode = 'LIVE'
@@ -149,12 +151,16 @@ class OpenSkySource:
             acalt = (data_df['baro_altitude']/aero.ft).astype(str)
             data_df['cas'] = aero.vtas2cas(data_df['velocity'], data_df['baro_altitude'])/aero.kts  # Assume GS = TAS
             acspd = data_df['cas'].astype(str)
+            acssr = data_df['squawk'].astype(str)
 
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
+            tracklabel = list("TRACKLABEL " + acid)
+            ssrlabel = list("SSRLABEL " + acid + ", 3")
+            ssr = list("SSRCODE " + acid + ", " + acssr)
 
-            commands += create
-            commandstime += [0.]*len(create)
+            commands += create + tracklabel + ssrlabel + ssr
+            commandstime += [0.]*len(create) + [0.01]*4*len(create)
 
             # Set mode
             self.mode = 'INITIAL'
@@ -266,6 +272,8 @@ class OpenSkySource:
 
             # Create commands
             cmds.append("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
+            cmds.append("TRACKLABEL "+acid)
+            cmds.append("SSRLABEL "+acid+", 3")
             if mode == 'LIVE':
                 cmds.append("SETDATAFEED "+acid+" OPENSKY")
 

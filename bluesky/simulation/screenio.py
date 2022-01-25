@@ -284,6 +284,7 @@ class ScreenIO:
         data['mlbl']       = bs.traf.lvnlvars.mlbl
         data['ssrlbl']     = bs.traf.lvnlvars.ssrlbl
         data['tracklbl']   = bs.traf.lvnlvars.tracklbl
+        data['ssr']        = bs.traf.lvnlvars.ssr
 
         # Transition level as defined in traf
         data['translvl']   = bs.traf.translvl

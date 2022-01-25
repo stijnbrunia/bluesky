@@ -709,8 +709,15 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         rawssrlabel += 7*3*' '
     # 1 Line
     elif ssrlbl == 1:
-        # Line 1-3
-        rawssrlabel += 7*3*' '
+        # Line 1
+        rawssrlabel += 7*' '
+        # Line 2
+        if data.alt[i] < actdata.translvl:
+            rawssrlabel += '%-4s' % 'A   '
+        else:
+            rawssrlabel += '%-4s' % '    '
+        # Line 3
+        rawssrlabel += 7*' '
     # 2 Lines
     elif ssrlbl == 2:
         # Line 1
@@ -722,11 +729,11 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         else:
             rawssrlabel += '%-4s' % '    '
         # Line 3
-        rawssrlabel += 7*' '
+        rawssrlabel += '%-7s' % data.id[i][:7]
     # 3 Lines
     elif ssrlbl == 3:
         # Line 1
-        rawssrlabel += 7*' '
+        rawssrlabel += '%-7s' % str(data.ssr[i])[:7]
         # Line 2
         rawssrlabel += '%-3s' % leading_zeros(data.alt[i] / ft / 100)[:3]
         if data.alt[i] < actdata.translvl:

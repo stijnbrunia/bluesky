@@ -140,6 +140,7 @@ class VEMMISRead:
         # Flight data
         self.flights['T_UPDATE'] = pd.to_datetime(self.flights['T_UPDATE'], format="%d-%m-%Y %H:%M:%S")
         self.flights['T0'] = pd.to_datetime(self.flights['T0'], format="%d-%m-%Y %H:%M:%S")
+        # self.flights['SSR'] = self.flights['SSR'].astype(int)
 
         # Track data
         self.tracks['TIME'] = pd.to_timedelta(self.tracks['TIME']/100, unit='seconds')
@@ -428,6 +429,7 @@ class VEMMISRead:
         acwtc           = self.flightdata['WTC']
         acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
         acarr           = self.flightdata['STACK'].astype(str).str.replace('nan', '')
+        acssr           = self.flightdata['SSR'].astype(str)
         acorigin        = self.flightdata['ADEP']
         acdestination   = self.flightdata['DEST']
 
@@ -437,6 +439,7 @@ class VEMMISRead:
         sid          = list("SID "+acid+", "+acsid)
         flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
         wtc          = list("WTC "+acid+", "+acwtc)
+        ssr          = list("SSRCODE "+acid+", "+acssr)
         origin       = list("ORIG "+acid+", "+acorigin)
         destination  = list("DEST "+acid+", "+acdestination)
         lnav         = list("LNAV "+acid+", OFF")
@@ -466,8 +469,8 @@ class VEMMISRead:
         tdelete      = list(datafeed['SIM_END'])
 
         # Create lists
-        command     += create  + setdatafeed  + arr + sid + flighttype + wtc + origin + destination + lnav + delete
-        commandtime += tcreate + tsetdatafeed + 6*tset + tlnav + tdelete
+        command     += create  + setdatafeed  + arr + sid + flighttype + wtc + ssr + origin + destination + lnav + delete
+        commandtime += tcreate + tsetdatafeed + 7*tset + tlnav + tdelete
         # Sort
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
@@ -495,6 +498,7 @@ class VEMMISRead:
         commandtime = [0.]
 
         # Flight data
+        self.flightdata = self.flightdata.loc[self.flightdata['RUNWAY_OUT'] != '36L']  # No 36L departure
         acid            = self.flightdata['CALLSIGN']
         actype          = self.flightdata['ICAO_ACTYPE']
         aclat           = self.flightdata['LATITUDE'].astype(str)
@@ -507,19 +511,19 @@ class VEMMISRead:
         acsid           = self.flightdata['SID'].astype(str).str.replace('nan', '')
         acorigin        = self.flightdata['ADEP']
         acdestination   = self.flightdata['DEST']
+        acssr           = self.flightdata['SSR'].astype(str)
 
         # Commands
         create       = list("CRE "+acid+", "+actype+", " + aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
         sid          = list("SID "+acid+", "+acsid)
         flighttype   = list("FLIGHTTYPE "+acid+", "+acflighttype)
         wtc          = list("WTC "+acid+", "+acwtc)
+        ssr          = list("SSRCODE "+acid+", "+acssr)
         origin       = list("ORIG "+acid+", "+acorigin)
         destination  = list("DEST "+acid+", "+acdestination)
         # Data feed dependent commands
         inbound = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] == 'INBOUND']
         other = self.flightdata.loc[self.flightdata['FLIGHT_TYPE'] != 'INBOUND']
-        # No take-offs from 36L
-        other = other.loc[other['RUNWAY_OUT'] != '36L']
         # Sector 1
         sector1 = inbound.loc[inbound['LATITUDE'] >= 52.51121388888889]
         sector1 = sector1.loc[sector1['LONGITUDE'] >= 4.764166666666667]
@@ -564,8 +568,8 @@ class VEMMISRead:
         tset         = list(self.flightdata['SIM_START']+0.01)  # Add 0.01 to ensure right order
 
         # Create lists
-        command     += create  + setdatafeed  + arr  + sid + flighttype + wtc + origin + destination + tracklabel + ssrlabel + lnav + delete
-        commandtime += tcreate + tsetdatafeed + tarr + 5*tset + 2*tlabel + tlnav + tdelete
+        command     += create  + setdatafeed  + arr  + sid + flighttype + wtc + ssr + origin + destination + tracklabel + ssrlabel + lnav + delete
+        commandtime += tcreate + tsetdatafeed + tarr + 6*tset + 2*tlabel + tlnav + tdelete
         # Sort
         command_df = pd.DataFrame({'COMMAND': command, 'TIME': commandtime})
         command_df = command_df.sort_values(by=['TIME'])
