@@ -7,7 +7,7 @@ Date: 26-1-2022
 
 
 accmaps = [['a1',    'NEW\nPNTS',       ['lambda: None']],
-           ['a2',    'CTR/\n/TMA',      ['lambda: accmaps.close()',
+           ['a2',    'CTR/\nTMA',      ['lambda: accmaps.close()',
                                          'lambda: show_basetid("accctrtma", "accctrtma")']],
            ['a3',    '',                 None],
            ['a4',    'AAA\nAREAS',      ['lambda: accmaps.close()',

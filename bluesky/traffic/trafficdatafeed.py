@@ -166,10 +166,11 @@ class TrafficDataFeed(Entity):
         """
 
         bs.traf.distflown[itraf_update] -= bs.traf.gs[itraf_update]*bs.sim.simdt
-        bs.traf.distflown[itraf_update] += geo.kwikdist_matrix(bs.traf.lat[itraf_update],
-                                                               bs.traf.lon[itraf_update],
-                                                               self.trackdata['lat'][itrackdata_update],
-                                                               self.trackdata['lon'][itrackdata_update])*aero.nm
+        bs.traf.distflown[itraf_update] += np.array(geo.kwikdist_matrix(bs.traf.lat[itraf_update],
+                                                                        bs.traf.lon[itraf_update],
+                                                                        self.trackdata['lat'][itrackdata_update],
+                                                                        self.trackdata['lon'][itrackdata_update])*aero.nm,
+                                                    dtype=np.float)
 
         bs.traf.lat[itraf_update] = self.trackdata['lat'][itrackdata_update]
         bs.traf.lon[itraf_update] = self.trackdata['lon'][itrackdata_update]
