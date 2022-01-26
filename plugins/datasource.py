@@ -97,12 +97,13 @@ class DataSource(core.Entity):
         if datatype.upper() not in ['VEMMIS']:
             return False, 'REPLAY: Data type not supported'
 
-        # Folder
-        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
-        if not os.path.isdir(datapath):
-            return False, 'REPLAY: Folder does not exist'
+        # Other inputs
+        succes, message = check_inputs(folder=folder, date=date0, time=time0)
+        if not succes:
+            return False, 'REPLAY: ' + message
 
         # Files
+        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
         if not files_check(datatype, datapath):
             return False, 'REPLAY: The folder does not contain all the required files'
 
@@ -183,11 +184,12 @@ class DataSource(core.Entity):
         if datatype.upper() not in ['VEMMIS', 'OPENSKY']:
             return False, 'INITIAL: Data type not supported'
 
-        # Folder
+        # Other inputs
         datapath = os.getcwd() + "\\scenario\\" + folder.lower()
         if datatype.upper() not in ['OPENSKY']:
-            if not os.path.isdir(datapath):
-                return False, 'INITIAL: Folder does not exist'
+            succes, message = check_inputs(folder=folder, date=date0, time=time0)
+            if not succes:
+                return False, 'INITIAL: ' + message
 
             # Files
             if not files_check(datatype, datapath):
@@ -244,6 +246,48 @@ class DataSource(core.Entity):
 """
 Static functions
 """
+
+
+def check_inputs(folder=None, date=None, time=None):
+    """
+    Function: Check if inputs are valid
+    Args:
+        folder:     folder input [str]
+        date:       date [str]
+        time:       time [str]
+    Returns:
+        True/False: Inputs are correct/incorrect [bool]
+        string:     Message [str]
+
+    Created by: Bob van Dillen
+    Date: 26-1-2022
+    """
+
+    # Check folder input
+    if folder:
+        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
+        if not os.path.isdir(datapath):
+            return False, 'Folder does not exist'
+
+    # Check date input
+    if date:
+        date = date.split('-')
+        if len(date) != 3:
+            return False, 'Invalid date'
+        for item in date:
+            if not item.isnumeric():
+                return False, 'Invalid date'
+
+    # Check time input
+    if time:
+        time = time.split(':')
+        if len(time) != 3:
+            return False, 'Invalid time'
+        for item in time:
+            if not item.isnumeric():
+                return False, 'Invalid time'
+
+    return True, ''
 
 
 def files_check(datatype, datapath):
