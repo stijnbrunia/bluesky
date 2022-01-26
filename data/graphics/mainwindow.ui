@@ -17,6 +17,9 @@
    <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="cursor">
+    <cursorShape>CrossCursor</cursorShape>
+   </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="spacing">
      <number>1</number>
@@ -1143,6 +1146,11 @@ background-color: rgb(0, 0, 0);
              </colorrole>
             </disabled>
            </palette>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
           </property>
           <property name="cursor" stdset="0">
            <cursorShape>IBeamCursor</cursorShape>

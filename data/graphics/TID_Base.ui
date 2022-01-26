@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1036</width>
+    <width>1548</width>
     <height>736</height>
    </rect>
   </property>
@@ -34,9 +34,9 @@
      <colorrole role="Window">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
+        <red>12</red>
+        <green>12</green>
+        <blue>11</blue>
        </color>
       </brush>
      </colorrole>
@@ -63,9 +63,9 @@
      <colorrole role="Window">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
+        <red>12</red>
+        <green>12</green>
+        <blue>11</blue>
        </color>
       </brush>
      </colorrole>
@@ -83,18 +83,18 @@
      <colorrole role="Base">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
+        <red>12</red>
+        <green>12</green>
+        <blue>11</blue>
        </color>
       </brush>
      </colorrole>
      <colorrole role="Window">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
+        <red>12</red>
+        <green>12</green>
+        <blue>11</blue>
        </color>
       </brush>
      </colorrole>
@@ -108,6 +108,9 @@
     <bold>false</bold>
    </font>
   </property>
+  <property name="cursor">
+   <cursorShape>CrossCursor</cursorShape>
+  </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
@@ -120,18 +123,27 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
      </property>
      <property name="default">
       <bool>false</bool>
@@ -149,18 +161,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -172,18 +190,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -195,18 +219,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -218,18 +248,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -241,18 +277,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -264,18 +306,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -287,18 +335,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -310,18 +364,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -333,18 +393,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -356,18 +422,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -379,18 +451,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -402,18 +480,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -425,18 +509,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -448,18 +538,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -471,18 +567,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -494,18 +596,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -517,18 +625,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -540,18 +654,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -563,18 +683,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -586,18 +712,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -609,18 +741,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -632,18 +770,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -655,18 +799,24 @@ background-color: rgb(0, 0, 0);
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="cursor">
+      <cursorShape>CrossCursor</cursorShape>
+     </property>
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
 
-color: rgb(255, 255, 255);
-font: 75 20pt &quot;Arial&quot;;
+color: rgb(180, 200, 139);
+font: 87 28pt &quot;Arial Black&quot;;
 border: 4px solid red;
-border-color: rgb(112, 112, 112);
-background-color: rgb(0, 0, 0);
+border-color: rgb(180, 200, 139);
+background-color: rgb(17, 12, 12);
 </string>
      </property>
      <property name="text">
       <string>PushButton</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
