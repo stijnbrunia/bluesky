@@ -31,13 +31,13 @@ accmain = [['a1', 'DCT',            ['lambda: tid_cmds("HDG")',
            ['d4', 'EC\nNKB',        ['lambda: None']],
 
            ['e1', 'EFL',            ['lambda: tid_cmds("ALT")',
-                                     'lambda: accmain.close()'
+                                     'lambda: accmain.close()',
                                      'lambda: show_basetid("accefl", "accefl")']],
            ['e2', 'HDG',            ['lambda: tid_cmds("HDG")',
-                                     'lambda: accmain.close()'
+                                     'lambda: accmain.close()',
                                      'lambda: show_basetid("acchdg", "acchdg")']],
            ['e3', 'SPD',            ['lambda: tid_cmds("SPD")',
-                                     'lambda: accmain.close()'
+                                     'lambda: accmain.close()',
                                      'lambda: show_basetid("accspd", "accspd")']],
            ['e4', 'PLAY\nBACK',     ['lambda: accmain.close()',
                                      'lambda: show_basetid("accpbm", "accpbm")']],
@@ -79,7 +79,7 @@ accdct = [['a1', '',        None],
           ['f3', 'ANKB',    ['lambda: None']],
           ['f4', 'EXQ',     ['lambda: console.Console._instance.stack(console.Console._instance.command_line)',
                              'lambda: accdct.close()',
-                             'lambda: show_basetid("accmain", "accmain")',]]
+                             'lambda: show_basetid("accmain", "accmain")']]
           ]
 
 
