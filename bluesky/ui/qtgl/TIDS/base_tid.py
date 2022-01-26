@@ -86,7 +86,12 @@ def tid_cmds(tidcmd):
             cmdline = ''
             for i in range(len(cmdlinelst)-1):
                 cmdline += cmdlinelst[i] + ' ; '
-            cmdline += id_select + ' ' + tidcmd + ' '
+            # Altitude command
+            if tidcmd.upper() == 'ALT':
+                cmdline += ' ; ' + id_select + ' ' + tidcmd + ' FL'
+            # Other commands
+            else:
+                cmdline += ' ; ' + id_select + ' ' + tidcmd + ' '
 
     # Commands that only need 1 input
     elif len(argslst[-1]) > 0:
@@ -102,7 +107,12 @@ def tid_cmds(tidcmd):
         cmdline = ''
         for i in range(len(cmdlinelst) - 1):
             cmdline += cmdlinelst[i] + ' ; '
-        cmdline += id_select + ' ' + tidcmd + ' '
+        # Altitude command
+        if tidcmd.upper() == 'ALT':
+            cmdline += ' ; ' + id_select + ' ' + tidcmd + ' FL'
+        # Other commands
+        else:
+            cmdline += ' ; ' + id_select + ' ' + tidcmd + ' '
 
     # Set the command line
     console.Console._instance.set_cmdline(cmdline)
