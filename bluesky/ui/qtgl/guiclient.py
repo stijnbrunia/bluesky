@@ -174,6 +174,7 @@ class nodeData:
     def clear_scen_data(self):
         # Clear all scenario-specific data for sender node
         self.polys = dict()
+        self.polyspoints = dict()
         self.custacclr = dict()
         self.custgrclr = dict()
         self.custwplbl = ''
@@ -253,6 +254,7 @@ class nodeData:
         # We're either updating a polygon, or deleting it. In both cases
         # we remove the current one.
         self.polys.pop(name, None)
+        self.polyspoints.pop(name, None)
 
         # Break up polyline list of (lat,lon)s into separate line segments
         if coordinates is not None:
@@ -268,13 +270,16 @@ class nodeData:
                                  coordinates[2], coordinates[3],
                                  coordinates[2], coordinates[1]], dtype=np.float32)
 
-            elif shape == 'CIRCLE':
+            elif shape == 'CIRCLE' or shape == 'POINT':
                 # Input data is latctr,lonctr,radius[nm]
                 # Convert circle into polyline list
 
                 # Circle parameters
                 Rearth = 6371000.0             # radius of the Earth [m]
-                numPoints = 72                 # number of straight line segments that make up the circrle
+                if shape == 'CIRCLE':
+                    numPoints = 72             # number of straight line segments that make up the circrle
+                else:
+                    numPoints = 8              # number of straight line segments that make up the circrle
 
                 # Inputs
                 lat0 = coordinates[0]              # latitude of the center of the circle [deg]
@@ -325,7 +330,10 @@ class nodeData:
 
             # Store new or updated polygon by name, and concatenated with the
             # other polys
-            self.polys[name] = (contourbuf, fillbuf, colorbuf)
+            if shape == 'POINT':
+                self.polyspoints[name] = (contourbuf, fillbuf, colorbuf)
+            else:
+                self.polys[name] = (contourbuf, fillbuf, colorbuf)
 
     def defwpt(self, name, lat, lon):
         self.custwplbl += name[:10].ljust(10)
