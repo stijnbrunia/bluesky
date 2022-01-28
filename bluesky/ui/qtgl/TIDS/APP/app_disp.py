@@ -5,9 +5,10 @@ Created by: Bob van Dillen
 Date: 9-12-2021
 """
 
-appdisp = [['a1',    'RANGE\nRADAR',    ['lambda: None']],
-           ['a2',    '36',              ['lambda: console.Console._instance.stack("ZOOM 1.3")']],
-           ['a3',    '48',              ['lambda: console.Console._instance.stack("ZOOM 0.7")']],
+appdisp = [['a1',    'RANGE\nRADAR',    ['lambda: appdisp.close()',
+                                         'lambda: show_basetid("apprange", "apprange")']],
+           ['a2',    '36',              ['lambda: console.Console._instance.stack("SCREENRANGE 36")']],
+           ['a3',    '48',              ['lambda: console.Console._instance.stack("SCREENRANGE 48")']],
            ['a4',    'CRO',             ['lambda: None']],
 
            ['b1',    'MOV',             ['lambda: None']],
@@ -40,6 +41,39 @@ appdisp = [['a1',    'RANGE\nRADAR',    ['lambda: None']],
            ['f4',    'EXQ',             ['lambda: appdisp.close()',
                                          'lambda: show_basetid("appmain", "appmain")']]
            ]
+
+
+apprange = [['a1',    '16',                 ['lambda: console.Console._instance.stack("SCREENRANGE 16")']],
+            ['a2',    '36',                 ['lambda: console.Console._instance.stack("SCREENRANGE 36")']],
+            ['a3',    '48',                 ['lambda: console.Console._instance.stack("SCREENRANGE 48")']],
+            ['a4',    'PLN\nVIEW',          ['lambda: console.Console._instance.stack("SCREENRANGE 120")']],
+
+            ['b1',    '24',                 ['lambda: console.Console._instance.stack("SCREENRANGE 24")']],
+            ['b2',    '42',                 ['lambda: console.Console._instance.stack("SCREENRANGE 42")']],
+            ['b3',    '60',                 ['lambda: console.Console._instance.stack("SCREENRANGE 60")']],
+            ['b4',    '160',                ['lambda: console.Console._instance.stack("SCREENRANGE 160")']],
+
+            ['c1',    'RNG',                ['lambda: None']],
+            ['c2',    'TAR W',              ['lambda: None']],
+            ['c3',    'TAR 1',              ['lambda: None']],
+            ['c4',    'ARTAS1\nAPP',        ['lambda: None']],
+
+            ['d1',    'DCT\nTAR1',          ['lambda: None']],
+            ['d2',    'DCT\nTAR W',         ['lambda: None']],
+            ['d3',    '',                   None],
+            ['d4',    'ARTAS2\nAPP',        ['lambda: None']],
+
+            ['e1',    'DCT\nARTAS2\nAPP',   ['lambda: None']],
+            ['e2',    '',                   None],
+            ['e3',    'MADAP',              ['lambda: None']],
+            ['e4',    'ARTAS1\nACC',        ['lambda: None']],
+
+            ['f1',    '',                   None],
+            ['f2',    'MAIN',               ['lambda: apprange.close()',
+                                             'lambda: show_basetid("appdisp", "appdisp")']],
+            ['f3',    '',                   None],
+            ['f4',    '',                   None]
+            ]
 
 
 applabel = [['a1',    'SLA\nLARGE',         ['lambda: None']],

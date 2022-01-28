@@ -256,6 +256,12 @@ def initbasecmds():
             "Enable/Disable history symbols"
         ],
         "HOLD": ["HOLD", "", bs.sim.hold, "Pause(hold) simulation"],
+        "SCREENRANGE": [
+            "SCREENRANGE RANGE",
+            "float",
+            lambda a: bs.scr.setscreenrange(a),
+            "Set the horizontal radar screen range"
+        ],
         "IMPLEMENTATION": [
             "IMPLEMENTATION [base, implementation]",
             "[txt,txt]",

@@ -7,8 +7,8 @@ Date: 9-12-2021
 
 
 appmain = [['a1', 'UCO',            ['lambda: tidcmds.setcmd("UCO")']],
-           ['a2', '36',             ['lambda: console.Console._instance.stack("ZOOM 1.3")']],
-           ['a3', '48',             ['lambda: console.Console._instance.stack("ZOOM 0.7")']],
+           ['a2', '36',             ['lambda: console.Console._instance.stack("SCREENRANGE 36")']],
+           ['a3', '48',             ['lambda: console.Console._instance.stack("SCREENRANGE 48")']],
            ['a4', 'REL',            ['lambda: tidcmds.setcmd("REL")']],
 
            ['b1', 'HDG',            ['lambda: tidcmds.setcmd("HDG")',
