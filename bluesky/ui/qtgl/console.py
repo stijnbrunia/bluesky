@@ -45,24 +45,6 @@ def process_cmdline(cmdlines):
             Console._instance.stack(cmd)
 
 
-def selected_ac():
-    """
-    Function: Put the selected aircraft in the command line
-    Args: -
-    Returns: -
-
-    Created by: Bob van Dillen
-    Date: 12-1-2022
-    """
-
-    actdata = bs.net.get_nodedata()
-    id_select = actdata.cmddata.idsel
-    if id_select:
-        Console._instance.set_cmdline(id_select+' ')
-    else:
-        Console._instance.set_cmdline('')
-
-
 class Console(QWidget):
     lineEdit = None
     stackText = None
@@ -158,7 +140,6 @@ class Console(QWidget):
                     hintline = ' ' + str.join(',', hintargs[len(self.args):])
                 else:
                     hintline = ' ' + hint
-
         self.lineEdit.set_cmdline(self.command_line, hintline, cursorpos)
 
     def keyPressEvent(self, event):

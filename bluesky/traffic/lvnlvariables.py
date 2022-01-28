@@ -43,7 +43,7 @@ class LVNLVariables(Entity):
             self.rwy = []                                # Runway
             self.sid = []                                # SID
             self.ssr = np.array([], dtype=np.int)        # SSR code
-            self.ssrlbl = np.array([], dtype=np.int)     # Show SSR label
+            self.ssrlbl = []                             # Show SSR label
             self.tracklbl = np.array([], dtype=np.bool)  # Show track label
             self.uco = np.array([], dtype=np.bool)       # Under Control
             self.wtc = []                                # Wake Turbulence Category
@@ -63,7 +63,7 @@ class LVNLVariables(Entity):
 
         self.lblpos[-n:] = ['CR']
         self.tracklbl[-n:] = True
-        self.ssrlbl[-n:] = 0
+        self.ssrlbl[-n:] = [[]]
         self.mlbl[-n:] = False
 
     @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
@@ -186,20 +186,28 @@ class LVNLVariables(Entity):
 
         self.ssr[idx] = int(ssr)
 
-    @stack.command(name='SSRLABEL', brief='SSRLABEL CALLSIGN LINES')
-    def setssrlabel(self, idx: 'acid', ssrlabel: int):
+    @stack.command(name='SSRLABEL', brief='SSRLABEL CALLSIGN MODE')
+    def setssrlabel(self, idx: 'acid', ssrmode: str):
         """
         Function: Set the SSR label
         Args:
             idx:        index for traffic arrays [int]
-            ssrlabel:   ssr label lines [int]
+            ssrmode:    ssr label mode [int]
         Returns: -
 
         Created by: Bob van Dillen
         Date: 24-1-2022
         """
 
-        self.ssrlbl[idx] = ssrlabel
+        ssrmode = ssrmode.upper()
+
+        if ssrmode in ['A', 'C', 'ACID']:
+            if ssrmode in self.ssrlbl[idx]:
+                self.ssrlbl[idx].remove(ssrmode)
+            else:
+                self.ssrlbl[idx].append(ssrmode)
+        else:
+            return False, 'SSRLABEL: Not a valid SSR label item'
 
     @stack.command(name='TRACKLABEL', brief='TRACKLABEL CALLSIGN')
     def settracklabel(self, idx: 'acid'):
