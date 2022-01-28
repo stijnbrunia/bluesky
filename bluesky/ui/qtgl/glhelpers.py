@@ -522,7 +522,6 @@ class VertexArrayObject(QOpenGLVertexArrayObject):
         self.bind()
         program = ShaderSet.get_shader(self.shader_type)
         for name, data in attribs.items():
-            print(program.attribs)
             attrib = program.attribs.get(name, None)
             if not attrib:
                 raise KeyError('Unknown attribute ' + name +
