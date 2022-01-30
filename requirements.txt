@@ -24,3 +24,5 @@ pyopengl-accelerate
 
 rtree
 
+requests
+
