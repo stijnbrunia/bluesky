@@ -12,6 +12,7 @@ appmain = [['a1', 'UCO',            ['lambda: tidcmds.setcmd("UCO")']],
            ['a4', 'REL',            ['lambda: tidcmds.setcmd("REL")']],
 
            ['b1', 'HDG',            ['lambda: tidcmds.setcmd("HDG")',
+                                     'lambda: appmain.clos()',
                                      'lambda: show_basetid("apphdg", "apphdg")']],
            ['b2', 'POS',            ['lambda: appmain.close()',
                                      'lambda: show_basetid("apppos", "apppos")']],
@@ -19,16 +20,19 @@ appmain = [['a1', 'UCO',            ['lambda: tidcmds.setcmd("UCO")']],
            ['b4', 'ACM',            ['lambda: None']],
 
            ['c1', 'EFL',            ['lambda: tidcmds.setcmd("EFL")',
+                                     'lambda: appmain.close()',
                                      'lambda: show_basetid("appefl", "appefl")']],
            ['c2', 'TFL',            ['lambda: None']],
            ['c3', 'LBL',            ['lambda: tidcmds.setcmd("TRACKLABEL")']],
            ['c4', 'ERA',            ['lambda: None']],
 
            ['d1', 'SPD',            ['lambda: tidcmds.setcmd("SPD")',
+                                     'lambda: appmain.close()',
                                      'lambda: show_basetid("appspd", "appspd")']],
            ['d2', 'DPL',            ['lambda: None']],
            ['d3', 'PBR',            ['lambda: console.Console._instance.stack("OP")']],
            ['d4', 'RWY',            ['lambda: tidcmds.setcmd("RWY")',
+                                     'lambda: appmain.close()',
                                      'lambda: show_basetid("apprwy", "apprwy")']],
 
            ['e1', 'REL',            ['lambda: tidcmds.setcmd("REL")']],
@@ -79,7 +83,8 @@ apphdg = [['a1', 'ARTIP',       ['lambda: tidcmds.setarg("ARTIP", 1)']],
                                  'lambda: apphdg.close()',
                                  'lambda: show_basetid("appspd", "appspd")']],
           ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
-                                 'lambda: apphdg.close()']]
+                                 'lambda: apphdg.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']]
           ]
 
 
@@ -234,7 +239,8 @@ appefl = [['a1', '',            None],
                                  'lambda: appefl.close()',
                                  'lambda: show_basetid("appspd", "appspd")']],
           ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
-                                 'lambda: appefl.close()']]
+                                 'lambda: appefl.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']]
           ]
 
 
@@ -273,7 +279,8 @@ appspd = [['a1', '250',         ['lambda: tidcmds.setarg("250", 1)']],
                                  'lambda: appspd.close()',
                                  'lambda: show_basetid("appefl", "appefl")']],
           ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
-                                 'lambda: appspd.close()']]
+                                 'lambda: appspd.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']]
           ]
 
 

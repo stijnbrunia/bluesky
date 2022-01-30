@@ -119,7 +119,7 @@ class ScreenIO:
         zoomlat = 1/((latmax - lat)*ar)
         zoomlon = 1/((lonmax - lon)*np.cos(np.radians(lat)))
 
-        zoom = max(zoomlat, zoomlon)
+        zoom = min(zoomlat, zoomlon)
 
         self.zoom(zoom, True)
 
