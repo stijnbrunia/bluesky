@@ -16,3 +16,11 @@ zmq
 
 pygame
 
+psycopg2
+
+pyopengl
+
+pyopengl-accelerate
+
+rtree
+
