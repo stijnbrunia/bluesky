@@ -89,8 +89,8 @@ class HistorySymbols(Entity):
 
         if self.active:
             # Get latitudes and longitudes for all history symbols
-            self.lat = np.append(self.lat1, (self.lat2, self.lat3, self.lat4, self.lat5))
-            self.lon = np.append(self.lon1, (self.lon2, self.lon3, self.lon4, self.lon5))
+            self.lat = np.append(self.lat1, (self.lat2, self.lat3, self.lat4))
+            self.lon = np.append(self.lon1, (self.lon2, self.lon3, self.lon4))
             self.lat = self.lat[self.lat != 0.]
             self.lon = self.lon[self.lon != 0.]
 

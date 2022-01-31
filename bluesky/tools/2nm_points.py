@@ -2,10 +2,10 @@ import os
 import re
 import geo
 
-# files = ['28.scn', '40.scn', '35.scn', '21.scn', '38.scn', '26.scn', '42.scn', '31.scn', '23.scn', '33.scn', '18.scn']
-# pfiles = ['210.scn', '211.scn', '212.scn', '213.scn', '214.scn', '215.scn', '216.scn', '217.scn', '218.scn', '219.scn', '220.scn']
-files = ['71.scn', '72.scn', '73.scn', '74.scn', '75.scn', '76.scn']
-pfiles = ['238.scn', '239.scn', '240.scn', '241.scn', '242.scn', '243.scn']
+files = ['28.scn', '40.scn', '35.scn', '21.scn', '38.scn', '26.scn', '42.scn', '31.scn', '23.scn', '33.scn', '18.scn']
+pfiles = ['210.scn', '211.scn', '212.scn', '213.scn', '214.scn', '215.scn', '216.scn', '217.scn', '218.scn', '219.scn', '220.scn']
+# files = ['71.scn', '72.scn', '73.scn', '74.scn', '75.scn', '76.scn']
+# pfiles = ['238.scn', '239.scn', '240.scn', '241.scn', '242.scn', '243.scn']
 dist = [2., 4., 6., 8.]
 
 path = os.path.expanduser("~") + "\\PycharmProjects\\bluesky\\scenario\\LVNL\\Maps\\mapid\\"
