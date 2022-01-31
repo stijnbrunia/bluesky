@@ -5,7 +5,8 @@ Created by: Bob van Dillen
 Date: 26-1-2022
 """
 
-accdisp = [['a1',    'VIEW',            ['lambda: None']],
+accdisp = [['a1',    'VIEW',            ['lambda: accdisp.close()',
+                                         'lambda: show_basetid("accview", "accview")']],
            ['a2',    'LABEL',           ['lambda: accdisp.close()',
                                          'lambda: show_basetid("acclabel", "acclabel")']],
            ['a3',    'CRO',             ['lambda: None']],
@@ -39,6 +40,39 @@ accdisp = [['a1',    'VIEW',            ['lambda: None']],
            ['f3',    'INFO',            ['lambda: None']],
            ['f4',    'EXQ',             ['lambda: accdisp.close()',
                                          'lambda: show_basetid("accmain", "accmain")']]
+           ]
+
+
+accview = [['a1',    'SE5',             ['lambda: console.Console._instance.stack("PAN 52.843333333333334,3.9274999999999998 ; SCREENRANGE 80")']],
+           ['a2',    'SUGOL',           ['lambda: console.Console._instance.stack("PAN SUGOL ; SCREENRANGE 80")']],
+           ['a3',    'SE4',             ['lambda: console.Console._instance.stack("PAN 52.3925,3.7552777777777777 ; SCREENRANGE 80")']],
+           ['a4',    '',                None],
+
+           ['b1',    'FIC',             ['lambda: console.Console._instance.stack("PAN 52.79694444444444,4.014166666666667 ; SCREENRANGE 80")']],
+           ['b2',    'ACO',             ['lambda: console.Console._instance.stack("PAN 52.538888888888884,4.849722222222222 ; SCREENRANGE 80")']],
+           ['b3',    'RIVER',           ['lambda: console.Console._instance.stack("PAN RIVER ; SCREENRANGE 80")']],
+           ['b4',    'SE3',             ['lambda: console.Console._instance.stack("PAN 51.68,4.148611111111111 ; SCREENRANGE 80")']],
+
+           ['c1',    'SE1',             ['lambda: console.Console._instance.stack("PAN 52.70805555555556,6.049722222222222 ; SCREENRANGE 80")']],
+           ['c2',    'ARTIP',           ['lambda: console.Console._instance.stack("PAN ARTIP ; SCREENRANGE 80")']],
+           ['c3',    'SE2',             ['lambda: console.Console._instance.stack("PAN 52.49805555555556,6.036388888888888 ; SCREENRANGE 80")']],
+           ['c4',    'RNG\n140',        ['lambda: console.Console._instance.stack("SCREENRANGE 140")']],
+
+           ['d1',    'RNG\n80',         ['lambda: console.Console._instance.stack("SCREENRANGE 80")']],
+           ['d2',    'RNG\n90',         ['lambda: console.Console._instance.stack("SCREENRANGE 90")']],
+           ['d3',    'RNG\n100',        ['lambda: console.Console._instance.stack("SCREENRANGE 100")']],
+           ['d4',    'RNG\n120',        ['lambda: console.Console._instance.stack("SCREENRANGE 120")']],
+
+           ['e1',    'OCK',             ['lambda: None']],
+           ['e2',    '',                None],
+           ['e3',    'COBRI',           ['lambda: None']],
+           ['e4',    'PDS',             ['lambda: None']],
+
+           ['f1',    '',                None],
+           ['f2',    'MAIN',            ['lambda: accview.close()',
+                                         'lambda: show_basetid("accdisp", "accdisp")']],
+           ['f3',    '',                None],
+           ['f4',    '',                None]
            ]
 
 
