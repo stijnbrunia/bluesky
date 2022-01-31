@@ -279,7 +279,7 @@ class nodeData:
                 if shape == 'CIRCLE':
                     numPoints = 72             # number of straight line segments that make up the circrle
                 else:
-                    numPoints = 8              # number of straight line segments that make up the circrle
+                    numPoints = 8              # number of straight line segments that make up the point
 
                 # Inputs
                 lat0 = coordinates[0]              # latitude of the center of the circle [deg]
