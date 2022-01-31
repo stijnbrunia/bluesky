@@ -105,11 +105,14 @@ class OpenSkySource:
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
             datafeed = list("SETDATAFEED "+acid+", OPENSKY")
             tracklabel = list("TRACKLABEL "+acid)
-            ssrlabel = list("SSRLABEL "+acid+", 3")
+            ssrlabela = list("SSRLABEL " + acid + ", A")
+            ssrlabelc = list("SSRLABEL " + acid + ", C")
+            ssrlabelacid = list("SSRLABEL " + acid + ", ACID")
+            ssrlabel = ssrlabela + ssrlabelc + ssrlabelacid
             ssr = list("SSRCODE "+acid+", "+acssr)
 
             commands += create + datafeed + tracklabel + ssrlabel + ssr
-            commandstime += [0.]*len(create) + [0.01]*4*len(create)
+            commandstime += [0.]*len(create) + [0.01]*6*len(create)
 
             # Set Mode
             self.mode = 'LIVE'
@@ -161,11 +164,14 @@ class OpenSkySource:
             # Get commands
             create = list("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
             tracklabel = list("TRACKLABEL " + acid)
-            ssrlabel = list("SSRLABEL " + acid + ", 3")
+            ssrlabela = list("SSRLABEL " + acid + ", A")
+            ssrlabelc = list("SSRLABEL " + acid + ", C")
+            ssrlabelacid = list("SSRLABEL " + acid + ", ACID")
+            ssrlabel = ssrlabela + ssrlabelc + ssrlabelacid
             ssr = list("SSRCODE " + acid + ", " + acssr)
 
             commands += create + tracklabel + ssrlabel + ssr
-            commandstime += [0.]*len(create) + [0.01]*4*len(create)
+            commandstime += [0.]*len(create) + [0.01]*5*len(create)
 
             # Set mode
             self.mode = 'INITIAL'
@@ -278,7 +284,9 @@ class OpenSkySource:
             # Create commands
             cmds.append("CRE "+acid+" B738 "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
             cmds.append("TRACKLABEL "+acid)
-            cmds.append("SSRLABEL "+acid+", 3")
+            cmds.append("SSRLABEL "+acid+", A")
+            cmds.append("SSRLABEL "+acid+", C")
+            cmds.append("SSRLABEL "+acid+", ACID")
             if mode == 'LIVE':
                 cmds.append("SETDATAFEED "+acid+" OPENSKY")
 

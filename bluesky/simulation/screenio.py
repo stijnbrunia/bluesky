@@ -5,7 +5,7 @@ import numpy as np
 # Local imports
 import bluesky as bs
 from bluesky import stack
-from bluesky.tools import areafilter
+from bluesky.tools import areafilter, geo
 from bluesky.core.walltime import Timer
 
 bs.settings.set_variable_defaults(screendt=0.2)
@@ -94,6 +94,34 @@ class ScreenIO:
         lon0 = lon - 1.0 / (zoom * np.cos(np.radians(lat)))
         lon1 = lon + 1.0 / (zoom * np.cos(np.radians(lat)))
         return lat0, lat1, lon0, lon1
+
+    def setscreenrange(self, screenr):
+        """
+        Function: Set the radar screen range (radius)
+        Args:
+            screenr:    screen radius (nm) [float]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Get appropriate lat/lon/aspect ratio
+        sender = stack.sender()
+        lat, lon = self.client_pan.get(sender) or self.def_pan
+        ar = self.client_ar.get(sender) or 1.0
+
+        # Get maximum latitude and longitude
+        latmax = geo.qdrpos(lat, lon, 0, screenr)[0]
+        lonmax = geo.qdrpos(lat, lon, 90, screenr)[1]
+
+        # Determine zoom
+        zoomlat = 1/((latmax - lat)*ar)
+        zoomlon = 1/((lonmax - lon)*np.cos(np.radians(lat)))
+
+        zoom = min(zoomlat, zoomlon)
+
+        self.zoom(zoom, True)
 
     def zoom(self, zoom, absolute=True):
         sender    = stack.sender()

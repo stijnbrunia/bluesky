@@ -36,6 +36,7 @@ def show_basetid(name, layout):
     globals()[str(name)].setWindowFlag(Qt.WindowMinMaxButtonsHint)
     globals()[str(name)].exec()
 
+
 # def tidclose(command, dialogname):
 def tidclose(command, dialogname):
     lambda: command
@@ -43,66 +44,299 @@ def tidclose(command, dialogname):
     bs.ui.qtgl.console.Console._instance.stack(bs.ui.qtgl.console.Console._instance.command_line)
 
 
-def tid_cmds(tidcmd):
+class TIDCmds:
     """
-    Function: Process commands coming from the TID
-    Args:
-        tidcmd: command [str]
-    Returns: -
+    Class definition: Process inputs coming from the TID
+    Methods:
+        clear():            Clear variables
+        update_cmdline():   Update the command line
+        exq():              Execute commandline
+        exqcmd():           Execute a command
+        clr():              Clear command
+        cor():              Correct command
+        setcmd():           Set a command
+        changecmd():        Change the current command
+        setarg():           Set an argument
+        addarg():           Add an argument
+        addchar():          Add a character
 
     Created by: Bob van Dillen
-    Date: 21-1-2022
+    Date: 28-1-2022
     """
 
-    # Get simulation data
-    actdata = bs.net.get_nodedata()
-    id_select = actdata.cmddata.idsel
+    def __init__(self):
+        self.cmdslst = []
+        self.argslst = []
 
-    # Get command line
-    cmdline = console.get_cmdline()
+        self.iact = 0
 
-    # Split the command line
-    cmdlinelst = cmdline.split(';')
-    cmdlst = []
-    argslst = []
-    # Loop over the command lines
-    for line in cmdlinelst:
-        # Get command and arguments
-        cmd, args = misc.cmdsplit(line, actdata.acdata.id)
-        cmdlst.append(cmd)
-        argslst.append(args)
+    def clear(self):
+        """
+        Function: Clear variables
+        Args: -
+        Returns: -
 
-    # Commands that need more than 1 input
-    if cmdlst[-1].upper() in ['HDG', 'ALT', 'SPD', 'SSRLABEL']:
-        if len(argslst[-1]) > 1:
-            # Altitude command
-            if tidcmd.upper() == 'ALT':
-                cmdline += ' ; ' + id_select + ' ' + tidcmd + ' FL'
-            # Other commands
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        self.cmdslst = []
+        self.argslst = []
+
+        self.iact = 0
+
+    def update_cmdline(self):
+        """
+        Function: Update the command line
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        actdata = bs.net.get_nodedata()
+        id_select = actdata.cmddata.idsel
+
+        cmdline = id_select.strip() + ' ; '
+
+        # Loop over commands
+        for cmd, args in zip(self.cmdslst, self.argslst):
+            cmdline += cmd
+            # Loop over arguments for this command
+            for arg in args:
+                cmdline += ' ' + arg
+
+            cmdline += ' ; '
+
+        cmdline = cmdline[:-3]  # Remove last ' ; '
+
+        # Set the command line
+        console.Console._instance.set_cmdline(cmdline, 1)
+
+    def exq(self):
+        """
+        Function: Execute commandline
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        actdata = bs.net.get_nodedata()
+        id_select = actdata.cmddata.idsel
+
+        # Check if an aircraft is selected
+        if id_select:
+            idx = misc.get_indices(actdata.acdata.id, id_select)[0]
+
+            # Check if selected aircraft is UCO
+            if actdata.acdata.uco[idx] or 'UCO' in self.cmdslst:
+
+                cmdline = ''
+
+                # Loop over commands
+                for cmd, args in zip(self.cmdslst, self.argslst):
+                    if cmd == 'EFL':
+                        cmd = 'ALT'
+                        addfl = True
+                    else:
+                        addfl = False
+
+                    cmdline += id_select + ' ' + cmd
+
+                    # Loop over arguments for this command
+                    for arg in args:
+                        if addfl:
+                            cmdline += ' FL' + arg
+                        else:
+                            cmdline += ' ' + arg
+
+                    cmdline += ' ; '
+
+                cmdline = cmdline[:-3]  # Remove last ' ; '
+
+                # Stack the command line
+                console.Console._instance.stack(cmdline)
             else:
-                cmdline += ' ; ' + id_select + ' ' + tidcmd + ' '
-        # Leave out last command
+                bs.scr.echo(id_select+' not UCO')
         else:
-            cmdline = ''
-            for i in range(len(cmdlinelst)-1):
-                cmdline += cmdlinelst[i] + ' ; '
-            cmdline += id_select + ' ' + tidcmd + ' '
+            bs.scr.echo('No aircraft selected')
 
-    # Commands that only need 1 input
-    elif len(argslst[-1]) > 0:
-        # Altitude command
-        if tidcmd.upper() == 'ALT':
-            cmdline += ' ; ' + id_select + ' ' + tidcmd + ' FL'
-        # Other commands
+        # Clear
+        self.clear()
+
+        # Empty command line
+        console.Console._instance.set_cmdline('')
+
+    @staticmethod
+    def exqcmd(cmd, arg=''):
+        """
+        Function: Execute a command
+        Args:
+            cmd:    command [str]
+            arg:    argument [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        cmd = cmd.strip().upper()
+        arg = arg.strip()
+
+        # Selected aircraft
+        actdata = bs.net.get_nodedata()
+        id_select = actdata.cmddata.idsel
+
+        # Check if an aircraft is selected
+        if id_select:
+            # Command line
+            cmdline = id_select + ' ' + cmd + ' ' + arg
+            cmdline = cmdline.strip()
+
+            # Stack the command
+            console.Console._instance.stack(cmdline)
         else:
-            cmdline += ' ; ' + id_select + ' ' + tidcmd + ' '
+            bs.scr.echo('No aircraft selected')
 
-    # Leave out last command
-    else:
-        cmdline = ''
-        for i in range(len(cmdlinelst) - 1):
-            cmdline += cmdlinelst[i] + ' ; '
-        cmdline += id_select + ' ' + tidcmd + ' '
+    def clr(self):
+        """
+        Function: Clear command
+        Args: -
+        Returns: -
 
-    # Set the command line
-    console.Console._instance.set_cmdline(cmdline)
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        self.argslst[self.iact] = ['']
+
+        # Set the command line
+        self.update_cmdline()
+
+    def cor(self):
+        """
+        Function: Correct command
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Clear
+        self.clear()
+
+        # Update the command line
+        console.Console._instance.set_cmdline('')
+
+    def setcmd(self, cmd):
+        """
+        Function: Set a command
+        Args:
+            cmd:    command [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        cmd = cmd.strip().upper()
+
+        if cmd in self.cmdslst:
+            # Get index
+            self.iact = self.cmdslst.index(cmd)
+        else:
+            # Unfinished previous command
+            if len(self.cmdslst) != 0 and self.cmdslst[self.iact] not in ['UCO', 'REL'] and self.argslst[self.iact] != 0:
+                self.cmdslst[self.iact] = cmd
+                self.argslst[self.iact] = ['']
+            # Finished previous command
+            else:
+                # Append new command
+                self.cmdslst.append(cmd)
+                self.argslst.append([''])
+
+                # Index
+                self.iact = len(self.cmdslst) - 1
+
+        # Update command line
+        self.update_cmdline()
+
+    def changecmd(self, cmd):
+        """
+        Function: Change the current command
+        Args:
+            cmd:    command [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        cmd = cmd.strip().upper()
+
+        # Change command
+        self.cmdslst[self.iact] = cmd
+        # Clear arguments
+        self.argslst[self.iact] = ['']
+
+        # Update command line
+        self.update_cmdline()
+
+    def setarg(self, arg, argn):
+        """
+        Function: Set an argument
+        Args:
+            arg:    argument [str]
+            argn:   argument number (1, 2, ..., n) [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Set the argument
+        self.argslst[self.iact][argn-1] = arg.strip()
+
+        # Update command line
+        self.update_cmdline()
+
+    def addarg(self, arg):
+        """
+        Function: Add an argument
+        Args:
+            arg:    argument [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Append argument
+        self.argslst[self.iact].append(arg.strip())
+
+        # Update command line
+        self.update_cmdline()
+
+    def addchar(self, char):
+        """
+        Function: Add a character
+        Args:
+            char:   character [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Append character
+        self.argslst[self.iact][-1] += char.strip()
+
+        # Update command line
+        self.update_cmdline()
+
+
+tidcmds = TIDCmds()
