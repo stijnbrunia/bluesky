@@ -17,7 +17,7 @@ from bluesky.core import Entity, timed_function
 from bluesky.stack import refdata
 from bluesky.stack.recorder import savecmd
 from bluesky.tools import geo, Functions
-from bluesky.tools.misc import latlon2txt, angleFromCoordinate
+from bluesky.tools.misc import latlon2txt, angleFromCoordinate, get_indices
 from bluesky.tools.aero import cas2tas, casormach2tas, fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
 
@@ -544,7 +544,9 @@ class Traffic(Entity):
         self.lat = self.lat + np.degrees(bs.sim.simdt * self.gsnorth / Rearth)
         self.coslat = np.cos(np.deg2rad(self.lat))
         self.lon = self.lon + np.degrees(bs.sim.simdt * self.gseast / self.coslat / Rearth)
-        self.distflown += self.gs * bs.sim.simdt
+        # Update distflown only for simulated aircraft
+        itrafsim = np.setdiff1d(np.arange(0, self.ntraf), get_indices(self.id, bs.traf.trafdatafeed.datafeedids))
+        self.distflown[itrafsim] += self.gs[itrafsim] * bs.sim.simdt
 
     def id2idx(self, acid):
         """Find index of aircraft id"""

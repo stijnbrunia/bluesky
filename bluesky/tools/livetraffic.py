@@ -8,6 +8,7 @@ Date: 14-1-2022
 import requests
 import pandas as pd
 import numpy as np
+import datetime
 import bluesky as bs
 from bluesky.tools import aero, misc
 
@@ -82,8 +83,12 @@ class OpenSkySource:
             data_df.dropna(subset=['callsign', 'lon', 'lat', 'baro_altitude', 'velocity', 'true_track'],
                            inplace=True)
 
+            # Date and time
+            epochtime = data['time']
+            datetime0 = datetime.datetime.utcfromtimestamp(epochtime)
+
             # Initial commands
-            commands = ['SWRAD HISTORY']
+            commands = ["DATE "+datetime0.strftime('%d %m %Y %H:%M:%S')]
             commandstime = [0.]
 
             # Get aircraft data

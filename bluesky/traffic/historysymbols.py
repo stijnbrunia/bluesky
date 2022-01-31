@@ -121,6 +121,11 @@ class HistorySymbols(Entity):
             i_update = np.intersect1d(i_new, i_swhistory)
             self.swhistory[i_new] = ~self.swhistory[i_new]
 
+            # OPENSKY traffic always gets an update
+            iopensky = misc.get_indices(bs.traf.trafdatafeed.source, 'OPENSKY')
+            iopensky_new = np.intersect1d(i_new, iopensky)
+            i_update = np.union1d(i_update, iopensky_new)
+
             # Update the history symbols
             self.update_history(i_update)
 

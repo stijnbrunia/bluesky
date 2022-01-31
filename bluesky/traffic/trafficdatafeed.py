@@ -165,11 +165,11 @@ class TrafficDataFeed(Entity):
         Date: 13-1-2022
         """
 
-        bs.traf.distflown[itraf_update] -= bs.traf.gs[itraf_update]*bs.sim.simdt
-        bs.traf.distflown[itraf_update] += geo.kwikdist_matrix(bs.traf.lat[itraf_update],
-                                                               bs.traf.lon[itraf_update],
-                                                               self.trackdata['lat'][itrackdata_update],
-                                                               self.trackdata['lon'][itrackdata_update])*aero.nm
+        bs.traf.distflown[itraf_update] += np.array(geo.kwikdist_matrix(bs.traf.lat[itraf_update],
+                                                                        bs.traf.lon[itraf_update],
+                                                                        self.trackdata['lat'][itrackdata_update],
+                                                                        self.trackdata['lon'][itrackdata_update])*aero.nm,
+                                                    dtype=np.float32)
 
         bs.traf.lat[itraf_update] = self.trackdata['lat'][itrackdata_update]
         bs.traf.lon[itraf_update] = self.trackdata['lon'][itrackdata_update]
@@ -194,7 +194,6 @@ class TrafficDataFeed(Entity):
         bs.traf.hdg[itraf_prev] = self.trafprev['hdg'][iprev]
         bs.traf.alt[itraf_prev] = self.trafprev['alt'][iprev]
         bs.traf.gs[itraf_prev] = self.trafprev['gs'][iprev]
-        bs.traf.distflown[itraf_prev] = self.trafprev['distflown'][iprev]
 
     def update_speed(self):
         """
