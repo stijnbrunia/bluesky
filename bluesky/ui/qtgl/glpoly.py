@@ -27,6 +27,8 @@ class Poly(glh.RenderObject, layer=-20):
         # Fixed polygons
         self.allpolys = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.allpfill = glh.VertexArrayObject(glh.gl.GL_TRIANGLES)
+        # Points
+        self.allpoints = glh.VertexArrayObject(glh.gl.GL_TRIANGLES)
 
         self.prevmousepos = (0, 0)
 
@@ -40,6 +42,7 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
         self.allpfill.create(vertex=POLY_SIZE * 24,
                              color=np.append(palette.polys, 50))
+        self.allpoints.create(vertex=POLY_SIZE * 24, color=palette.polys)
 
     def draw(self):
         actdata = bs.net.get_nodedata()
@@ -56,6 +59,7 @@ class Poly(glh.RenderObject, layer=-20):
         # --- DRAW CUSTOM SHAPES (WHEN AVAILABLE) -----------------------------
         if actdata.show_poly > 0:
             self.allpolys.draw()
+            self.allpoints.draw()
             if actdata.show_poly > 1:
                 self.allpfill.draw()
         
@@ -111,8 +115,11 @@ class Poly(glh.RenderObject, layer=-20):
             the data of the current node is updated. '''
         # Shape data change
         if 'SHAPE' in changed_elems:
-            if nodedata.polys:
+            # Make Current
+            if nodedata.polys or nodedata.polyspoints:
                 self.glsurface.makeCurrent()
+            # Polys
+            if nodedata.polys:
                 contours, fills, colors = zip(*nodedata.polys.values())
                 # Create contour buffer with color
                 self.allpolys.update(vertex=np.concatenate(contours),
@@ -123,3 +130,9 @@ class Poly(glh.RenderObject, layer=-20):
             else:
                 self.allpolys.set_vertex_count(0)
                 self.allpfill.set_vertex_count(0)
+            # Points
+            if nodedata.polyspoints:
+                contours, fills, colors = zip(*nodedata.polyspoints.values())
+                self.allpoints.update(vertex=np.concatenate(fills))
+            else:
+                self.allpoints.set_vertex_count(0)

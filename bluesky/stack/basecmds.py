@@ -372,6 +372,12 @@ def initbasecmds():
             bs.traf.poscommand,
             "Get info on aircraft, airport or waypoint",
         ],
+        "POINT": [
+            "POINT name, lat, lon",
+            "txt,latlon",
+            lambda name, *coords: areafilter.defineArea(name, "POINT", coords),
+            "Draw a point"
+        ],
         "PRINTER": [
             "PRINTER",
             "",
