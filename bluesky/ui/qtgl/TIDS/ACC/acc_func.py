@@ -50,18 +50,18 @@ accmain = [['a1', 'DCT',            ['lambda: tidcmds.setcmd("HDG")',
 
 accdct = [['a1', '',        None],
           ['a2', '',        None],
-          ['a3', 'SUGOL',   ['lambda: tidcmds.setarg("SUGOL")']],
-          ['a4', 'NIRSI',   ['lambda: tidcmds.setarg("NIRSI")']],
+          ['a3', 'SUGOL',   ['lambda: tidcmds.setarg("SUGOL", 1)']],
+          ['a4', 'NIRSI',   ['lambda: tidcmds.setarg("NIRSI", 1)']],
 
           ['b1', '',        None],
           ['b2', '',        None],
-          ['b3', 'RIVER',   ['lambda: tidcmds.setarg("RIVER")']],
-          ['b4', 'SOKSI',   ['lambda: tidcmds.setarg("SOKSI")']],
+          ['b3', 'RIVER',   ['lambda: tidcmds.setarg("RIVER", 1)']],
+          ['b4', 'SOKSI',   ['lambda: tidcmds.setarg("SOKSI", 1)']],
 
           ['c1', '',        None],
           ['c2', '',        None],
-          ['c3', 'ARTIP',   ['lambda: tidcmds.setarg("ARTIP")']],
-          ['c4', 'PAM',     ['lambda: tidcmds.setarg("PAM")']],
+          ['c3', 'ARTIP',   ['lambda: tidcmds.setarg("ARTIP", 1)']],
+          ['c4', 'PAM',     ['lambda: tidcmds.setarg("PAM", 1)']],
 
           ['d1', '',        None],
           ['d2', '',        None],
@@ -123,11 +123,11 @@ accefl = [['a1', '',        None],
 acchdg = [['a1', '',        None],
           ['a2', '',        None],
           ['a3', '',        None],
-          ['a4', 'PAM',     ['lambda: tidcmds.setarg("PAM")']],
+          ['a4', 'PAM',     ['lambda: tidcmds.setarg("PAM", 1)']],
 
           ['b1', '',        None],
           ['b2', '',        None],
-          ['b3', 'SPY',     ['lambda: tidcmds.setarg("SPY")']],
+          ['b3', 'SPY',     ['lambda: tidcmds.setarg("SPY", 1)']],
           ['b4', '>>>>',    ['lambda: None']],
 
           ['c1', '7',       ['lambda: tidcmds.addchar("7")']],
@@ -156,10 +156,10 @@ acchdg = [['a1', '',        None],
           ]
 
 
-accspd = [['a1', '220',     ['lambda: tidcmds.setarg("220")']],
-          ['a2', '250',     ['lambda: tidcmds.setarg("250")']],
-          ['a3', '280',     ['lambda: tidcmds.setarg("280")']],
-          ['a4', '300',     ['lambda: tidcmds.setarg("300")']],
+accspd = [['a1', '220',     ['lambda: tidcmds.setarg("220", 1)']],
+          ['a2', '250',     ['lambda: tidcmds.setarg("250", 1)']],
+          ['a3', '280',     ['lambda: tidcmds.setarg("280", 1)']],
+          ['a4', '300',     ['lambda: tidcmds.setarg("300", 1)']],
 
           ['b1', 'SPD',     ['lambda: None']],
           ['b2', '',        None],
