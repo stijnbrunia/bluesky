@@ -116,8 +116,8 @@ class ScreenIO:
         ar = self.client_ar.get(sender) or 1.0
 
         # Get maximum latitude and longitude
-        latmax = geo.qdrpos(lat, lon, 0, screenr)[0]
-        lonmax = geo.qdrpos(lat, lon, 90, screenr)[1]
+        latmax = geo.qdrpos(lat, lon, 0, screenr)[0] + 0.1
+        lonmax = geo.qdrpos(lat, lon, 90, screenr)[1] + 0.03
 
         # Determine zoom
         zoomlat = 1/((latmax - lat)*ar)
