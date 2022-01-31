@@ -24,8 +24,8 @@ accmain = [['a1', 'DCT',            ['lambda: tidcmds.setcmd("HDG")',
            ['c3', 'STR',            ['lambda: None']],
            ['c4', 'ERA',            ['lambda: None']],
 
-           ['d1', 'TOC\nEXQ',       ['lambda: None']],
-           ['d2', 'TOC',            ['lambda: None']],
+           ['d1', 'TOC\nEXQ',       ['lambda: tidcmds.exqcmd("REL")']],
+           ['d2', 'TOC',            ['lambda: tidcmds.setcmd("REL")']],
            ['d3', 'UCO\nEXQ',       ['lambda: tidcmds.exqcmd("UCO")']],
            ['d4', 'EC\nNKB',        ['lambda: None']],
 
