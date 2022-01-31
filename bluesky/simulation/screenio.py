@@ -5,7 +5,7 @@ import numpy as np
 # Local imports
 import bluesky as bs
 from bluesky import stack
-from bluesky.tools import areafilter, geo
+from bluesky.tools import areafilter, geo, misc
 from bluesky.core.walltime import Timer
 
 bs.settings.set_variable_defaults(screendt=0.2)
@@ -20,7 +20,7 @@ class ScreenIO:
     siminfo_rate = 1
 
     # Update rate of aircraft update messages [Hz]
-    acupdate_rate = 1/bs.settings.screendt
+    acupdate_rate = 5
 
     # =========================================================================
     # Functions
@@ -44,6 +44,11 @@ class ScreenIO:
         self.samplecount = 0
         self.prevcount   = 0
 
+        # Timing send aircraft data
+        self.acdt = max(bs.settings.screendt, 1/self.acupdate_rate)
+        self.prevactime = -self.acdt
+        self.prevacdata = dict()
+
         # Output event timers
         self.slow_timer = Timer()
         self.slow_timer.timeout.connect(self.send_siminfo)
@@ -55,10 +60,6 @@ class ScreenIO:
         self.fast_timer.timeout.connect(self.send_aircraft_data)
         self.fast_timer.start(int(1000 / self.acupdate_rate))
 
-        self.cmd_timer = Timer()
-        self.cmd_timer.timeout.connect(self.send_command_data)
-        self.cmd_timer.start(int(1000 / 2))
-
     def step(self):
         if bs.sim.state == bs.OP:
             self.samplecount += 1
@@ -69,6 +70,9 @@ class ScreenIO:
         self.samplecount = 0
         self.prevcount   = 0
         self.prevtime    = 0.0
+
+        self.prevactime = -bs.settings.screendt
+        self.prevacdata = dict()
 
         # Communicate reset to gui
         bs.net.send_event(b'RESET', b'ALL')
@@ -276,77 +280,77 @@ class ScreenIO:
             bs.net.send_stream(b'TRAILS', data)
 
     def send_aircraft_data(self):
-        data = dict()
-        data['simt']       = bs.sim.simt
-        data['id']         = bs.traf.id
-        data['lat']        = bs.traf.lat
-        data['lon']        = bs.traf.lon
-        data['alt']        = bs.traf.alt
-        data['tas']        = bs.traf.tas
-        data['cas']        = bs.traf.cas
-        data['gs']         = bs.traf.gs
-        data['selspd']     = bs.traf.selspd
-        data['ingroup']    = bs.traf.groups.ingroup
-        data['inconf'] = bs.traf.cd.inconf
-        data['type'] = bs.traf.type
-        data['tcpamax'] = bs.traf.cd.tcpamax
-        data['rpz'] = bs.traf.cd.rpz
-        data['nconf_cur'] = len(bs.traf.cd.confpairs_unique)
-        data['nconf_tot'] = len(bs.traf.cd.confpairs_all)
-        data['nlos_cur'] = len(bs.traf.cd.lospairs_unique)
-        data['nlos_tot'] = len(bs.traf.cd.lospairs_all)
-        data['selhdg']        = bs.traf.selhdg
-        data['trk']        = bs.traf.trk
-        data['selalt']     = bs.traf.selalt
-        data['vs']         = bs.traf.vs
-        data['vmin']       = bs.traf.perf.vmin
-        data['vmax']       = bs.traf.perf.vmax
+        # Interval update data
+        if bs.sim.simt - self.prevactime >= self.acdt:
+            data = dict()
 
-        # LVNL Variables
-        data['arr']        = bs.traf.lvnlvars.arr
-        data['flighttype'] = bs.traf.lvnlvars.flighttype
-        data['sid']        = bs.traf.lvnlvars.sid
-        data['rwy']        = bs.traf.lvnlvars.rwy
-        data['uco']        = bs.traf.lvnlvars.uco
-        data['rel']        = bs.traf.lvnlvars.rel
-        data['wtc']        = bs.traf.lvnlvars.wtc
-        data['lblpos']     = bs.traf.lvnlvars.lblpos
-        data['mlbl']       = bs.traf.lvnlvars.mlbl
-        data['ssrlbl']     = bs.traf.lvnlvars.ssrlbl
-        data['tracklbl']   = bs.traf.lvnlvars.tracklbl
-        data['ssr']        = bs.traf.lvnlvars.ssr
+            data['simt']        = bs.sim.simt
+            data['id']          = bs.traf.id
+            data['lat']         = bs.traf.lat
+            data['lon']         = bs.traf.lon
+            data['alt']         = bs.traf.alt
+            data['tas']         = bs.traf.tas
+            data['cas']         = bs.traf.cas
+            data['gs']          = bs.traf.gs
+            data['ingroup']     = bs.traf.groups.ingroup
+            data['inconf']      = bs.traf.cd.inconf
+            data['type']        = bs.traf.type
+            data['tcpamax']     = bs.traf.cd.tcpamax
+            data['rpz']         = bs.traf.cd.rpz
+            data['nconf_cur']   = len(bs.traf.cd.confpairs_unique)
+            data['nconf_tot']   = len(bs.traf.cd.confpairs_all)
+            data['nlos_cur']    = len(bs.traf.cd.lospairs_unique)
+            data['nlos_tot']    = len(bs.traf.cd.lospairs_all)
+            data['trk']         = bs.traf.trk
+            data['vs']          = bs.traf.vs
+            data['vmin']        = bs.traf.perf.vmin
+            data['vmax']        = bs.traf.perf.vmax
 
-        # Transition level as defined in traf
-        data['translvl']   = bs.traf.translvl
+            # LVNL Variables
+            data['flighttype']  = bs.traf.lvnlvars.flighttype
+            data['wtc']         = bs.traf.lvnlvars.wtc
 
-        # ASAS resolutions for visualization. Only send when evaluated
-        data['asastas']  = bs.traf.cr.tas
-        data['asastrk']  = bs.traf.cr.trk
+            # Transition level as defined in traf
+            data['translvl']    = bs.traf.translvl
 
-        # History symbols
-        data['histsymblat'] = bs.traf.histsymb.lat
-        data['histsymblon'] = bs.traf.histsymb.lon
+            # ASAS resolutions for visualization. Only send when evaluated
+            data['asastas']     = bs.traf.cr.tas
+            data['asastrk']     = bs.traf.cr.trk
 
+            # History symbols
+            data['histsymblat'] = bs.traf.histsymb.lat
+            data['histsymblon'] = bs.traf.histsymb.lon
+
+            # Take start up into account
+            if bs.sim.simt != 0:
+                self.prevactime = bs.sim.simt
+                self.prevacdata = data
+        else:
+            data = self.prevacdata
+
+        # Always update data (take aircraft create/delete into account)
+        if 'id' in data.keys():
+            itrafsend = misc.get_indices(bs.traf.id, data['id'])  # aircraft that are in the previous data
+        else:
+            itrafsend = []
+
+        data['arr']      = np.array(bs.traf.lvnlvars.arr)[itrafsend].tolist()
+        data['idsel']    = bs.traf.id_select
+        data['lblpos']   = np.array(bs.traf.lvnlvars.lblpos)[itrafsend].tolist()
+        data['mlbl']     = bs.traf.lvnlvars.mlbl[itrafsend]
+        data['rel']      = bs.traf.lvnlvars.rel[itrafsend]
+        data['rwy']      = np.array(bs.traf.lvnlvars.rwy)[itrafsend].tolist()
+        data['selhdg']   = bs.traf.selhdg[itrafsend]
+        data['selalt']   = bs.traf.selalt[itrafsend]
+        data['selspd']   = bs.traf.selspd[itrafsend]
+        data['sid']      = np.array(bs.traf.lvnlvars.sid)[itrafsend].tolist()
+        data['ssr']      = bs.traf.lvnlvars.ssr[itrafsend]
+        data['ssrlbl']   = np.array(bs.traf.lvnlvars.ssrlbl)[itrafsend].tolist()
+        data['tracklbl'] = bs.traf.lvnlvars.tracklbl[itrafsend]
+        data['uco']      = bs.traf.lvnlvars.uco[itrafsend]
+
+        # Send data
         bs.net.send_stream(b'ACDATA', data)
-
-    def send_command_data(self):
-        data = dict()
-        data['arr'] = bs.traf.lvnlvars.arr
-        data['id'] = bs.traf.id
-        data['idsel'] = bs.traf.id_select
-        data['lblpos'] = bs.traf.lvnlvars.lblpos
-        data['mlbl'] = bs.traf.lvnlvars.mlbl
-        data['rel'] = bs.traf.lvnlvars.rel
-        data['rwy'] = bs.traf.lvnlvars.rwy
-        data['selhdg'] = bs.traf.selhdg
-        data['selalt'] = bs.traf.selalt
-        data['selspd'] = bs.traf.selspd
-        data['sid'] = bs.traf.lvnlvars.sid
-        data['ssrlbl'] = bs.traf.lvnlvars.ssrlbl
-        data['tracklbl'] = bs.traf.lvnlvars.tracklbl
-        data['uco'] = bs.traf.lvnlvars.uco
-
-        bs.net.send_stream(b'CMDDATA', data)
 
     def send_route_data(self):
         for sender, acid in self.route_acid.items():

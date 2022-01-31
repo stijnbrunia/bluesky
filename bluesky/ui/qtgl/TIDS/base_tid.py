@@ -96,7 +96,7 @@ class TIDCmds:
         """
 
         actdata = bs.net.get_nodedata()
-        id_select = actdata.cmddata.idsel
+        id_select = actdata.acdata.idsel
 
         cmdline = id_select.strip() + ' ; '
 
@@ -125,7 +125,7 @@ class TIDCmds:
         """
 
         actdata = bs.net.get_nodedata()
-        id_select = actdata.cmddata.idsel
+        id_select = actdata.acdata.idsel
 
         # Check if an aircraft is selected
         if id_select:
@@ -188,7 +188,7 @@ class TIDCmds:
 
         # Selected aircraft
         actdata = bs.net.get_nodedata()
-        id_select = actdata.cmddata.idsel
+        id_select = actdata.acdata.idsel
 
         # Check if an aircraft is selected
         if id_select:

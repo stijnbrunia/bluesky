@@ -308,8 +308,8 @@ class Traffic(glh.RenderObject, layer=100):
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Process incoming traffic data. '''
-        if 'ACDATA' in changed_elems or 'CMDDATA' in changed_elems:
-            self.update_aircraft_data(nodedata.acdata, nodedata.cmddata)
+        if 'ACDATA' in changed_elems:
+            self.update_aircraft_data(nodedata.acdata)
         if 'ROUTEDATA' in changed_elems:
             self.update_route_data(nodedata.routedata)
         if 'TRAILS' in changed_elems:
@@ -382,7 +382,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.route.set_vertex_count(0)
             self.routelbl.n_instances = 0
 
-    def update_aircraft_data(self, data, cmddata):
+    def update_aircraft_data(self, data):
         ''' Update GPU buffers with new aircraft simulation data. '''
         if not self.initialized:
             return
@@ -448,7 +448,7 @@ class Traffic(glh.RenderObject, layer=100):
 
                 # Labels
                 rawlabels, rawmlabel, rawssrlabel = create_aclabel(rawlabels, rawmlabel, rawssrlabel,
-                                                                   actdata, data, i, cmddata)
+                                                                   actdata, data, i)
 
                 # Colours
                 if inconf:
@@ -460,7 +460,7 @@ class Traffic(glh.RenderObject, layer=100):
                              4] = [lat, lon, lat1, lon1]
                     confidx += 1
                 # Selected aircraft
-                elif acid == cmddata.idsel and actdata.atcmode != 'BLUESKY':
+                elif acid == data.idsel and actdata.atcmode != 'BLUESKY':
                     rgb = (227, 227, 49) + (255,)
                     color[i, :] = rgb
                 else:
@@ -509,7 +509,7 @@ Create label functions
 """
 
 
-def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i, cmddata):
+def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i):
     """
     Function: Create the labels for an aircraft
     Args:
@@ -519,7 +519,6 @@ def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i, cmddata)
         actdata:        node data [class]
         data:           aircraft data [class]
         i:              index for data [int]
-        cmddata:        command data [class]
     Returns:
         rawlabels:      aircraft labels [list]
         rawmlabel:      micro label [str]
@@ -529,17 +528,8 @@ def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i, cmddata)
     Date: 12-1-2022
     """
 
-    # Check if aircraft is in cmddata
-    if data.id[i] in cmddata.id:
-        j = misc.get_indices(cmddata.id, data.id[i])[0]
-        lblpos = cmddata.lblpos[j]
-    else:
-        cmddata = None
-        j = None
-        lblpos = data.lblpos[i]
-
     # Get track label position
-    lbl_i = get_lblpos(lblpos)
+    lbl_i = get_lblpos(data.lblpos[i])
     # Other track label positions are empty
     for n in range(len(rawlabels)):
         if n != lbl_i:
@@ -548,11 +538,11 @@ def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i, cmddata)
     # APP mode
     if actdata.atcmode == 'APP':
         rawlabels[lbl_i], rawmlabel, rawssrlabel = applabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                            data, i, cmddata=cmddata, j=j)
+                                                            data, i)
     # ACC mode
     elif actdata.atcmode == 'ACC':
         rawlabels[lbl_i], rawmlabel, rawssrlabel = acclabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                            data, i, cmddata=cmddata, j=j)
+                                                            data, i)
     # TWR mode
     elif actdata.atcmode == 'TWR':
         rawlabels[lbl_i] = twrlabel(rawlabels[lbl_i], actdata, data, i)
@@ -597,7 +587,7 @@ def get_lblpos(lblpos):
         return 2
 
 
-def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j=None):
+def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i):
     """
     Function: Create approach label
     Args:
@@ -607,8 +597,6 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         actdata:        node data [class]
         data:           aircraft data [class]
         i:              index for data [int]
-        cmddata:        command data [class]
-        j:              index for cmddata [int]
     Returns:
         rawlabel:       track label string [str]
         rawmlabel:      micro label string [str]
@@ -618,32 +606,8 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     Date: 21-12-2021
     """
 
-    # Check for cmddata
-    if cmddata:
-        arr      = cmddata.arr[j]
-        mlbl     = cmddata.mlbl[j]
-        rwy      = cmddata.rwy[j]
-        selalt   = cmddata.selalt[j]
-        selhdg   = cmddata.selhdg[j]
-        selspd   = cmddata.selspd[j]
-        sid      = cmddata.sid[j]
-        ssrlbl   = cmddata.ssrlbl[j]
-        tracklbl = cmddata.tracklbl[j]
-        uco      = cmddata.uco[j]
-    else:
-        arr      = data.arr[i]
-        mlbl     = data.mlbl[i]
-        rwy      = data.rwy[i]
-        selalt   = data.selalt[i]
-        selhdg   = data.selhdg[i]
-        selspd   = data.selspd[i]
-        sid      = data.sid[i]
-        ssrlbl   = data.ssrlbl[i]
-        tracklbl = data.tracklbl[i]
-        uco      = data.uco[i]
-
     # Track label
-    if tracklbl:
+    if data.tracklbl[i]:
         # Line 1
         rawlabel += '%-8s' % data.id[i][:8]
 
@@ -653,20 +617,20 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
             rawlabel += '%-1s' % 'A'
         else:
             rawlabel += '%-1s' % ' '
-        if uco and selalt != 0:
-            rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
+        if data.uco[i] and data.selalt[i] != 0:
+            rawlabel += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
         else:
             rawlabel += '%-3s' % '   '
         rawlabel += '%-1s' % ' '
 
         # Line 3
         rawlabel += '%-4s' % str(data.type[i])[:4]
-        if uco and selhdg != 0:
-            rawlabel += '%-3s' % leading_zeros(selhdg)[:3]
+        if data.uco[i] and data.selhdg[i] != 0:
+            rawlabel += '%-3s' % leading_zeros(data.selhdg[i])[:3]
         elif data.flighttype[i] == 'INBOUND':
-            rawlabel += '%-3s' % arr.replace('ARTIP', 'ATP')[:3]
+            rawlabel += '%-3s' % data.arr[i].replace('ARTIP', 'ATP')[:3]
         elif data.flighttype[i] == 'OUTBOUND':
-            rawlabel += '%-3s' % sid[:3]
+            rawlabel += '%-3s' % data.sid[i][:3]
         else:
             rawlabel += '%-3s' % '   '
         rawlabel += '%-1s' % ' '
@@ -677,8 +641,8 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
             rawlabel += '%-1s' % str(data.wtc[i])[:1]
         else:
             rawlabel += '%-1s' % ' '
-        if uco and selspd != 0:
-            rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
+        if data.uco[i] and data.selspd[i] != 0:
+            rawlabel += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
         else:
             rawlabel += '%-3s' % 'SPD'
         rawlabel += '%-1s' % ' '
@@ -686,22 +650,22 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         rawlabel += 8*4*' '
 
     # Micro label
-    if mlbl:
+    if data.mlbl[i]:
         if data.flighttype[i].upper() == 'OUTBOUND':
             rawmlabel += '  '+chr(30)
         else:
-            rawmlabel += '%-3s' % rwy[:3]
+            rawmlabel += '%-3s' % data.rwy[i][:3]
     else:
         rawmlabel += 3*' '
 
     # SSR label
     # Mode A
-    if 'A' in ssrlbl and data.ssr[i] != 0:
+    if 'A' in data.ssrlbl[i] and data.ssr[i] != 0:
         rawssrlabel += '%-7s' % str(data.ssr[i])[:7]
     else:
         rawssrlabel += 7*' '
     # Mode C
-    if 'C' in ssrlbl:
+    if 'C' in data.ssrlbl[i]:
         rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
         if data.alt[i] < actdata.translvl:
             rawssrlabel += '%-4s' % 'A   '
@@ -710,7 +674,7 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     else:
         rawssrlabel += 7*' '
     # ACID
-    if 'ACID' in ssrlbl:
+    if 'ACID' in data.ssrlbl[i]:
         rawssrlabel += '%-7s' % data.id[i][:7]
     else:
         rawssrlabel += 7*' '
@@ -718,7 +682,7 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     return rawlabel, rawmlabel, rawssrlabel
 
 
-def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j=None):
+def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i):
     """
     Function: Create acc label
     Args:
@@ -728,8 +692,6 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         actdata:        node data [class]
         data:           aircraft data [class]
         i:              index for data [int]
-        cmddata:        command data [class]
-        j:              index for cmddata [int]
     Returns:
         rawlabel:       track label string [str]
         rawmlabel:      micro label string [str]
@@ -739,23 +701,8 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     Date: 21-12-2021
     """
 
-    if cmddata:
-        uco = cmddata.uco[j]
-        selalt = cmddata.selalt[j]
-        selspd = cmddata.selspd[j]
-        ssrlbl = cmddata.ssrlbl[j]
-        tracklbl = cmddata.tracklbl[j]
-        mlbl = cmddata.mlbl[j]
-    else:
-        uco = data.uco[i]
-        selalt = data.selalt[i]
-        selspd = data.selspd[i]
-        ssrlbl = data.ssrlbl[i]
-        tracklbl = data.tracklbl[i]
-        mlbl = data.mlbl[i]
-
     # Track label
-    if tracklbl:
+    if data.tracklbl[i]:
         # Line 1
         rawlabel += '%-8s' % data.id[i][:8]
 
@@ -765,8 +712,8 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
             rawlabel += '%-1s' % 'A'
         else:
             rawlabel += '%-1s' % ' '
-        if uco and selalt != 0:
-            rawlabel += '%-3s' % leading_zeros(selalt/ft/100)[-3:]
+        if data.uco[i] and data.selalt[i] != 0:
+            rawlabel += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
         else:
             rawlabel += '%-3s' % '   '
         rawlabel += '%-1s' % ' '
@@ -781,9 +728,9 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
             rawlabel += '%-1s' % ' '
 
         # Line 4
-        if uco and selspd != 0:
+        if data.uco[i] and data.selspd[i] != 0:
             rawlabel += '%-1s' % 'I'
-            rawlabel += '%-3s' % leading_zeros(selspd/kts)[:3]
+            rawlabel += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
         else:
             rawlabel += '%-4s' % '    '
         rawlabel += '%-4s' % data.type[i][:4]
@@ -791,7 +738,7 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
         rawlabel += 8*4*' '
 
     # Micro label
-    if mlbl:
+    if data.mlbl[i]:
         if data.flighttype[i].upper() == 'INBOUND':
             rawmlabel += '  '+chr(31)
         else:
@@ -801,17 +748,17 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
 
     # SSR label
     # ACID
-    if 'ACID' in ssrlbl:
+    if 'ACID' in data.ssrlbl[i]:
         rawssrlabel += '%-7s' % data.id[i][:7]
     else:
         rawssrlabel += 7*' '
     # Mode A
-    if 'A' in ssrlbl and data.ssr[i] != 0:
+    if 'A' in data.ssrlbl[i] and data.ssr[i] != 0:
         rawssrlabel += '%-7s' % str(data.ssr[i])[:7]
     else:
         rawssrlabel += 7*' '
     # Mode C
-    if 'C' in ssrlbl:
+    if 'C' in data.ssrlbl[i]:
         rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
         if data.alt[i] < actdata.translvl:
             rawssrlabel += '%-4s' % 'A   '
@@ -823,7 +770,7 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i, cmddata=None, j
     return rawlabel, rawmlabel, rawssrlabel
 
 
-def twrlabel(rawlabel, actdata, data, i, cmddata=None, j=None):
+def twrlabel(rawlabel, actdata, data, i):
     """
     Function: Create acc label
     Args:
@@ -831,8 +778,6 @@ def twrlabel(rawlabel, actdata, data, i, cmddata=None, j=None):
         actdata:        node data [dict]
         data:           aircraft data [dict]
         i:              index for data [int]
-        cmddata:        command data [dict]
-        j:              index for cmddata [int]
     Returns:
         rawlabel:       track label string [str]
         rawmlabel:      micro label string [str]
@@ -842,13 +787,6 @@ def twrlabel(rawlabel, actdata, data, i, cmddata=None, j=None):
     Date: 21-12-2021
     """
 
-    if cmddata:
-        rwy = cmddata.rwy[j]
-        sid = cmddata.sid[j]
-    else:
-        rwy = data.rwy[i]
-        sid = data.sid[i]
-
     # Line 1
     rawlabel += '%-8s' % data.id[i][:8]
     if actdata.show_lbl == 2:
@@ -856,9 +794,9 @@ def twrlabel(rawlabel, actdata, data, i, cmddata=None, j=None):
         if data.flighttype[i] == "INBOUND":
             rawlabel += 8*' '
         else:
-            rawlabel += '%-5s' % sid[:5]
+            rawlabel += '%-5s' % data.sid[i][:5]
             rawlabel += ' '
-            rawlabel += '%-2s' % rwy[-2:]
+            rawlabel += '%-2s' % data.rwy[i][-2:]
         # Line 3
         rawlabel += '%-8s' % data.type[i][:8]
         # Line 4
