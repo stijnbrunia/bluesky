@@ -249,12 +249,18 @@ class TIDCmds:
             # Get index
             self.iact = self.cmdslst.index(cmd)
         else:
-            # Append new command
-            self.cmdslst.append(cmd)
-            self.argslst.append([''])
+            # Unfinished previous command
+            if len(self.cmdslst) != 0 and self.cmdslst[self.iact] not in ['UCO', 'REL'] and self.argslst[self.iact] != 0:
+                self.cmdslst[self.iact] = cmd
+                self.argslst[self.iact] = ['']
+            # Finished previous command
+            else:
+                # Append new command
+                self.cmdslst.append(cmd)
+                self.argslst.append([''])
 
-            # Index
-            self.iact = len(self.cmdslst) - 1
+                # Index
+                self.iact = len(self.cmdslst) - 1
 
         # Update command line
         self.update_cmdline()

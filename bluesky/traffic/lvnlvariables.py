@@ -66,6 +66,47 @@ class LVNLVariables(Entity):
         self.ssrlbl[-n:] = [[]]
         self.mlbl[-n:] = False
 
+    @stack.command(name='UCO')
+    def selucocmd(self, idx: 'acid'):
+        """
+        Function: Set UCO for aircraft
+        Args:
+            idx:    index for traffic arrays
+        Returns: -
+        """
+
+        # Autopilot modes
+        bs.traf.swlnav[idx] = True
+        bs.traf.swvnav[idx] = True
+        bs.traf.swvnavspd[idx] = True
+
+        bs.traf.trafdatafeed.uco(idx)
+        self.uco[idx] = True
+        self.rel[idx] = False
+
+    @stack.command(name='REL',)
+    def setrelcmd(self, idx: 'acid'):
+        """
+        Function: Set REL for aircraft
+        Args:
+            idx:    index for traffic arrays
+        Returns: -
+
+        Created by: Bob van Dillen
+        """
+
+        # Autopilot modes
+        bs.traf.swlnav[idx] = True
+        bs.traf.swvnav[idx] = True
+        bs.traf.swvnavspd[idx] = True
+
+        # Labels
+        self.tracklbl[idx] = False
+        self.ssrlbl[idx] = ['C']
+
+        self.uco[idx] = False
+        self.rel[idx] = True
+
     @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
     def setarr(self, idx: 'acid', arr: str = '', addwpts: 'onoff' = True):
         """
