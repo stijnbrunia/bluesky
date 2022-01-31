@@ -37,7 +37,7 @@ def defineArea(areaname, areatype, coordinates, top=1e9, bottom=-1e9):
     elif areatype == 'LINE':
         basic_shapes[areaname] = Line(areaname, coordinates)
     elif areatype == 'POINT':
-        coordinates += (0.10,)
+        coordinates += (0.09,)
         basic_shapes[areaname] = Circle(areaname, coordinates)
 
     # Pass the shape on to the screen object
