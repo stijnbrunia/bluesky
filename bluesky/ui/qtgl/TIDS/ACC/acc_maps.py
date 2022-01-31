@@ -46,7 +46,7 @@ accmaps = [['a1',    'NEW\nPNTS',       ['lambda: None']],
 
            ['f1',    '',                None],
            ['f2',    'MAIN',            ['lambda: accmaps.close()',
-                                         'lambda: show_basetid("accmain", "accmain")']],
+                                         'lambda: show_basetid("accdisp", "accdisp")']],
            ['f3',    '',                None],
            ['f4',    '',                None]
            ]
@@ -79,7 +79,7 @@ accaaa = [['a1',    '',                 None],
 
           ['f1',    '',                 None],
           ['f2',    'MAIN',             ['lambda: accaaa.close()',
-                                         'lambda: show_basetid("accmain", "accmain")']],
+                                         'lambda: show_basetid("accdisp", "accdisp")']],
           ['f3',    'MAPS',             ['lambda: accaaa.close()',
                                          'lambda: show_basetid("accmaps", "accmaps")']],
           ['f4',    '',                 None]
@@ -113,7 +113,7 @@ accappeham = [['a1',    'AM\n36C',      ['lambda: console.Console._instance.stac
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accappeham.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accappeham.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -147,7 +147,7 @@ accappehle = [['a1',    'LE\n05',           ['lambda: console.Console._instance.
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accappehle.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accappehle.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -181,7 +181,7 @@ accappother = [['a1',    'RD\n06',          ['lambda: console.Console._instance.
 
                ['f1',    '',                None],
                ['f2',    'MAIN',            ['lambda: accappother.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
                ['f3',    'MAPS',            ['lambda: accappother.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
                ['f4',    '',                None]
@@ -215,7 +215,7 @@ accctrtma = [['a1',    'CTR\nEHAM',         ['lambda: console.Console._instance.
 
              ['f1',    '',                  None],
              ['f2',    'MAIN',              ['lambda: accctrtma.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
              ['f3',    'MAPS',              ['lambda: accctrtma.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
              ['f4',    '',                  None]
@@ -251,7 +251,7 @@ accficitms = [['a1',    'HPZ',              ['lambda: accficitms.close()',
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accficitms.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accficitms.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -285,7 +285,7 @@ acchpz = [['a1',    'HANZE',                ['lambda: console.Console._instance.
 
           ['f1',    '',                     None],
           ['f2',    'MAIN',                 ['lambda: acchpz.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
           ['f3',    'MAPS',                 ['lambda: acchpz.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
           ['f4',    '',                     None]
@@ -319,7 +319,7 @@ accpoll = [['a1',    'NL\nPTS',             ['lambda: console.Console._instance.
 
            ['f1',    '',                     None],
            ['f2',    'MAIN',                 ['lambda: accpoll.close()',
-                                              'lambda: show_basetid("accmain", "accmain")']],
+                                              'lambda: show_basetid("accdisp", "accdisp")']],
            ['f3',    'MAPS',                 ['lambda: accpoll.close()',
                                               'lambda: show_basetid("accmaps", "accmaps")']],
            ['f4',    '',                     None]
@@ -353,7 +353,7 @@ accfic = [['a1',    'FM 1',                 ['lambda: console.Console._instance.
 
           ['f1',    '',                     None],
           ['f2',    'MAIN',                 ['lambda: accfic.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
           ['f3',    'MAPS',                 ['lambda: accfic.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
           ['f4',    '',                     None]
@@ -387,7 +387,7 @@ accappeheh = [['a1',    'EH\n03',           ['lambda: console.Console._instance.
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accappeheh.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accappeheh.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -421,7 +421,7 @@ accappehkd = [['a1',    '',                 None],
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accappehkd.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accappehkd.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -455,7 +455,7 @@ accappmiln = [['a1',    '',                 None],
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accappmiln.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accappmiln.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -489,7 +489,7 @@ accappmils = [['a1',    'WO\n07',           ['lambda: console.Console._instance.
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accappmils.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accappmils.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -523,7 +523,7 @@ accmilehr8 = [['a1',    'EHR8\nNORTH',      ['lambda: console.Console._instance.
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accmilehr8.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accmilehr8.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -557,7 +557,7 @@ accmilmisc = [['a1',    'RP\nNAMES',        ['lambda: console.Console._instance.
 
               ['f1',    '',                 None],
               ['f2',    'MAIN',             ['lambda: accmilmisc.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
               ['f3',    'MAPS',             ['lambda: accmilmisc.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
               ['f4',    '',                 None]
@@ -591,7 +591,7 @@ accmisc = [['a1',    'NL\nGEO',             ['lambda: console.Console._instance.
 
            ['f1',    '',                    None],
            ['f2',    'MAIN',                ['lambda: accmisc.close()',
-                                             'lambda: show_basetid("accmain", "accmain")']],
+                                             'lambda: show_basetid("accdisp", "accdisp")']],
            ['f3',    'MAPS',                ['lambda: accmisc.close()',
                                              'lambda: show_basetid("accmaps", "accmaps")']],
            ['f4',    '',                    None]
