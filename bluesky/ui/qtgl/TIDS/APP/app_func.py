@@ -12,7 +12,7 @@ appmain = [['a1', 'UCO',            ['lambda: tidcmds.setcmd("UCO")']],
            ['a4', 'REL',            ['lambda: tidcmds.setcmd("REL")']],
 
            ['b1', 'HDG',            ['lambda: tidcmds.setcmd("HDG")',
-                                     'lambda: appmain.clos()',
+                                     'lambda: appmain.close()',
                                      'lambda: show_basetid("apphdg", "apphdg")']],
            ['b2', 'POS',            ['lambda: appmain.close()',
                                      'lambda: show_basetid("apppos", "apppos")']],

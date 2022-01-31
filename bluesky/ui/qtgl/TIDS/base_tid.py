@@ -127,34 +127,48 @@ class TIDCmds:
         actdata = bs.net.get_nodedata()
         id_select = actdata.cmddata.idsel
 
-        cmdline = ''
+        # Check if an aircraft is selected
+        if id_select:
+            idx = misc.get_indices(actdata.acdata.id, id_select)[0]
 
-        # Loop over commands
-        for cmd, args in zip(self.cmdslst, self.argslst):
-            if cmd == 'EFL':
-                cmd = 'ALT'
-                addfl = True
+            # Check if selected aircraft is UCO
+            if actdata.acdata.uco[idx] or 'UCO' in self.cmdslst:
+
+                cmdline = ''
+
+                # Loop over commands
+                for cmd, args in zip(self.cmdslst, self.argslst):
+                    if cmd == 'EFL':
+                        cmd = 'ALT'
+                        addfl = True
+                    else:
+                        addfl = False
+
+                    cmdline += id_select + ' ' + cmd
+
+                    # Loop over arguments for this command
+                    for arg in args:
+                        if addfl:
+                            cmdline += ' FL' + arg
+                        else:
+                            cmdline += ' ' + arg
+
+                    cmdline += ' ; '
+
+                cmdline = cmdline[:-3]  # Remove last ' ; '
+
+                # Stack the command line
+                console.Console._instance.stack(cmdline)
             else:
-                addfl = False
-
-            cmdline += id_select + ' ' + cmd
-
-            # Loop over arguments for this command
-            for arg in args:
-                if addfl:
-                    cmdline += ' FL' + arg
-                else:
-                    cmdline += ' ' + arg
-
-            cmdline += ' ; '
-
-        cmdline = cmdline[:-3]  # Remove last ' ; '
-
-        # Stack the command line
-        console.Console._instance.stack(cmdline)
+                bs.scr.echo(id_select+' not UCO')
+        else:
+            bs.scr.echo('No aircraft selected')
 
         # Clear
         self.clear()
+
+        # Empty command line
+        console.Console._instance.set_cmdline('')
 
     @staticmethod
     def exqcmd(cmd, arg=''):
@@ -176,12 +190,16 @@ class TIDCmds:
         actdata = bs.net.get_nodedata()
         id_select = actdata.cmddata.idsel
 
-        # Command line
-        cmdline = id_select + ' ' + cmd + ' ' + arg
-        cmdline = cmdline.strip()
+        # Check if an aircraft is selected
+        if id_select:
+            # Command line
+            cmdline = id_select + ' ' + cmd + ' ' + arg
+            cmdline = cmdline.strip()
 
-        # Stack the command
-        console.Console._instance.stack(cmdline)
+            # Stack the command
+            console.Console._instance.stack(cmdline)
+        else:
+            bs.scr.echo('No aircraft selected')
 
     def clr(self):
         """
