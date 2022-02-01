@@ -329,7 +329,7 @@ class ScreenIO:
             data = self.prevacdata
 
         # Always update data (take aircraft create/delete into account)
-        if 'id' in data.keys():
+        if 'id' in data:
             itrafsend = misc.get_indices(bs.traf.id, data['id'])  # aircraft that are in the previous data
         else:
             itrafsend = []

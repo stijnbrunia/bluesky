@@ -143,7 +143,7 @@ class OpenAP(PerfBase):
             self.delta_cd_gear[-n:] = np.nan
 
         else:
-            if actype not in self.coeff.limits_fixwing.keys():
+            if actype not in self.coeff.limits_fixwing.keys() and actype not in self.coeff.dragpolar_fixwing.keys():
                 actype = "B744"
 
             self.vminic[-n:] = self.coeff.limits_fixwing[actype]["vminic"]
