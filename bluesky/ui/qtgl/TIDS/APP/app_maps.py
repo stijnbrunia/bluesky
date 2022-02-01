@@ -43,7 +43,7 @@ appmaps = [['a1',    'ALS\n10NM',     ['lambda: appmaps.close()',
 
            ['f1',    'COR',           'lambda: None'],
            ['f2',    'MAIN',          ['lambda: appmaps.close()',
-                                       'lambda: show_basetid("appmain", "appmain")']],
+                                       'lambda: show_basetid("appdisp", "appdisp")']],
            ['f3',    '',              None],
            ['f4',    'FIC\nMAPS',     'lambda: None']]
 
