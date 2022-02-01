@@ -98,7 +98,7 @@ class HistorySymbols(Entity):
             if len(bs.traf.trafdatafeed.datafeedids) > 0:
                 itrafdatafeed = misc.get_indices(bs.traf.id, bs.traf.trafdatafeed.datafeedids)
                 # Data feed traffic that received an update
-                itrafnew = np.nonzero(bs.traf.trafdatafeed.lastupdate <= 0.5)[0]
+                itrafnew = np.nonzero(bs.traf.trafdatafeed.lastupdate <= 0.2)[0]
                 itrafdatafeed_new = np.intersect1d(itrafdatafeed, itrafnew, assume_unique=True)
             else:
                 itrafdatafeed = np.array([])
