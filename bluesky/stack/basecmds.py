@@ -250,10 +250,10 @@ def initbasecmds():
             "Manuel Switch per aircraft (using ADSB data)",
         ],
         "HISTORY": [
-            "HISTORY ON/OFF",
-            "onoff",
+            "HISTORY SYMBOLS",
+            "int",
             bs.traf.histsymb.setHistory,
-            "Enable/Disable history symbols"
+            "Enable/Disable history symbols and set the number of symbols"
         ],
         "HOLD": ["HOLD", "", bs.sim.hold, "Pause(hold) simulation"],
         "SCREENRANGE": [
