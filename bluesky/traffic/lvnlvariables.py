@@ -8,7 +8,8 @@ Date: 24-12-2021
 
 import numpy as np
 import bluesky as bs
-from bluesky.core import Entity
+from bluesky.core import Entity, timed_function
+from bluesky.tools import misc, geo
 from bluesky import stack
 
 
@@ -36,6 +37,7 @@ class LVNLVariables(Entity):
 
         with self.settrafarrays():
             self.arr = []                                # Arrival/Stack
+            self.dtg_tbar = np.array([])                 # Distance to T-Bar point
             self.flighttype = []                         # Flight type
             self.lblpos = []                             # Label position
             self.mlbl = np.array([], dtype=np.bool)      # Show micro label
@@ -66,6 +68,34 @@ class LVNLVariables(Entity):
         self.ssrlbl[-n:] = [[]]
         self.mlbl[-n:] = False
 
+    @timed_function(name='lvnlvars', dt=0.1)
+    def update(self):
+        """
+        Function: Update LVNL variables
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 1-2-2022
+        """
+
+        # Distance to
+        inirsi_gal1 = misc.get_indices(self.arr, "NIRSI_GAL01")
+        inirsi_gal2 = misc.get_indices(self.arr, "NIRSI_GAL02")
+        inirsi_603 = misc.get_indices(self.arr, "NIRSI_AM603")
+
+        self.dtg_tbar[inirsi_gal1] = geo.kwikdist_matrix(bs.traf.lat[inirsi_gal1], bs.traf.lon[inirsi_gal1],
+                                                         np.ones(len(inirsi_gal1))*52.47962777777778,
+                                                         np.ones(len(inirsi_gal1))*4.513372222222222)
+        self.dtg_tbar[inirsi_gal2] = geo.kwikdist_matrix(bs.traf.lat[inirsi_gal2], bs.traf.lon[inirsi_gal2],
+                                                         np.ones(len(inirsi_gal2))*52.58375277777778,
+                                                         np.ones(len(inirsi_gal2))*4.342225)
+        self.dtg_tbar[inirsi_603] = geo.kwikdist_matrix(bs.traf.lat[inirsi_603], bs.traf.lon[inirsi_603],
+                                                        np.ones(len(inirsi_gal2))*52.68805555555555,
+                                                        np.ones(len(inirsi_gal2))*4.513333333333334)
+
+        return
+
     @stack.command(name='UCO')
     def selucocmd(self, idx: 'acid'):
         """
@@ -79,6 +109,10 @@ class LVNLVariables(Entity):
         bs.traf.swlnav[idx] = True
         bs.traf.swvnav[idx] = True
         bs.traf.swvnavspd[idx] = True
+
+        # Labels
+        self.tracklbl[idx] = True
+        self.ssrlbl[idx] = []
 
         bs.traf.trafdatafeed.uco(idx)
         self.uco[idx] = True
