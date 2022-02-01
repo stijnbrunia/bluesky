@@ -47,10 +47,9 @@ class DataSource(core.Entity):
     def __init__(self):
         super().__init__()
 
-        self.swreplay = False
-        self.swlive = False
-        self.swinitial = False
-        self.datasource = None
+        self.sourcenames = []
+        self.sourceupdate = np.array([], dtype=np.bool_)
+        self.datasource = []
 
     def reset(self):
         """
@@ -64,10 +63,26 @@ class DataSource(core.Entity):
 
         super().reset()
 
-        self.swreplay = False
-        self.swlive = False
-        self.swinitial = False
-        self.datasource = None
+        self.sourcenames = []
+        self.sourceupdate = np.array([], dtype=np.bool_)
+        self.datasource = []
+
+    @stack.command(name='SOURCES',)
+    def getsources(self):
+        """
+        Function: Get the active sources
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 1-2-2022
+        """
+
+        echostr = 'Current data sources: '
+        for source in self.sourcenames:
+            echostr += source+', '
+        echostr = echostr.strip(', ')
+        bs.scr.echo(echostr)
 
     @stack.command(name='REPLAY', brief='REPLAY DATATYPE FOLDER (DATE [dd-mm-yyyy] TIME [HH:MM:SS])')
     def setreplay(self, datatype: 'txt', folder: 'txt', date0: 'txt' = '', time0: 'txt' = ''):
@@ -84,40 +99,72 @@ class DataSource(core.Entity):
         Date: 14-1-2022
         """
 
-        # --------------- Check inputs ---------------
-        # Modes
-        if self.swreplay:
-            return False, 'REPLAY: Already in REPLAY mode'
-        if self.swlive:
-            return False, 'REPLAY: Already in LIVE mode'
-        if self.swinitial:
-            return False, 'REPLAY: Already in INITIAL mode'
+        # Convert inputs
+        datatype = datatype.upper()
+        folder = folder.lower()
+        datapath = os.getcwd() + "\\scenario\\" + folder
 
+        # --------------- Check inputs ---------------
         # Data type
-        if datatype.upper() not in ['VEMMIS']:
+        if datatype not in ['VEMMIS']:
             return False, 'REPLAY: Data type not supported'
 
         # Other inputs
-        succes, message = check_inputs(folder=folder, date=date0, time=time0)
+        succes, message = check_inputs(path=datapath, files=datatype, date=date0, time=time0)
         if not succes:
             return False, 'REPLAY: ' + message
 
-        # Files
-        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
-        if not files_check(datatype, datapath):
-            return False, 'REPLAY: The folder does not contain all the required files'
+        # --------------- Access data ---------------
+        # Get data type
+        if datatype == 'VEMMIS':
+            self.sourcenames.append('VEMMIS-'+folder)
+            self.sourceupdate = np.append(self.sourceupdate, True)
+            self.datasource.append(vemmisread.VEMMISSource())
+
+        # Get commands data
+        commands, commandstime = self.datasource[-1].replay(datapath, date0, time0)
+        simstack.stack_commands(commandstime, commands)
+
+    @stack.command(name='PLAYBACK', brief='PLAYBACK DATATYPE FOLDER (DATE [dd-mm-yyyy] TIME [HH:MM:SS])')
+    def setplayback(self, datatype: str, folder: str = '', date0: str = '', time0: str = ''):
+        """
+        Function: Take initial aircraft positions from data source
+        Args:
+            datatype:   data type [str]
+            folder:     folder name [str]
+            date0:      start date [str]
+            time0:      start time [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 14-1-2022
+        """
+
+        # Convert inputs
+        datatype = datatype.upper()
+        folder = folder.lower()
+        datapath = os.getcwd() + "\\scenario\\" + folder
+
+        # --------------- Check inputs ---------------
+        # Data type
+        if datatype not in ['VEMMIS']:
+            return False, 'PLAYBACK: Data type not supported'
+
+        # Other inputs
+        succes, message = check_inputs(path=datapath, files=datatype, date=date0, time=time0)
+        if not succes:
+            return False, 'PLAYBACK: ' + message
 
         # --------------- Access data ---------------
         # Get data type
-        if datatype.upper() == 'VEMMIS':
-            self.datasource = vemmisread.VEMMISSource()
+        if datatype == 'VEMMIS':
+            self.sourcenames.append('VEMMIS-'+folder)
+            self.sourceupdate = np.append(self.sourceupdate, False)
+            self.datasource.append(vemmisread.VEMMISSource())
 
         # Get commands data
-        commands, commandstime = self.datasource.replay(datapath, date0, time0)
+        commands, commandstime = self.datasource[-1].playback(datapath, date0, time0)
         simstack.stack_commands(commandstime, commands)
-
-        # Set replay
-        self.swreplay = True
 
     @stack.command(name='LIVE', brief='LIVE DATATYPE')
     def setlive(self, datatype: str):
@@ -132,14 +179,6 @@ class DataSource(core.Entity):
         """
 
         # --------------- Check inputs ---------------
-        # Modes
-        if self.swreplay:
-            return False, 'LIVE: Already in REPLAY mode'
-        if self.swlive:
-            return False, 'LIVE: Already in LIVE mode'
-        if self.swinitial:
-            return False, 'LIVE: Already in INITIAL mode'
-
         # Data type
         if datatype.upper() not in ['OPENSKY']:
             return False, 'LIVE: Data type not supported'
@@ -147,67 +186,13 @@ class DataSource(core.Entity):
         # --------------- Access data ---------------
         # Get data type
         if datatype.upper() == 'OPENSKY':
-            self.datasource = livetraffic.OpenSkySource()
+            self.sourcenames.append('OPENSKY')
+            self.sourceupdate = np.append(self.sourceupdate, True)
+            self.datasource.append(livetraffic.OpenSkySource())
 
         # Get commands data
-        commands, commandstime = self.datasource.live()
+        commands, commandstime = self.datasource[-1].live()
         simstack.stack_commands(commandstime, commands)
-
-        # Set live
-        self.swlive = True
-
-    @stack.command(name='INITIAL', brief='INITIAL DATATYPE FOLDER (DATE [dd-mm-yyyy] TIME [HH:MM:SS])')
-    def setinitial(self, datatype: str, folder: str = '', date0: str = '', time0: str = ''):
-        """
-        Function: Take initial aircraft positions from data source
-        Args:
-            datatype:   data type [str]
-            folder:     folder name [str]
-            date0:      start date [str]
-            time0:      start time [str]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 14-1-2022
-        """
-
-        # --------------- Check inputs ---------------
-        # Modes
-        if self.swreplay:
-            return False, 'INITIAL: Already in REPLAY mode'
-        if self.swlive:
-            return False, 'INITIAL: Already in LIVE mode'
-        if self.swinitial:
-            return False, 'INITIAL: Already in INITIAL mode'
-
-        # Data type
-        if datatype.upper() not in ['VEMMIS', 'OPENSKY']:
-            return False, 'INITIAL: Data type not supported'
-
-        # Other inputs
-        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
-        if datatype.upper() not in ['OPENSKY']:
-            succes, message = check_inputs(folder=folder, date=date0, time=time0)
-            if not succes:
-                return False, 'INITIAL: ' + message
-
-            # Files
-            if not files_check(datatype, datapath):
-                return False, 'INITIAL: The folder does not contain all the required files'
-
-        # --------------- Access data ---------------
-        # Get data type
-        if datatype.upper() == 'VEMMIS':
-            self.datasource = vemmisread.VEMMISSource()
-        elif datatype.upper() == 'OPENSKY':
-            self.datasource = livetraffic.OpenSkySource()
-
-        # Get commands data
-        commands, commandstime = self.datasource.initial(datapath, date0, time0)
-        simstack.stack_commands(commandstime, commands)
-
-        # Set initial
-        self.swinitial = True
 
     @core.timed_function(name='datafeed', dt=0.5)
     def update_trackdata(self):
@@ -220,23 +205,49 @@ class DataSource(core.Entity):
         Date: 14-1-2022
         """
 
+        # Indices of data sources that need to provide updates
+        isourceupdate = np.nonzero(self.sourceupdate)[0]
+
         # Check if update is needed
-        if not self.swreplay and not self.swlive:
+        if len(isourceupdate) == 0:
             return
 
-        # Get data
-        cmds, ids, lat, lon, hdg, alt, gs = self.datasource.update_trackdata(bs.sim.simt)
+        # Create commands
+        cmds = []
 
         # Create track data
-        trackdata = {'id': ids,
-                     'lat': lat,
-                     'lon': lon,
-                     'hdg': hdg,
-                     'alt': alt,
-                     'gs': gs}
+        trackdata = {'id': [],
+                     'lat': np.array([]),
+                     'lon': np.array([]),
+                     'hdg': np.array([]),
+                     'alt': np.array([]),
+                     'gs': np.array([])}
+
+        # Get data for all data sources
+        # Indices of the sources that need to provide updates
+        for i in isourceupdate:
+            running, cmdsi, ids, lat, lon, hdg, alt, gs = self.datasource[i].update_trackdata(bs.sim.simt)
+
+            # Add to commands
+            cmds += cmdsi
+
+            # Add to track data
+            trackdata['id'] += ids
+            trackdata['lat'] = np.append(trackdata['lat'], lat)
+            trackdata['lon'] = np.append(trackdata['lon'], lon)
+            trackdata['hdg'] = np.append(trackdata['hdg'], hdg)
+            trackdata['alt'] = np.append(trackdata['alt'], alt)
+            trackdata['gs'] = np.append(trackdata['gs'], gs)
+
+            # Check status
+            if not running:
+                self.sourcenames.pop(i)
+                self.sourceupdate = np.delete(self.sourceupdate, i)
+                self.datasource.pop(i)
 
         # Send trackdata
-        bs.traf.trafdatafeed.trackdata = trackdata
+        if len(trackdata['id']) > 0:
+            bs.traf.trafdatafeed.trackdata = trackdata
 
         # Stack commands
         for cmd in cmds:
@@ -248,11 +259,12 @@ Static functions
 """
 
 
-def check_inputs(folder=None, date=None, time=None):
+def check_inputs(path=None, files=None, date=None, time=None):
     """
     Function: Check if inputs are valid
     Args:
-        folder:     folder input [str]
+        path:       folder input [str]
+        files:      files check (insert data type) [str]
         date:       date [str]
         time:       time [str]
     Returns:
@@ -264,10 +276,14 @@ def check_inputs(folder=None, date=None, time=None):
     """
 
     # Check folder input
-    if folder:
-        datapath = os.getcwd() + "\\scenario\\" + folder.lower()
-        if not os.path.isdir(datapath):
+    if path:
+        if not os.path.isdir(path):
             return False, 'Folder does not exist'
+
+    # Check files
+    if files and path:
+        if not files_check(files, path):
+            return False, 'Folder does not contain all required files'
 
     # Check date input
     if date:

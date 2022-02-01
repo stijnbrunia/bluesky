@@ -759,7 +759,7 @@ class VEMMISSource:
         return commands, commandstime
 
     @staticmethod
-    def initial(datapath, date0, time0):
+    def playback(datapath, date0, time0):
         """
         Function: Take initial aircraft positions from VEMMIS
         Args:
@@ -801,8 +801,11 @@ class VEMMISSource:
         Date: 14-1-2022
         """
 
+        # Set running
+        running = True
+
         # Check if the next data point is reached
-        if self.t_next <= simtime and self.running:
+        if self.t_next <= simtime:
             # Commands
             cmds = []
 
@@ -818,12 +821,12 @@ class VEMMISSource:
             alt = self.alt[i0: im]
             gs = self.gs[i0: im]
 
+            # Check for last data point
             if im <= self.i_max:
                 self.i_next = im
                 self.t_next = self.simt[im]
             else:
-                bs.scr.echo("VEMMIS: Last data point is reached")
-                self.running = False
+                running = False
         else:
             cmds = []
             ids = []
@@ -833,7 +836,7 @@ class VEMMISSource:
             alt = np.array([])
             gs = np.array([])
 
-        return cmds, ids, lat, lon, hdg, alt, gs
+        return running, cmds, ids, lat, lon, hdg, alt, gs
 
 
 """

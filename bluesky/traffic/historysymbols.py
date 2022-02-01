@@ -76,7 +76,7 @@ class HistorySymbols(Entity):
 
         self.t_prev = 0.
 
-    @timed_function(name='historysymbols', dt=0.5)
+    @timed_function(name='historysymbols', dt=0.2)
     def update(self):
         """
         Function: Update the history symbols
