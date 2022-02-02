@@ -88,14 +88,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.aclabels_ul = glh.Text(settings.text_size, (8, 4))  # upper-left
         self.aclabels_uc = glh.Text(settings.text_size, (8, 4))  # upper-center
         self.aclabels_ur = glh.Text(settings.text_size, (8, 4))  # upper-right
-        # self.leaderlines_ll = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # self.leaderlines_lc = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # self.leaderlines_lr = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # self.leaderlines_cl = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # self.leaderlines_cr = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # self.leaderlines_ul = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # self.leaderlines_uc = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # self.leaderlines_ur = glh.VertexArrayObject(glh.gl.GL_LINES)
+        # self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
 
         self.ssrlabels = glh.Text(0.95*settings.text_size, (7, 3))
         self.microlabels = glh.Text(0.95*settings.text_size, (3, 1))
@@ -215,9 +208,10 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Leader lines ---------------
 
-        # self.leaderlines.create(vertex=np.array([(ac_size, 0), (3.6*ac_size, 0)], dtype=np.float32))
-        # self.leaderlines.set_attribs(lat=self.lat, lon=self.lon, color=self.color,
-        #                              instance_divisor=1)
+        # self.leaderlines.create(vertex=MAX_NAIRCRAFT * 4, color=self.color)
+        # self.leaderlines.set_attribs(lat=self.lat, lon=self.lon)
+
+        # --------------- CPA lines ---------------
 
         self.cpalines.create(vertex=MAX_NCONFLICTS * 16, color=palette.conflict, usage=glh.GLBuffer.StreamDraw)
 
@@ -294,7 +288,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.aclabels_ur.draw(n_instances=actdata.naircraft)
             self.ssrlabels.draw(n_instances=actdata.naircraft)
             self.microlabels.draw(n_instances=actdata.naircraft)
-            # self.leaderlines.draw(n_instances=actdata.naircraft)
+            # self.leaderlines.draw()
 
         # SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
@@ -435,6 +429,7 @@ class Traffic(glh.RenderObject, layer=100):
                          '', '', '']
             rawmlabel = ''
             rawssrlabel = ''
+            # leaderlines = []
             color = np.empty(
                 (min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
             selssd = np.zeros(naircraft, dtype=np.uint8)
@@ -449,6 +444,7 @@ class Traffic(glh.RenderObject, layer=100):
                 # Labels
                 rawlabels, rawmlabel, rawssrlabel = create_aclabel(rawlabels, rawmlabel, rawssrlabel,
                                                                    actdata, data, i)
+                # leaderlines = leaderline_vertex(leaderlines, data, i)
 
                 # Colours
                 if inconf:
@@ -497,6 +493,9 @@ class Traffic(glh.RenderObject, layer=100):
             self.ssrlbl.update(np.array(rawssrlabel.encode('utf8'), dtype=np.string_))
             # Update micro label
             self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
+            # Leader line update
+            # leaderlines = np.array(leaderlines, dtype=np.float32)
+            # self.leaderlines.update(vertex=leaderlines)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:
@@ -857,3 +856,30 @@ def leading_zeros(number):
         return '0'+str(round(number))
     else:
         return str(round(number))
+
+
+def leaderline_vertex(leaderlines, data, i):
+    """
+    Function: Get the vertex for the leader line
+    Args:
+        leaderlines:    leader lines vertices [array]
+        data:           aircraft data [class]
+        i:              index for data [int]
+    Returns:
+        leaderlines:    leader lines vertices [array]
+
+    Created by: Bob van Dillen
+    Date: 2-2-2022
+    """
+
+    ac_size = settings.ac_size
+    vertices = ['', '', '',
+                [-ac_size, 0, -3.6*ac_size, 0], [ac_size, 0, 3.6*ac_size, 0],
+                '', '', '']
+
+    i = get_lblpos(data.lblpos[i])
+
+    leaderlines = np.append(leaderlines, vertices[i])
+
+    return leaderlines
+
