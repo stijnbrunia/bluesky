@@ -335,7 +335,7 @@ class ScreenIO:
             itrafsend = []
 
         data['arr']      = np.array(bs.traf.lvnlvars.arr)[itrafsend].tolist()
-        data['idsel']    = bs.traf.id_select
+        # data['idsel']    = bs.traf.id_select
         data['lblpos']   = np.array(bs.traf.lvnlvars.lblpos)[itrafsend].tolist()
         data['mlbl']     = bs.traf.lvnlvars.mlbl[itrafsend]
         data['rel']      = bs.traf.lvnlvars.rel[itrafsend]

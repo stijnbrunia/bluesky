@@ -91,8 +91,8 @@ class LVNLVariables(Entity):
                                                          np.ones(len(inirsi_gal2))*52.58375277777778,
                                                          np.ones(len(inirsi_gal2))*4.342225)
         self.dtg_tbar[inirsi_603] = geo.kwikdist_matrix(bs.traf.lat[inirsi_603], bs.traf.lon[inirsi_603],
-                                                        np.ones(len(inirsi_gal2))*52.68805555555555,
-                                                        np.ones(len(inirsi_gal2))*4.513333333333334)
+                                                        np.ones(len(inirsi_603))*52.68805555555555,
+                                                        np.ones(len(inirsi_603))*4.513333333333334)
 
         return
 

@@ -460,7 +460,7 @@ class Traffic(glh.RenderObject, layer=100):
                              4] = [lat, lon, lat1, lon1]
                     confidx += 1
                 # Selected aircraft
-                elif acid == data.idsel and actdata.atcmode != 'BLUESKY':
+                elif acid == console.Console._instance.id_select and actdata.atcmode != 'BLUESKY':
                     rgb = (227, 227, 49) + (255,)
                     color[i, :] = rgb
                 else:

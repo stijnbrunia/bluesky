@@ -1,12 +1,12 @@
 from math import cos, atan2, radians, degrees
 from numpy import array
 import bluesky as bs
-
+from bluesky.ui.qtgl import console
 from bluesky.tools import geo
 from bluesky.tools.misc import findnearest, cmdsplit
 
 
-def radarclick(cmdline, lat, lon, acdata=None, route=None):
+def radarclick(cmdline, lat, lon, acdata=None, route=None, actdata=None):
     """Process lat,lon as clicked in radar window"""
 
     # Specify which argument can be clicked, and how, in this dictionary
@@ -119,7 +119,10 @@ def radarclick(cmdline, lat, lon, acdata=None, route=None):
                 if clicktype == "acid":
                     idx = findnearest(lat, lon, acdata.lat, acdata.lon)
                     if idx >= 0:
-                        todisplay += acdata.id[idx] + " "
+                        if actdata and actdata.atcmode != 'BLUESKY':
+                            console.Console._instance.id_select = acdata.id[idx]
+                        else:
+                            todisplay += acdata.id[idx] + " "
 
                 elif clicktype == "latlon":
                     todisplay += str(round(lat, 6)) + "," + str(round(lon, 6)) + " "

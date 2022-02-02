@@ -329,7 +329,7 @@ class RadarWidget(glh.RenderWidget):
             lat, lon = self.pixelCoordsToLatLon(event.x(), event.y())
             actdata = bs.net.get_nodedata()
             tostack, tocmdline = radarclick(console.get_cmdline(), lat, lon,
-                                            actdata.acdata, actdata.routedata)
+                                            actdata.acdata, actdata.routedata, actdata)
             console.process_cmdline((tostack + '\n' + tocmdline) if tostack else tocmdline)
 
         elif event.type() == QEvent.MouseMove:

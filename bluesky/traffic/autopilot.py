@@ -524,7 +524,7 @@ class Autopilot(Entity, replaceable=True):
             return False
 
     @stack.command(name='ALT')
-    def selaltcmd(self, idx: 'acidselect', alt: 'alt', vspd: 'vspd' = None):
+    def selaltcmd(self, idx: 'acid', alt: 'alt', vspd: 'vspd' = None):
         """ ALT acid, alt, [vspd]
 
             Select autopilot altitude command."""
@@ -552,7 +552,7 @@ class Autopilot(Entity, replaceable=True):
         bs.traf.swvnav[idx] = False
 
     @stack.command(name='HDG', aliases=("HEADING", "TURN"))
-    def selhdgcmd(self, idx: 'acidselect', hdg: 'hdg'):  # HDG command
+    def selhdgcmd(self, idx: 'acid', hdg: 'hdg'):  # HDG command
         """ HDG acid,hdg (deg,True or Magnetic)
             Autopilot select heading command. """
         if hdg.upper() in bs.navdb.wpid:
@@ -592,7 +592,7 @@ class Autopilot(Entity, replaceable=True):
         return True
 
     @stack.command(name='SPD', aliases=("SPEED",))
-    def selspdcmd(self, idx: 'acidselect', casmach: 'spd'):  # SPD command
+    def selspdcmd(self, idx: 'acid', casmach: 'spd'):  # SPD command
         """ SPD acid, casmach (= CASkts/Mach) 
         
             Select autopilot speed. """
