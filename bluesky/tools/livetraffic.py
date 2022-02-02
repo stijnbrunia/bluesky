@@ -95,8 +95,8 @@ class OpenSkySource:
             datetime0 = datetime.datetime.utcfromtimestamp(epochtime)
 
             # Initial commands
-            cmds = ["DATE "+datetime0.strftime('%d %m %Y %H:%M:%S')]
-            cmdst = [0.]
+            cmds = ["DATE "+datetime0.strftime('%d %m %Y %H:%M:%S'), 'HISTORY 3']
+            cmdst = [0.]*2
 
             # Get aircraft data
             acid = data_df['callsign'].str.strip()
