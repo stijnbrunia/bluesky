@@ -102,11 +102,6 @@ class Console(QWidget):
         self.set_cmdline('')
         autocomplete.reset()
         self.history_pos = 0
-        # Select aircraft
-        actdata = bs.net.get_nodedata()
-        acid = cmdacid(text, actdata.acdata.id)
-        if acid:
-            self.id_select = acid
 
     def echo(self, text):
         actdata = bs.net.get_nodedata()
