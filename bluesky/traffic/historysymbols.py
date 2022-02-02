@@ -29,8 +29,8 @@ class HistorySymbols(Entity):
 
         self.nsymb = 4
 
-        self.lat = np.array([])
-        self.lon = np.array([])
+        self.histlat = np.array([])
+        self.histlon = np.array([])
 
         self.t_prev = 0.
 
@@ -80,8 +80,8 @@ class HistorySymbols(Entity):
 
         self.nsymb = 4
 
-        self.lat = np.array([])
-        self.lon = np.array([])
+        self.histlat = np.array([])
+        self.histlon = np.array([])
 
         self.t_prev = 0.
 
@@ -99,31 +99,31 @@ class HistorySymbols(Entity):
         if self.nsymb > 0:
             # Get latitudes and longitudes for all history symbols
             if self.nsymb >= 1:
-                self.lat = self.lat1
-                self.lon = self.lon1
+                self.histlat = self.lat1
+                self.histlon = self.lon1
             if self.nsymb >= 2:
-                self.lat = np.append(self.lat, self.lat2)
-                self.lon = np.append(self.lon, self.lon2)
+                self.histlat = np.append(self.histlat, self.lat2)
+                self.histlon = np.append(self.histlon, self.lon2)
             if self.nsymb >= 3:
-                self.lat = np.append(self.lat, self.lat3)
-                self.lon = np.append(self.lon, self.lon3)
+                self.histlat = np.append(self.histlat, self.lat3)
+                self.histlon = np.append(self.histlon, self.lon3)
             if self.nsymb >= 4:
-                self.lat = np.append(self.lat, self.lat4)
-                self.lon = np.append(self.lon, self.lon4)
+                self.histlat = np.append(self.histlat, self.lat4)
+                self.histlon = np.append(self.histlon, self.lon4)
             if self.nsymb >= 5:
-                self.lat = np.append(self.lat, self.lat5)
-                self.lon = np.append(self.lon, self.lon5)
+                self.histlat = np.append(self.histlat, self.lat5)
+                self.histlon = np.append(self.histlon, self.lon5)
             if self.nsymb >= 6:
-                self.lat = np.append(self.lat, self.lat6)
-                self.lon = np.append(self.lon, self.lon6)
+                self.histlat = np.append(self.histlat, self.lat6)
+                self.histlon = np.append(self.histlon, self.lon6)
             if self.nsymb >= 7:
-                self.lat = np.append(self.lat, self.lat7)
-                self.lon = np.append(self.lon, self.lon7)
+                self.histlat = np.append(self.histlat, self.lat7)
+                self.histlon = np.append(self.histlon, self.lon7)
             if self.nsymb == 8:
-                self.lat = np.append(self.lat, self.lat8)
-                self.lon = np.append(self.lon, self.lon8)
-            self.lat = self.lat[self.lat != 0.]
-            self.lon = self.lon[self.lon != 0.]
+                self.histlat = np.append(self.histlat, self.lat8)
+                self.histlon = np.append(self.histlon, self.lon8)
+            self.histlat = self.histlat[self.histlat != 0.]
+            self.histlon = self.histlon[self.histlon != 0.]
 
             # Data feed traffic
             if len(bs.traf.trafdatafeed.datafeedids) > 0:
@@ -160,8 +160,8 @@ class HistorySymbols(Entity):
             # Update the history symbols
             self.update_history(i_update)
         else:
-            self.lat = np.array([])
-            self.lon = np.array([])
+            self.histlat = np.array([])
+            self.histlon = np.array([])
 
     def update_history(self, indices):
         """

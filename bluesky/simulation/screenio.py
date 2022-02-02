@@ -1,5 +1,6 @@
 """ ScreenIO is a screen proxy on the simulation side for the QTGL implementation of BlueSky."""
 import time
+import copy
 import numpy as np
 
 # Local imports
@@ -46,7 +47,7 @@ class ScreenIO:
 
         # Timing send aircraft data
         self.acdt = max(bs.settings.screendt, 1/self.acupdate_rate)
-        self.prevactime = -self.acdt
+        self.prevactime = 0.
         self.prevacdata = dict()
 
         # Output event timers
@@ -71,7 +72,7 @@ class ScreenIO:
         self.prevcount   = 0
         self.prevtime    = 0.0
 
-        self.prevactime = -bs.settings.screendt
+        self.prevactime = 0.
         self.prevacdata = dict()
 
         # Communicate reset to gui
@@ -281,7 +282,7 @@ class ScreenIO:
 
     def send_aircraft_data(self):
         # Interval update data
-        if bs.sim.simt - self.prevactime >= self.acdt:
+        if bs.sim.simt - self.prevactime >= self.acdt or bs.sim.simt <= 0.2:
             data = dict()
 
             data['simt']        = bs.sim.simt
@@ -318,36 +319,60 @@ class ScreenIO:
             data['asastrk']     = bs.traf.cr.trk
 
             # History symbols
-            data['histsymblat'] = bs.traf.histsymb.lat
-            data['histsymblon'] = bs.traf.histsymb.lon
+            data['histsymblat'] = bs.traf.histsymb.histlat
+            data['histsymblon'] = bs.traf.histsymb.histlon
 
-            # Take start up into account
-            if bs.sim.simt != 0:
-                self.prevactime = bs.sim.simt
-                self.prevacdata = data
+            # Always update data
+            data['arr']         = np.array(bs.traf.lvnlvars.arr)
+            data['lblpos']      = np.array(bs.traf.lvnlvars.lblpos)
+            data['mlbl']        = np.array(bs.traf.lvnlvars.mlbl)
+            data['rel']         = np.array(bs.traf.lvnlvars.rel)
+            data['rwy']         = np.array(bs.traf.lvnlvars.rwy)
+            data['selhdg']      = bs.traf.selhdg
+            data['selalt']      = bs.traf.selalt
+            data['selspd']      = bs.traf.selspd
+            data['sid']         = np.array(bs.traf.lvnlvars.sid)
+            data['ssr']         = bs.traf.lvnlvars.ssr
+            data['ssrlbl']      = np.array(bs.traf.lvnlvars.ssrlbl)
+            data['tracklbl']    = bs.traf.lvnlvars.tracklbl
+            data['uco']         = bs.traf.lvnlvars.uco
+
+            self.prevactime = bs.sim.simt
+            self.prevacdata = copy.deepcopy(data)
         else:
-            data = self.prevacdata
+            data = copy.deepcopy(self.prevacdata)
+
+        # Check if data is created
+        if 'id' in data:
+            # Index for traffic arrays in data dict
+            idata = misc.get_indices(data['id'], bs.traf.id)
+            # Index for traffic arrays
+            itraf = misc.get_indices(bs.traf.id, data['id'])
+        else:
+            idata = []
+            itraf = []
 
         # Always update data (take aircraft create/delete into account)
-        if 'id' in data:
-            itrafsend = misc.get_indices(bs.traf.id, data['id'])  # aircraft that are in the previous data
-        else:
-            itrafsend = []
-
-        data['arr']      = np.array(bs.traf.lvnlvars.arr)[itrafsend].tolist()
-        # data['idsel']    = bs.traf.id_select
-        data['lblpos']   = np.array(bs.traf.lvnlvars.lblpos)[itrafsend].tolist()
-        data['mlbl']     = bs.traf.lvnlvars.mlbl[itrafsend]
-        data['rel']      = bs.traf.lvnlvars.rel[itrafsend]
-        data['rwy']      = np.array(bs.traf.lvnlvars.rwy)[itrafsend].tolist()
-        data['selhdg']   = bs.traf.selhdg[itrafsend]
-        data['selalt']   = bs.traf.selalt[itrafsend]
-        data['selspd']   = bs.traf.selspd[itrafsend]
-        data['sid']      = np.array(bs.traf.lvnlvars.sid)[itrafsend].tolist()
-        data['ssr']      = bs.traf.lvnlvars.ssr[itrafsend]
-        data['ssrlbl']   = np.array(bs.traf.lvnlvars.ssrlbl)[itrafsend].tolist()
-        data['tracklbl'] = bs.traf.lvnlvars.tracklbl[itrafsend]
-        data['uco']      = bs.traf.lvnlvars.uco[itrafsend]
+        data['arr'][idata]      = np.array(bs.traf.lvnlvars.arr)[itraf]
+        data['arr']             = data['arr'].tolist()
+        data['lblpos'][idata]   = np.array(bs.traf.lvnlvars.lblpos)[itraf]
+        data['lblpos']          = data['lblpos'].tolist()
+        data['mlbl'][idata]     = np.array(bs.traf.lvnlvars.mlbl)[itraf]
+        data['mlbl']            = data['mlbl'].tolist()
+        data['rel'][idata]      = np.array(bs.traf.lvnlvars.rel)[itraf]
+        data['rel']             = data['rel'].tolist()
+        data['rwy'][idata]      = np.array(bs.traf.lvnlvars.rwy)[itraf]
+        data['rwy']             = data['rwy'].tolist()
+        data['selhdg'][idata]   = bs.traf.selhdg[itraf]
+        data['selalt'][idata]   = bs.traf.selalt[itraf]
+        data['selspd'][idata]   = bs.traf.selspd[itraf]
+        data['sid'][idata]      = np.array(bs.traf.lvnlvars.sid)[itraf]
+        data['sid']             = data['sid'].tolist()
+        data['ssr'][idata]      = bs.traf.lvnlvars.ssr[itraf]
+        data['ssrlbl'][idata]   = np.array(bs.traf.lvnlvars.ssrlbl)[itraf]
+        data['ssrlbl']          = data['ssrlbl'].tolist()
+        data['tracklbl'][idata] = bs.traf.lvnlvars.tracklbl[itraf]
+        data['uco'][idata]      = bs.traf.lvnlvars.uco[itraf]
 
         # Send data
         bs.net.send_stream(b'ACDATA', data)
@@ -374,3 +399,25 @@ class ScreenIO:
                 data['wpname'] = route.wpname
 
             bs.net.send_stream(b'ROUTEDATA' + (sender or b'*'), data)  # Send route data to GUI
+
+
+def index_prevdata(data, indices):
+    """
+    Function: Apply indices for interval data
+    Args:
+        data:       interval data [dict]
+        indices:    indices for traffic arrays in interval data [list(int), array(int)]
+    Returns: -
+
+    Created by: Bob van Dillen
+    Date: 2-2-2022
+    """
+
+    for key in data.keys():
+        print(key)
+        if isinstance(data[key], list):
+            data[key] = np.array(data[key])[indices].tolist()
+        elif type(data[key]).__module__ == np.__name__:
+            data[key] = data[key][indices]
+
+    return data
