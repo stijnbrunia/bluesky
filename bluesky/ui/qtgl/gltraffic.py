@@ -88,7 +88,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.aclabels_ul = glh.Text(settings.text_size, (8, 4))  # upper-left
         self.aclabels_uc = glh.Text(settings.text_size, (8, 4))  # upper-center
         self.aclabels_ur = glh.Text(settings.text_size, (8, 4))  # upper-right
-        # self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
 
         self.ssrlabels = glh.Text(0.95*settings.text_size, (7, 3))
         self.microlabels = glh.Text(0.95*settings.text_size, (3, 1))
@@ -208,8 +208,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Leader lines ---------------
 
-        # self.leaderlines.create(vertex=MAX_NAIRCRAFT * 4, color=self.color)
-        # self.leaderlines.set_attribs(lat=self.lat, lon=self.lon)
+        self.leaderlines.create(vertex=MAX_NAIRCRAFT * 4, color=palette.aircraft)
+        self.leaderlines.set_attribs(lat=self.lat, lon=self.lon)
 
         # --------------- CPA lines ---------------
 
@@ -269,7 +269,6 @@ class Traffic(glh.RenderObject, layer=100):
             self.ac_symbol.draw(n_instances=actdata.naircraft)
 
         if actdata.show_histsymb and len(actdata.acdata.histsymblat) != 0:
-            # glh.gl.glPointSize(2)
             self.hist_symbol.set_attribs(color=palette.aircraft)
             self.hist_symbol.draw(n_instances=len(actdata.acdata.histsymblat))
 
@@ -429,7 +428,7 @@ class Traffic(glh.RenderObject, layer=100):
                          '', '', '']
             rawmlabel = ''
             rawssrlabel = ''
-            # leaderlines = []
+            leaderlines = []
             color = np.empty(
                 (min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
             selssd = np.zeros(naircraft, dtype=np.uint8)
@@ -444,7 +443,7 @@ class Traffic(glh.RenderObject, layer=100):
                 # Labels
                 rawlabels, rawmlabel, rawssrlabel = create_aclabel(rawlabels, rawmlabel, rawssrlabel,
                                                                    actdata, data, i)
-                # leaderlines = leaderline_vertex(leaderlines, data, i)
+                leaderlines = leaderline_vertex(leaderlines, data, i)
 
                 # Colours
                 if inconf:
@@ -494,8 +493,9 @@ class Traffic(glh.RenderObject, layer=100):
             # Update micro label
             self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
             # Leader line update
-            # leaderlines = np.array(leaderlines, dtype=np.float32)
-            # self.leaderlines.update(vertex=leaderlines)
+            leaderlines = np.array(leaderlines, dtype=np.float32)
+            self.leaderlines.set_vertex_count(int(len(leaderlines)/2))
+            self.leaderlines.update(vertex=leaderlines)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:
@@ -874,12 +874,13 @@ def leaderline_vertex(leaderlines, data, i):
 
     ac_size = settings.ac_size
     vertices = ['', '', '',
-                [-ac_size, 0, -3.6*ac_size, 0], [ac_size, 0, 3.6*ac_size, 0],
+                [(-ac_size, 0,), (-3.6*ac_size, 0)], [(ac_size, 0), (3.6*ac_size, 0)],
                 '', '', '']
 
-    i = get_lblpos(data.lblpos[i])
+    j = get_lblpos(data.lblpos[i])
 
-    leaderlines = np.append(leaderlines, vertices[i])
+    leaderlines.append(vertices[j][0])
+    leaderlines.append(vertices[j][1])
 
     return leaderlines
 
