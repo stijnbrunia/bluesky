@@ -51,6 +51,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.asase = glh.GLBuffer()
         self.histsymblat = glh.GLBuffer()
         self.histsymblon = glh.GLBuffer()
+        self.leadlinelat = glh.GLBuffer()
+        self.leadlinelon = glh.GLBuffer()
 
         # --------------- Label data ---------------
 
@@ -115,6 +117,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.rpz.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.histsymblat.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
         self.histsymblon.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
+        self.leadlinelat.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
+        self.leadlinelon.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
 
         # --------------- Label data ---------------
 
@@ -187,10 +191,10 @@ class Traffic(glh.RenderObject, layer=100):
                                 (ac_size, -text_height-ac_size),
                                 instanced=True)
         self.aclabels_cl.create(self.lbl_cl, self.lat, self.lon, self.color,
-                                (-8*text_size-ac_size, 0),
+                                (-8*text_size-5*ac_size, 0),
                                 instanced=True)
         self.aclabels_cr.create(self.lbl_cr, self.lat, self.lon, self.color,
-                                (ac_size, 0), instanced=True)
+                                (5*ac_size, 0), instanced=True)
         self.aclabels_ul.create(self.lbl_ul, self.lat, self.lon, self.color,
                                 (-8*text_size-ac_size, 3*text_height+ac_size),
                                 instanced=True)
@@ -209,7 +213,7 @@ class Traffic(glh.RenderObject, layer=100):
         # --------------- Leader lines ---------------
 
         self.leaderlines.create(vertex=MAX_NAIRCRAFT * 4, color=palette.aircraft)
-        self.leaderlines.set_attribs(lat=self.lat, lon=self.lon)
+        self.leaderlines.set_attribs(lat=self.leadlinelat, lon=self.leadlinelon)
 
         # --------------- CPA lines ---------------
 
@@ -287,7 +291,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.aclabels_ur.draw(n_instances=actdata.naircraft)
             self.ssrlabels.draw(n_instances=actdata.naircraft)
             self.microlabels.draw(n_instances=actdata.naircraft)
-            # self.leaderlines.draw()
+            self.leaderlines.draw()
 
         # SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
@@ -412,6 +416,8 @@ class Traffic(glh.RenderObject, layer=100):
             self.rpz.update(np.array(data.rpz, dtype=np.float32))
             self.histsymblat.update(np.array(data.histsymblat, dtype=np.float32))
             self.histsymblon.update(np.array(data.histsymblon, dtype=np.float32))
+            self.leadlinelat.update(np.repeat(np.array(data.lat, dtype=np.float32), 2))
+            self.leadlinelon.update(np.repeat(np.array(data.lon, dtype=np.float32), 2))
             if hasattr(data, 'asasn') and hasattr(data, 'asase'):
                 self.asasn.update(np.array(data.asasn, dtype=np.float32))
                 self.asase.update(np.array(data.asase, dtype=np.float32))
@@ -443,7 +449,7 @@ class Traffic(glh.RenderObject, layer=100):
                 # Labels
                 rawlabels, rawmlabel, rawssrlabel = create_aclabel(rawlabels, rawmlabel, rawssrlabel,
                                                                    actdata, data, i)
-                leaderlines = leaderline_vertex(leaderlines, data, i)
+                leaderlines = leaderline_vertex(leaderlines, actdata, data, i)
 
                 # Colours
                 if inconf:
@@ -858,7 +864,7 @@ def leading_zeros(number):
         return str(round(number))
 
 
-def leaderline_vertex(leaderlines, data, i):
+def leaderline_vertex(leaderlines, actdata, data, i):
     """
     Function: Get the vertex for the leader line
     Args:
@@ -873,9 +879,23 @@ def leaderline_vertex(leaderlines, data, i):
     """
 
     ac_size = settings.ac_size
-    vertices = ['', '', '',
-                [(-ac_size, 0,), (-3.6*ac_size, 0)], [(ac_size, 0), (3.6*ac_size, 0)],
-                '', '', '']
+    text_size = settings.text_size
+    text_width = text_size
+    text_height = text_size*1.2307692307692308
+
+    # APP does not use the last character of the track label
+    if actdata.atcmode == 'APP':
+        vertices = [[(0, ac_size), (0, 3*text_height+ac_size)], [(0, 0), (0, 0)], [(0, ac_size), (0, 3*text_height+ac_size)],
+                    [(-ac_size, 0,), (-4.9*ac_size-text_width, 0)], [(ac_size, 0), (4.9*ac_size, 0)],
+                    [(0, -ac_size), (0, -3*text_height-ac_size)], [(0, 0), (0, 0)], [(0, -ac_size), (0, -3*text_height-ac_size)]]
+    elif actdata.atcmode == 'ACC':
+        vertices = [[(0, ac_size), (0, 3*text_height+ac_size)], [(0, 0), (0, 0)], [(0, ac_size), (0, 3*text_height+ac_size)],
+                    [(-ac_size, 0,), (-4.9*ac_size, 0)], [(ac_size, 0), (4.9*ac_size, 0)],
+                    [(0, -ac_size), (0, -3*text_height-ac_size)], [(0, 0), (0, 0)], [(0, -ac_size), (0, -3*text_height-ac_size)]]
+    else:
+        vertices = [[(0, 0), (0, 0)], [(0, 0), (0, 0)], [(0, 0), (0, 0)],
+                    [(0, 0), (0, 0)], [(0, 0), (0, 0)],
+                    [(0, 0), (0, 0)], [(0, 0), (0, 0)], [(0, 0), (0, 0)]]
 
     j = get_lblpos(data.lblpos[i])
 
