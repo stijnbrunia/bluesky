@@ -118,7 +118,10 @@ class OpenSkySource:
             rawdata = requests.get(self.url).json()
 
             # Convert to pandas DataFrame
-            data = pd.DataFrame(rawdata['states'], columns=self.cols)
+            if len(rawdata['states'][0]) == 17:
+                data = pd.DataFrame(rawdata['states'], columns=self.cols[:-1])
+            else:
+                data = pd.DataFrame(rawdata['states'], columns=self.cols)
 
             # Process data
             data['callsign'] = data['callsign'].str.replace(' ', '')
