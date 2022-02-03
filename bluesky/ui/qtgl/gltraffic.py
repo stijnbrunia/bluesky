@@ -182,27 +182,27 @@ class Traffic(glh.RenderObject, layer=100):
         # --------------- Aircraft labels ---------------
 
         self.aclabels_ll.create(self.lbl_ll, self.lat, self.lon, self.color,
-                                (-8*text_size-ac_size, -text_height-ac_size),
+                                (-8*text_size-5*ac_size, -text_height-5*ac_size),
                                 instanced=True)
         self.aclabels_lc.create(self.lbl_lc, self.lat, self.lon, self.color,
-                                (-4*text_size-ac_size, -text_height-ac_size),
-                                instanced=True)
-        self.aclabels_lr.create(self.lbl_lr, self.lat, self.lon, self.color,
                                 (ac_size, -text_height-ac_size),
                                 instanced=True)
+        self.aclabels_lr.create(self.lbl_lr, self.lat, self.lon, self.color,
+                                (5*ac_size, -text_height-5*ac_size),
+                                instanced=True)
         self.aclabels_cl.create(self.lbl_cl, self.lat, self.lon, self.color,
-                                (-8*text_size-5*ac_size, 0),
+                                (-8*text_size-7*ac_size, 0),
                                 instanced=True)
         self.aclabels_cr.create(self.lbl_cr, self.lat, self.lon, self.color,
-                                (5*ac_size, 0), instanced=True)
+                                (7*ac_size, 0), instanced=True)
         self.aclabels_ul.create(self.lbl_ul, self.lat, self.lon, self.color,
-                                (-8*text_size-ac_size, 3*text_height+ac_size),
+                                (-8*text_size-5*ac_size, 3*text_height+5*ac_size),
                                 instanced=True)
         self.aclabels_uc.create(self.lbl_uc, self.lat, self.lon, self.color,
-                                (-4*text_size-ac_size, 3*text_height+ac_size),
+                                (ac_size, 3*text_height+ac_size),
                                 instanced=True)
         self.aclabels_ur.create(self.lbl_ur, self.lat, self.lon, self.color,
-                                (ac_size, 3*text_height+ac_size),
+                                (5*ac_size, 3*text_height+5*ac_size),
                                 instanced=True)
 
         self.ssrlabels.create(self.ssrlbl, self.lat, self.lon, self.color,
@@ -664,13 +664,14 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i):
         rawmlabel += 3*' '
 
     # SSR label
+    ssrlbl = data.ssrlbl[i].split(';')
     # Mode A
-    if 'A' in data.ssrlbl[i] and data.ssr[i] != 0:
+    if 'A' in ssrlbl and data.ssr[i] != 0:
         rawssrlabel += '%-7s' % str(data.ssr[i])[:7]
     else:
         rawssrlabel += 7*' '
     # Mode C
-    if 'C' in data.ssrlbl[i]:
+    if 'C' in ssrlbl:
         rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
         if data.alt[i] < actdata.translvl:
             rawssrlabel += '%-4s' % 'A   '
@@ -679,7 +680,7 @@ def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i):
     else:
         rawssrlabel += 7*' '
     # ACID
-    if 'ACID' in data.ssrlbl[i]:
+    if 'ACID' in ssrlbl:
         rawssrlabel += '%-7s' % data.id[i][:7]
     else:
         rawssrlabel += 7*' '
@@ -752,18 +753,19 @@ def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i):
         rawmlabel += 3*' '
 
     # SSR label
+    ssrlbl = data.ssrlbl[i].split(';')
     # ACID
-    if 'ACID' in data.ssrlbl[i]:
+    if 'ACID' in ssrlbl:
         rawssrlabel += '%-7s' % data.id[i][:7]
     else:
         rawssrlabel += 7*' '
     # Mode A
-    if 'A' in data.ssrlbl[i] and data.ssr[i] != 0:
+    if 'A' in ssrlbl and data.ssr[i] != 0:
         rawssrlabel += '%-7s' % str(data.ssr[i])[:7]
     else:
         rawssrlabel += 7*' '
     # Mode C
-    if 'C' in data.ssrlbl[i]:
+    if 'C' in ssrlbl:
         rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
         if data.alt[i] < actdata.translvl:
             rawssrlabel += '%-4s' % 'A   '
@@ -884,14 +886,14 @@ def leaderline_vertex(leaderlines, actdata, data, i):
     text_height = text_size*1.2307692307692308
 
     # APP does not use the last character of the track label
-    if actdata.atcmode == 'APP':
-        vertices = [[(0, ac_size), (0, 3*text_height+ac_size)], [(0, 0), (0, 0)], [(0, ac_size), (0, 3*text_height+ac_size)],
-                    [(-ac_size, 0,), (-4.9*ac_size-text_width, 0)], [(ac_size, 0), (4.9*ac_size, 0)],
-                    [(0, -ac_size), (0, -3*text_height-ac_size)], [(0, 0), (0, 0)], [(0, -ac_size), (0, -3*text_height-ac_size)]]
-    elif actdata.atcmode == 'ACC':
-        vertices = [[(0, ac_size), (0, 3*text_height+ac_size)], [(0, 0), (0, 0)], [(0, ac_size), (0, 3*text_height+ac_size)],
-                    [(-ac_size, 0,), (-4.9*ac_size, 0)], [(ac_size, 0), (4.9*ac_size, 0)],
-                    [(0, -ac_size), (0, -3*text_height-ac_size)], [(0, 0), (0, 0)], [(0, -ac_size), (0, -3*text_height-ac_size)]]
+    if data.tracklbl[i] and actdata.atcmode == 'APP':
+        vertices = [[(-ac_size, ac_size), (-5*ac_size-text_width, 5*ac_size)], [(0, ac_size), (0, ac_size+3*text_height)], [(ac_size, ac_size), (5*ac_size, 5*ac_size)],
+                    [(-ac_size, 0,), (-7*ac_size-text_width, 0)], [(ac_size, 0), (7*ac_size, 0)],
+                    [(-ac_size, -ac_size), (-5*ac_size-text_width, -5*ac_size)], [(0, -ac_size), (0, -3*text_height-ac_size)], [(ac_size, -ac_size), (5*ac_size, -5*ac_size)]]
+    elif data.tracklbl[i] and actdata.atcmode == 'ACC':
+        vertices = [[(-ac_size, ac_size), (-5*ac_size, 5*ac_size)], [(0, ac_size), (0, ac_size+3*text_height)], [(ac_size, ac_size), (5*ac_size, 5*ac_size)],
+                    [(-ac_size, 0,), (-7*ac_size, 0)], [(ac_size, 0), (7*ac_size, 0)],
+                    [(-ac_size, -ac_size), (-5*ac_size, -5*ac_size)], [(0, -ac_size), (0, -3*text_height-ac_size)], [(ac_size, -ac_size), (5*ac_size, -5*ac_size)]]
     else:
         vertices = [[(0, 0), (0, 0)], [(0, 0), (0, 0)], [(0, 0), (0, 0)],
                     [(0, 0), (0, 0)], [(0, 0), (0, 0)],

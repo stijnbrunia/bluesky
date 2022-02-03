@@ -63,9 +63,8 @@ class LVNLVariables(Entity):
 
         super().create(n)
 
-        self.lblpos[-n:] = ['CR']
+        self.lblpos[-n:] = ['UL']
         self.tracklbl[-n:] = True
-        self.ssrlbl[-n:] = [[]]
         self.mlbl[-n:] = False
 
     @timed_function(name='lvnlvars', dt=0.1)
@@ -276,11 +275,28 @@ class LVNLVariables(Entity):
 
         ssrmode = ssrmode.upper()
 
+        # Check if it is a valid mode
         if ssrmode in ['A', 'C', 'ACID']:
-            if ssrmode in self.ssrlbl[idx]:
-                self.ssrlbl[idx].remove(ssrmode)
+            # Get active modes
+            if self.ssrlbl[idx]:
+                actmodes = self.ssrlbl[idx].split(';')
             else:
-                self.ssrlbl[idx].append(ssrmode)
+                actmodes = []
+
+            # Remove/Append
+            if ssrmode in actmodes:
+                actmodes.remove(ssrmode)
+            else:
+                actmodes.append(ssrmode)
+
+            # Reconstruct ssrlbl
+            ssrlbl = ''
+            for mode in actmodes:
+                ssrlbl += mode+';'
+            ssrlbl = ssrlbl[:-1]  # Leave out last ';'
+
+            self.ssrlbl[idx] = ssrlbl
+
         else:
             return False, 'SSRLABEL: Not a valid SSR label item'
 
