@@ -7,12 +7,17 @@ Date: 14-1-2022
 
 import requests
 import pandas as pd
+import pickle
 import numpy as np
 import datetime
 import bluesky as bs
-from bluesky.tools import aero, misc
+from bluesky.tools import aero, cachefile, misc
 
 bs.settings.set_variable_defaults(data_path='data')
+
+
+# Global variables
+actypes_version = 'v20220203'
 
 
 """
@@ -25,14 +30,18 @@ class OpenSkySource:
     Class definition: OpenSky as data source for data feed
     Methods:
         reset():            Reset variables
+        load_actypes():     Load aircaft types dictionary
+        request_data():     Request the data
         live():             Initiate live traffic
-        initial():          Take initial aircraft positions from live data
         update_trackdata(): Update the track data
         create_new():       Create new aircraft and delete from track data
+        delete_old():       Delete old aircraft
 
     Created by: Bob van Dillen
     Date: 14-1-2022
     """
+
+    actypes = None
 
     def __init__(self):
         self.mode = None
@@ -48,9 +57,7 @@ class OpenSkySource:
                      'baro_altitude', 'on_ground', 'velocity', 'true_track', 'vertical_rate', 'sensors',
                      'geo_altitude', 'squawk', 'spi', 'position_source', 'none']
 
-        actypesf = open(bs.settings.data_path + '\\aircraft_db.csv', 'r')
-        self.actypes = dict([line.split(',')[0:3:2] for line in actypesf])
-        actypesf.close()
+        self.load_actypes()
 
         self.t_prev = 0.
 
@@ -67,6 +74,69 @@ class OpenSkySource:
         self.mode = None
         self.t_prev = 0.
 
+    def load_actypes(self):
+        """
+        Function: Load aircaft types dictionary
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 3-2-2022
+        """
+
+        if self.actypes is None:
+            with cachefile.openfile('actypes.p', actypes_version) as cache:
+                try:
+                    self.actypes = cache.load()
+                except (pickle.PickleError, cachefile.CacheError) as e:
+                    print(e.args[0])
+
+                    # Read file
+                    acdata = pd.read_csv(bs.settings.data_path + '\\actypes.csv', sep=';')
+                    # Drop not usable rows for relevant columns
+                    acdata.dropna(subset=['icao24', 'typecode'], inplace=True)
+                    # Change the index in icao24
+                    acdata.set_index('icao24', inplace=True)
+
+                    self.actypes = dict(acdata['typecode'])
+
+                    cache.dump(self.actypes)
+
+    def request_data(self):
+        """
+        Function: Request the data
+        Args: -
+        Returns:
+            data:   live aircraft data [DataFrame]
+
+        Created by: Bob van Dillen
+        Date: 3-2-2022
+        """
+
+        try:
+            # Get "raw" json data
+            rawdata = requests.get(self.url).json()
+
+            # Convert to pandas DataFrame
+            data = pd.DataFrame(rawdata['states'], columns=self.cols)
+
+            # Process data
+            data['callsign'] = data['callsign'].str.replace(' ', '')
+            data['callsign'].replace('', float('NaN'), inplace=True)
+            data.dropna(subset=['icao24', 'callsign', 'lon', 'lat', 'baro_altitude', 'velocity', 'true_track'],
+                        inplace=True)
+
+            # Get the date and time
+            epochtime = rawdata['time']
+            data_datetime = datetime.datetime.utcfromtimestamp(epochtime)
+
+        except requests.exceptions.RequestException as e:
+            print(e)
+            data = pd.DataFrame(columns=self.cols)
+            data_datetime = datetime.datetime.now()
+
+        return data_datetime, data
+
     def live(self):
         """
         Function: Initiate live traffic
@@ -79,58 +149,47 @@ class OpenSkySource:
         Date: 15-1-2022
         """
 
-        try:
-            # Request data
-            data = requests.get(self.url).json()
-            # Process data
-            data_df = pd.DataFrame(data['states'], columns=self.cols)
-            data_df['callsign'] = data_df['callsign'].str.strip()
-            data_df['callsign'].replace('', float('NaN'), inplace=True)
-            data_df.dropna(subset=['callsign', 'lon', 'lat', 'baro_altitude', 'velocity', 'true_track'],
-                           inplace=True)
-            data_df['actype'] = [self.actypes.get(str(i), 'B738').upper() for i in data_df['icao24']]
+        data_datetime, data = self.request_data()
 
-            # Date and time
-            epochtime = data['time']
-            datetime0 = datetime.datetime.utcfromtimestamp(epochtime)
-
+        if len(data) > 0:
             # Initial commands
-            cmds = ["DATE "+datetime0.strftime('%d %m %Y %H:%M:%S'), 'HISTORY 3']
+            cmds = ["DATE "+data_datetime.strftime('%d %m %Y %H:%M:%S'), 'HISTORY 3']
             cmdst = [0.]*2
 
             # Get aircraft data
-            acid = data_df['callsign'].str.strip()
-            actype = data_df['actype']
-            aclat = data_df['lat'].astype(str)
-            aclon = data_df['lon'].astype(str)
-            achdg = data_df['true_track'].astype(str)
-            acalt = (data_df['baro_altitude']/aero.ft).astype(str)
-            data_df['cas'] = aero.vtas2cas(data_df['velocity'], data_df['baro_altitude'])/aero.kts  # Assume GS = TAS
-            acspd = data_df['cas'].astype(str)
+            acid           = data['callsign'].str.strip()
+            data['actype'] = [self.actypes.get(str(icao24), 'B738') for icao24 in data['icao24']]
+            actype         = data['actype']
+            aclat          = data['lat'].astype(str)
+            aclon          = data['lon'].astype(str)
+            achdg          = data['true_track'].astype(str)
+            acalt          = (data['baro_altitude']/aero.ft).astype(str)
+            data['cas']    = aero.vtas2cas(data['velocity'], data['baro_altitude'])/aero.kts  # Assume GS = TAS
+            acspd          = data['cas'].astype(str)
 
             # Get commands
             # Create
-            cmds += list("CRE "+acid+", "+actype+", "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
-            cmdst += [0.]*len(data_df)
+            cmds  += list("CRE "+acid+", "+actype+", "+aclat+" "+aclon+" "+achdg+" "+acalt+" "+acspd)
+            cmdst += [0.]*len(data)
 
             # Data feed
-            cmds += list("SETDATAFEED "+acid+", OPENSKY")
-            cmdst += [0.01]*len(data_df)
+            cmds  += list("SETDATAFEED "+acid+", OPENSKY")
+            cmdst += [0.01]*len(data)
 
             # SSR Code
-            ssrdata = data_df.dropna(subset=['squawk'])
-            cmds += list("SSRCODE "+ssrdata['callsign']+", "+ssrdata['squawk'])
-            cmdst += [0.01]*len(ssrdata)
+            ssrdata = data.dropna(subset=['squawk'])
+            cmds   += list("SSRCODE "+ssrdata['callsign']+", "+ssrdata['squawk'])
+            cmdst  += [0.01]*len(ssrdata)
 
             # Sort
             cmds_df = pd.DataFrame({'COMMAND': cmds, 'TIME': cmdst})
             cmds_df = cmds_df.sort_values(by=['TIME'])
-            cmds = list(cmds_df['COMMAND'])
-            cmdst = list(cmds_df['TIME'])
+            cmds    = list(cmds_df['COMMAND'])
+            cmdst   = list(cmds_df['TIME'])
 
-        except:
+        else:
             bs.scr.echo("LIVE: Initializing live traffic failed. Reset and try again.")
-            cmds = []
+            cmds  = []
             cmdst = []
 
         return cmds, cmdst
@@ -157,32 +216,21 @@ class OpenSkySource:
 
         # Get new data every 12.5 seconds
         if simtime-self.t_prev > 12.5:
-            try:
-                # Request data
-                data = requests.get(self.url).json()
-                # Process data
-                data_df = pd.DataFrame(data['states'], columns=self.cols)
-                data_df['callsign'] = data_df['callsign'].str.strip()
-                data_df['callsign'].replace('', float('NaN'), inplace=True)
-                data_df.dropna(subset=['callsign', 'lon', 'lat', 'baro_altitude', 'velocity', 'true_track'],
-                               inplace=True)
-                data_df['actype'] = [self.actypes.get(str(i), 'B738').upper() for i in data_df['icao24']]
-            except:
-                data_df = pd.DataFrame(columns=self.cols+['actype'])
+            data_datetime, data = self.request_data()
 
             # Commands
             cmds = []
 
             # Create new aircraft commands
-            cmds, data_df = self.create_new(cmds, data_df)
+            cmds, data = self.create_new(cmds, data)
 
             # Get aircraft data
-            ids = list(data_df['callsign'])
-            lat = np.array(data_df['lat'])
-            lon = np.array(data_df['lon'])
-            hdg = np.array(data_df['true_track'])
-            alt = np.array(data_df['baro_altitude'])
-            gs = np.array(data_df['velocity'])
+            ids = list(data['callsign'])
+            lat = np.array(data['lat'])
+            lon = np.array(data['lon'])
+            hdg = np.array(data['true_track'])
+            alt = np.array(data['baro_altitude'])
+            gs = np.array(data['velocity'])
 
             # Delete inactive aircraft
             self.delete_old(cmds)
@@ -201,53 +249,57 @@ class OpenSkySource:
 
         return running, cmds, ids, lat, lon, hdg, alt, gs
 
-    @staticmethod
-    def create_new(cmds, data_df):
+    def create_new(self, cmds, data):
         """
         Function: Create new aircraft and delete from trackdata
         Args:
             cmds:       commands [list]
-            data_df:    data frame containing the new data [DataFrame]
-            mode:       datasource mode [str]
+            data:       aircraft data [DataFrame]
         Returns:
             cmds:       commands [list]
-            data_df:    data frame containing the new data [DataFrame]
+            data_df:    aircraft data [DataFrame]
 
         Created by: Bob van Dillen
         Date: 17-1-2022
         """
 
-        ids = list(data_df['callsign'])
-        types = list(data_df['actype'])
-        lat = np.array(data_df['lat'])
-        lon = np.array(data_df['lon'])
-        hdg = np.array(data_df['true_track'])
-        alt = np.array(data_df['baro_altitude'])
-        gs = np.array(data_df['velocity'])
+        ids = list(data['callsign'])
 
         new_ids = np.setdiff1d(ids, bs.traf.id)
-        inew = misc.get_indices(ids, new_ids)
+        inew    = misc.get_indices(ids, new_ids)
+
+        # No new aircraft
+        if len(inew) == 0:
+            return cmds, data
+
+        # Aircraft data
+        icao24 = list(data['icao24'])
+        lat    = np.array(data['lat'])
+        lon    = np.array(data['lon'])
+        hdg    = np.array(data['true_track'])
+        alt    = np.array(data['baro_altitude'])
+        gs     = np.array(data['velocity'])
 
         # Loop over new aircraft
         for i in inew:
             # Aircraft data
-            acid = ids[i]
-            actype = types[i]
-            aclat = str(lat[i])
-            aclon = str(lon[i])
-            achdg = str(hdg[i])
-            acalt = str(alt[i]/aero.ft)
-            acspd = str(aero.tas2cas(gs[i], alt[i])/aero.kts)  # Assume GS = TAS
+            acid   = ids[i]
+            actype = self.actypes.get(icao24[i], 'B738')
+            aclat  = str(lat[i])
+            aclon  = str(lon[i])
+            achdg  = str(hdg[i])
+            acalt  = str(alt[i]/aero.ft)
+            acspd  = str(aero.tas2cas(gs[i], alt[i])/aero.kts)  # Assume GS = TAS
 
             # Create commands
             cmds.append("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
             cmds.append("SETDATAFEED "+acid+" OPENSKY")
 
             # Remove aircraft from track data
-            idrop = data_df.index[data_df['callsign'] == acid]
-            data_df.drop(idrop, inplace=True)
+            idrop = data.index[data['callsign'] == acid]
+            data.drop(idrop, inplace=True)
 
-        return cmds, data_df
+        return cmds, data
 
     @staticmethod
     def delete_old(cmds):
@@ -263,10 +315,10 @@ class OpenSkySource:
         """
 
         ilive = np.nonzero(np.array(bs.traf.trafdatafeed.source) == 'OPENSKY')[0]
-        iold = np.nonzero(bs.traf.trafdatafeed.lastupdate >= 1*60.)[0]
+        iold  = np.nonzero(bs.traf.trafdatafeed.lastupdate >= 1*60.)[0]
 
         idelete = np.intersect1d(ilive, iold)
-        ids = np.array(bs.traf.id)[idelete]
+        ids     = np.array(bs.traf.id)[idelete]
 
         for acid in ids:
             cmds.append("DEL "+acid)
