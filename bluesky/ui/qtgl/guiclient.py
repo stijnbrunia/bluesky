@@ -9,6 +9,7 @@ from bluesky.ui.qtgl.customevents import ACDataEvent, RouteDataEvent
 from bluesky.network.client import Client
 from bluesky.core import Signal
 from bluesky.tools.aero import ft
+from bluesky.tools import geo
 
 settings.set_variable_defaults(atc_mode='BLUESKY')
 
@@ -243,7 +244,7 @@ class nodeData:
             colorbuf = np.array(len(contourbuf) // 2 * color, dtype=np.uint8)
             self.polys[polyid] = (contourbuf, fillbuf, colorbuf)
 
-    def update_poly_data(self, name, shape='', coordinates=None, color=None):
+    def update_poly_data(self, name, shape='', coordinates=None, color=None, miscargs=None):
         # We're either updating a polygon, or deleting it. In both cases
         # we remove the current one.
         self.polys.pop(name, None)
@@ -294,12 +295,49 @@ class nodeData:
                 newdata = np.empty(2 * numPoints, dtype=np.float32)  # Create empty array
                 newdata[0::2] = latCircle  # Fill array lat0,lon0,lat1,lon1....
                 newdata[1::2] = lonCircle
+            elif shape == 'DASHEDLINE':
+                # Input data is lat0,lon0,lat1,lon1
+                # Get bearing and length
+                qdr, length = geo.qdrdist(coordinates[0], coordinates[1], coordinates[2], coordinates[3])
+
+                # Set the interval
+                if miscargs:
+                    interval = miscargs  # [nm]
+                else:
+                    interval = 0.5  # [nm]
+
+                # First coordinates
+                newdata = [coordinates[0], coordinates[1]]
+
+                # Create the line segments
+                dist = 0
+                # Check if the end of the total line is reached
+                while dist+interval <= length:
+                    # End of the line
+                    lat1, lon1 = geo.kwikpos(newdata[-2], newdata[-1], qdr, interval)
+                    newdata += [lat1, lon1]
+                    dist += interval
+
+                    # Check if there still fits an line segment after the empty segment
+                    if dist+2*interval <= length:
+                        # End of the empty segment
+                        lat2, lon2 = geo.kwikpos(lat1, lon1, qdr, interval)
+                        newdata += [lat2, lon2]
+
+                        dist += interval
+                    else:
+                        dist = length
+
+                newdata = np.array(newdata, dtype=np.float32)
 
             # Create polygon contour buffer
             # Distinguish between an open and a closed contour.
             # If this is a closed contour, add the first vertex again at the end
             # and add a fill shape
-            if shape[-4:] == 'LINE':
+            if shape == 'DASHEDLINE':
+                contourbuf = np.array(newdata, dtype=np.float32)
+                fillbuf = np.array([], dtype=np.float32)
+            elif shape[-4:] == 'LINE':
                 contourbuf = np.empty(2 * len(newdata) - 4, dtype=np.float32)
                 contourbuf[0::4]   = newdata[0:-2:2]  # lat
                 contourbuf[1::4]   = newdata[1:-2:2]  # lon
