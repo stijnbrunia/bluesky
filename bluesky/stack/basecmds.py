@@ -160,6 +160,12 @@ def initbasecmds():
             bs.traf.creconfs,
             "Create an aircraft that is in conflict with 'targetid'",
         ],
+        "DASHEDLINE": [
+            "DASHEDLINE name, interval, lat, lon, lat, lon",
+            "txt,float,latlon,latlon",
+            lambda name, *args: areafilter.defineArea(name, "DASHEDLINE", args[1:], miscargs=args[0]),
+            "Draw a dashed line"
+        ],
         "DATE": [
             "DATE [day,month,year,HH:MM:SS.hh]",
             "[int,int,int,txt]",
