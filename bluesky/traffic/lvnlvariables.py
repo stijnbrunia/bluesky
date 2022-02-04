@@ -111,7 +111,7 @@ class LVNLVariables(Entity):
 
         # Labels
         self.tracklbl[idx] = True
-        self.ssrlbl[idx] = []
+        self.ssrlbl[idx] = ''
 
         bs.traf.trafdatafeed.uco(idx)
         self.uco[idx] = True
@@ -135,7 +135,7 @@ class LVNLVariables(Entity):
 
         # Labels
         self.tracklbl[idx] = False
-        self.ssrlbl[idx] = ['C']
+        self.ssrlbl[idx] = 'C'
 
         self.uco[idx] = False
         self.rel[idx] = True

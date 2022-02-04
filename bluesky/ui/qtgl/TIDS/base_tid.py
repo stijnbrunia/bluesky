@@ -250,7 +250,7 @@ class TIDCmds:
             self.iact = self.cmdslst.index(cmd)
         else:
             # Unfinished previous command
-            if len(self.cmdslst) != 0 and self.cmdslst[self.iact] not in ['UCO', 'REL'] and self.argslst[self.iact] != 0:
+            if len(self.cmdslst) != 0 and self.cmdslst[self.iact] not in ['UCO', 'REL'] and self.argslst[self.iact] == ['']:
                 self.cmdslst[self.iact] = cmd
                 self.argslst[self.iact] = ['']
             # Finished previous command
