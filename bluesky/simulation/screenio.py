@@ -113,20 +113,29 @@ class ScreenIO:
 
         # Get appropriate lat/lon/aspect ratio
         sender = stack.sender()
-        lat, lon = self.client_pan.get(sender) or self.def_pan
+        panlat, panlon = self.client_pan.get(sender) or self.def_pan
         ar = self.client_ar.get(sender) or 1.0
 
         # Get maximum latitude and longitude
-        latmax = geo.qdrpos(lat, lon, 0, screenr)[0] + 0.6
-        lonmax = geo.qdrpos(lat, lon, 90, screenr)[1] + 0.03
+        latmax = geo.qdrpos(panlat, panlon, 0, screenr)[0]
+        lonmax = geo.qdrpos(panlat, panlon, 90, screenr)[1]
 
         # Determine zoom
-        zoomlat = 1/((latmax - lat)*ar)
-        zoomlon = 1/((lonmax - lon)*np.cos(np.radians(lat)))
+        zoomlat = 1/((latmax - panlat)*ar)
+        zoomlon = 1/((lonmax - panlon)*np.cos(np.radians(panlat)))
 
+        # Take minimum (most zoomed out)
         zoom = min(zoomlat, zoomlon)
 
-        self.zoom(zoom, True)
+        # Save zoom
+        if sender:
+            self.client_zoom[sender] = zoom
+        else:
+            self.def_zoom = zoom
+            self.client_zoom.clear()
+
+        # Send data
+        bs.net.send_event(b'PANZOOM', dict(screenrange=screenr))
 
     def zoom(self, zoom, absolute=True):
         sender    = stack.sender()
@@ -139,7 +148,7 @@ class ScreenIO:
             self.def_zoom = zoom * (1.0 if absolute else self.def_zoom)
             self.client_zoom.clear()
 
-        bs.net.send_event(b'PANZOOM', dict(zoom=zoom, absolute=absolute))
+        bs.net.send_event(b'PANZOOM', dict(zoom=zoom, absolute=absolute, screenrange=None))
 
     def color(self, name, r, g, b):
         ''' Set custom color for aircraft or shape. '''
@@ -187,7 +196,7 @@ class ScreenIO:
                                                        lon + self.def_pan[1])
             self.client_pan.clear()
 
-        bs.net.send_event(b'PANZOOM', dict(pan=(lat,lon), absolute=absolute))
+        bs.net.send_event(b'PANZOOM', dict(pan=(lat,lon), absolute=absolute, screenrange=None))
 
     def shownd(self, acid):
         bs.net.send_event(b'SHOWND', acid)

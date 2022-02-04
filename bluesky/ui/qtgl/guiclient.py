@@ -135,6 +135,7 @@ class nodeData:
         # Display pan and zoom
         self.pan = [0.0, 0.0]
         self.zoom = 1.0
+        self.screenrange = None
 
         self.naircraft = 0
         self.acdata = ACDataEvent()
@@ -223,7 +224,7 @@ class nodeData:
         for shape in shapes:
             self.update_poly_data(**shape)
 
-    def panzoom(self, pan=None, zoom=None, absolute=True):
+    def panzoom(self, pan=None, zoom=None, absolute=True, screenrange=None):
         if pan:
             if absolute:
                 self.pan  = list(pan)
@@ -232,6 +233,8 @@ class nodeData:
                 self.pan[1] += pan[1]
         if zoom:
             self.zoom = zoom * (1.0 if absolute else self.zoom)
+        if screenrange:
+            self.screenrange = screenrange
 
     def update_color_data(self, color, acid=None, groupid=None, polyid=None):
         if acid:

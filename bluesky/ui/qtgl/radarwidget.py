@@ -128,7 +128,7 @@ class RadarWidget(glh.RenderWidget):
 
         # Update pan/zoom
         if 'PANZOOM' in changed_elems:
-            self.panzoom(pan=nodedata.pan, zoom=nodedata.zoom, absolute=True)
+            self.panzoom(pan=nodedata.pan, zoom=nodedata.zoom, absolute=True, screenrange=nodedata.screenrange)
 
     def initializeGL(self):
         """Initialize OpenGL, VBOs, upload data on the GPU, etc."""
@@ -243,15 +243,14 @@ class RadarWidget(glh.RenderWidget):
 
         if screenrange:
             # Get maximum latitude and longitude
-            latmax = geo.qdrpos(self.panlat, self.panlon, 0, screenrange)[0] + 0.6
-            lonmax = geo.qdrpos(self.panlat, self.panlon, 90, screenrange)[1] + 0.03
+            latmax = geo.qdrpos(self.panlat, self.panlon, 0, screenrange)[0]
+            lonmax = geo.qdrpos(self.panlat, self.panlon, 90, screenrange)[1]
 
             # Determine zoom
             zoomlat = 1 / ((latmax - self.panlat) * self.ar)
             zoomlon = 1 / ((lonmax - self.panlon) * np.cos(np.radians(self.panlat)))
 
             self.zoom = min(zoomlat, zoomlon)
-
 
         # Check for necessity wrap-around in x-direction
         self.wraplon = -999.9
