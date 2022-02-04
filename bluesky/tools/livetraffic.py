@@ -92,7 +92,7 @@ class OpenSkySource:
                     print(e.args[0])
 
                     # Read file
-                    acdata = pd.read_csv(bs.settings.data_path + '\\actypes.csv', sep=';')
+                    acdata = pd.read_csv(bs.settings.data_path + '/actypes.csv', sep=';')
                     # Drop not usable rows for relevant columns
                     acdata.dropna(subset=['icao24', 'typecode'], inplace=True)
                     # Change the index in icao24

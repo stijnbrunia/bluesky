@@ -202,6 +202,8 @@ class nodeData:
             self.show_apt = 1
             self.show_histsymb = False
         else:
+            if settings.atc_mode.upper() == 'APP':
+                pass
             if settings.atc_mode.upper() == 'TWR':
                 palette.background = (4, 90, 4)
                 self.show_aptdetails = True
@@ -438,7 +440,7 @@ class nodeData:
         elif flag == 'ATCMODE':
             self.atcmode = args
             if self.atcmode == 'APP':
-                palette.aircraft = (210, 210, 200)
+                palette.aircraft = (220, 220, 220)
                 palette.coastlines = (44, 126, 41)
             elif self.atcmode == 'ACC':
                 palette.aircraft = (0, 255, 0)
