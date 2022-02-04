@@ -12,6 +12,7 @@ from bluesky.ui.qtgl import glhelpers as glh
 from bluesky.ui.radarclick import radarclick
 from bluesky.ui.qtgl import console
 from bluesky import settings
+from bluesky.tools import geo
 from .gltraffic import Traffic
 from .glmap import Map
 from .glnavdata import Navdata
@@ -188,7 +189,7 @@ class RadarWidget(glh.RenderWidget):
                 self.panlat - 1.0 / (self.zoom * self.ar),
                 self.panlon + 1.0 / (self.zoom * self.flat_earth))
 
-    def panzoom(self, pan=None, zoom=None, origin=None, absolute=False):
+    def panzoom(self, pan=None, zoom=None, origin=None, absolute=False, screenrange=None):
         if not self.initialized:
             return False
 
@@ -239,6 +240,18 @@ class RadarWidget(glh.RenderWidget):
 
             # Update flat-earth factor
             self.flat_earth = np.cos(np.deg2rad(self.panlat))
+
+        if screenrange:
+            # Get maximum latitude and longitude
+            latmax = geo.qdrpos(self.panlat, self.panlon, 0, screenrange)[0] + 0.6
+            lonmax = geo.qdrpos(self.panlat, self.panlon, 90, screenrange)[1] + 0.03
+
+            # Determine zoom
+            zoomlat = 1 / ((latmax - self.panlat) * self.ar)
+            zoomlon = 1 / ((lonmax - self.panlon) * np.cos(np.radians(self.panlat)))
+
+            self.zoom = min(zoomlat, zoomlon)
+
 
         # Check for necessity wrap-around in x-direction
         self.wraplon = -999.9
