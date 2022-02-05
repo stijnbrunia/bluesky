@@ -1,7 +1,7 @@
 aircraft=(220, 220, 220)
 aptlabel=(220, 250, 255)
 aptsymbol=(148, 178, 235)
-background=(16, 31, 31)
+background=(0, 0, 0)
 coastlines=(44, 126, 41)
 conflict=(255, 160, 0)
 pavement=(0, 0, 0)
