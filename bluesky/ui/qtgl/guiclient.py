@@ -195,31 +195,35 @@ class nodeData:
         self.show_fir      = True
         self.show_lbl      = 2
         self.show_poly     = 1  # 0=invisible, 1=outline, 2=fill
-        if settings.atc_mode.upper() == 'BLUESKY':
+        self.ssd_all       = False
+        self.ssd_conflicts = False
+        self.ssd_ownship   = set()
+        self.atcmode       = settings.atc_mode
+        # Display flags based on ATC mode
+        if settings.atc_mode.upper() == 'APP':
+            self.show_map = False
+            self.show_histsymb = True
+            self.show_aptdetails = False
+            self.show_wpt = 0
+            self.show_apt = 0
+        elif settings.atc_mode.upper() == 'ACC':
+            self.show_map = False
+            self.show_histsymb = True
+            self.show_aptdetails = False
+            self.show_wpt = 0
+            self.show_apt = 0
+        elif settings.atc_mode.upper() == 'TWR':
+            self.show_map = False
+            self.show_histsymb = False
+            self.show_aptdetails = True
+            self.show_wpt = 0
+            self.show_apt = 0
+        else:
             self.show_map = True
             self.show_aptdetails = True
             self.show_wpt = 1
             self.show_apt = 1
             self.show_histsymb = False
-        else:
-            if settings.atc_mode.upper() == 'APP':
-                pass
-            if settings.atc_mode.upper() == 'TWR':
-                palette.background = (4, 90, 4)
-                self.show_aptdetails = True
-                self.show_histsymb = False
-            else:
-                self.show_aptdetails = False
-                self.show_histsymb = True
-            self.show_map = False
-            self.show_wpt = 0
-            self.show_apt = 0
-        self.ssd_all       = False
-        self.ssd_conflicts = False
-        self.ssd_ownship   = set()
-
-        self.atcmode = settings.atc_mode
-
 
     def siminit(self, shapes, **kwargs):
         self.__dict__.update(kwargs)
@@ -438,19 +442,36 @@ class nodeData:
             self.show_histsymb = not self.show_histsymb
 
         elif flag == 'ATCMODE':
+            # Set ATC mode
             self.atcmode = args
-            if self.atcmode == 'APP':
-                palette.aircraft = (220, 220, 220)
-                palette.coastlines = (44, 126, 41)
-            elif self.atcmode == 'ACC':
-                palette.aircraft = (0, 255, 0)
-                palette.coastlines = (44, 126, 41)
-            elif self.atcmode == 'TWR':
-                palette.aircraft = (210, 210, 200)
-                palette.coastlines = (0, 0, 0)
+            settings.atc_mode = args
+            # Load new palette
+            palette.init()
+            # Display flags
+            if settings.atc_mode.upper() == 'APP':
+                self.show_map = False
+                self.show_histsymb = True
+                self.show_aptdetails = False
+                self.show_wpt = 0
+                self.show_apt = 0
+            elif settings.atc_mode.upper() == 'ACC':
+                self.show_map = False
+                self.show_histsymb = True
+                self.show_aptdetails = False
+                self.show_wpt = 0
+                self.show_apt = 0
+            elif settings.atc_mode.upper() == 'TWR':
+                self.show_map = False
+                self.show_histsymb = False
+                self.show_aptdetails = True
+                self.show_wpt = 0
+                self.show_apt = 0
             else:
-                palette.aircraft = (0, 255, 0)
-                palette.coastlines = (85, 85, 115)
+                self.show_map = True
+                self.show_aptdetails = True
+                self.show_wpt = 1
+                self.show_apt = 1
+                self.show_histsymb = False
 
     def echo(self, text='', flags=0):
         if text:
