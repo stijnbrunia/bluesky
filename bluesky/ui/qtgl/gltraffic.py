@@ -56,6 +56,7 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Label data ---------------
 
+        self.lbl = glh.GLBuffer()
         self.lbl_ll = glh.GLBuffer()
         self.lbl_lc = glh.GLBuffer()
         self.lbl_lr = glh.GLBuffer()
@@ -82,6 +83,7 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Label objects ---------------
 
+        self.aclabels = glh.Text(settings.text_size, (8, 3))     # BlueSky default (ATC mode BLUESKY)
         self.aclabels_ll = glh.Text(settings.text_size, (8, 4))  # lower-left
         self.aclabels_lc = glh.Text(settings.text_size, (8, 4))  # lower-center
         self.aclabels_lr = glh.Text(settings.text_size, (8, 4))  # lower-right
@@ -122,6 +124,7 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Label data ---------------
 
+        self.lbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.lbl_ll.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.lbl_lc.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.lbl_lr.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
@@ -180,7 +183,8 @@ class Traffic(glh.RenderObject, layer=100):
                                      color=palette.aircraft, instance_divisor=1)
 
         # --------------- Aircraft labels ---------------
-
+        self.aclabels.create(self.lbl, self.lat, self.lon, self.color,
+                             (ac_size, -0.5 * ac_size), instanced=True)
         self.aclabels_ll.create(self.lbl_ll, self.lat, self.lon, self.color,
                                 (-8*text_size-5*ac_size, -text_height-5*ac_size),
                                 instanced=True)
@@ -267,10 +271,10 @@ class Traffic(glh.RenderObject, layer=100):
         self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_SCREEN)
 
         # Draw traffic symbols
-        if actdata.atcmode in ['APP', 'ACC', 'TWR']:
-            self.ac_symbollvnl.draw(n_instances=actdata.naircraft)
-        else:
+        if actdata.atcmode == 'BLUESKY':
             self.ac_symbol.draw(n_instances=actdata.naircraft)
+        else:
+            self.ac_symbollvnl.draw(n_instances=actdata.naircraft)
 
         if actdata.show_histsymb and len(actdata.acdata.histsymblat) != 0:
             self.hist_symbol.set_attribs(color=palette.aircraft)
@@ -280,7 +284,10 @@ class Traffic(glh.RenderObject, layer=100):
             self.rwaypoints.draw(n_instances=self.routelbl.n_instances)
             self.routelbl.draw()
 
-        if actdata.show_lbl >= 1:
+        if actdata.atcmode == 'BLUESKY':
+            if actdata.show_lbl >= 1:
+                self.aclabels.draw(n_instances=actdata.naircraft)
+        else:
             self.aclabels_ll.draw(n_instances=actdata.naircraft)
             self.aclabels_lc.draw(n_instances=actdata.naircraft)
             self.aclabels_lr.draw(n_instances=actdata.naircraft)
@@ -429,6 +436,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.cpalines.set_vertex_count(2 * ncpalines)
 
             # Labels and colors
+            rawlabel = ''
             rawlabels = ['', '', '',
                          '', '',
                          '', '', '']
@@ -446,10 +454,16 @@ class Traffic(glh.RenderObject, layer=100):
                 if i >= MAX_NAIRCRAFT:
                     break
 
-                # Labels
-                rawlabels, rawmlabel, rawssrlabel = create_aclabel(rawlabels, rawmlabel, rawssrlabel,
-                                                                   actdata, data, i)
-                leaderlines = leaderline_vertex(leaderlines, actdata, data, i)
+                # BlueSky default label (ATC mode BLUESKY)
+                if actdata.atcmode == 'BLUESKY':
+                    rawlabel = baselabel(rawlabel, actdata, data, i)
+                # LVNL labels
+                else:
+                    # Labels
+                    rawlabels, rawmlabel, rawssrlabel = create_aclabel(rawlabels, rawmlabel, rawssrlabel,
+                                                                       actdata, data, i)
+                    # Leaderlines
+                    leaderlines = leaderline_vertex(leaderlines, actdata, data, i)
 
                 # Colours
                 if inconf:
@@ -485,23 +499,28 @@ class Traffic(glh.RenderObject, layer=100):
             self.cpalines.update(vertex=cpalines)
             self.color.update(color)
 
-            # Update track label
-            self.lbl_ll.update(np.array(rawlabels[5].encode('utf8'), dtype=np.string_))
-            self.lbl_lc.update(np.array(rawlabels[6].encode('utf8'), dtype=np.string_))
-            self.lbl_lr.update(np.array(rawlabels[7].encode('utf8'), dtype=np.string_))
-            self.lbl_cl.update(np.array(rawlabels[3].encode('utf8'), dtype=np.string_))
-            self.lbl_cr.update(np.array(rawlabels[4].encode('utf8'), dtype=np.string_))
-            self.lbl_ul.update(np.array(rawlabels[0].encode('utf8'), dtype=np.string_))
-            self.lbl_uc.update(np.array(rawlabels[1].encode('utf8'), dtype=np.string_))
-            self.lbl_ur.update(np.array(rawlabels[2].encode('utf8'), dtype=np.string_))
-            # Update SSR label
-            self.ssrlbl.update(np.array(rawssrlabel.encode('utf8'), dtype=np.string_))
-            # Update micro label
-            self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
-            # Leader line update
-            leaderlines = np.array(leaderlines, dtype=np.float32)
-            self.leaderlines.set_vertex_count(int(len(leaderlines)/2))
-            self.leaderlines.update(vertex=leaderlines)
+            # BlueSky default label (ATC mode BLUESKY)
+            if actdata.atcmode == 'BLUESKY':
+                self.lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
+            # LVNL labels
+            else:
+                # Update track label
+                self.lbl_ll.update(np.array(rawlabels[5].encode('utf8'), dtype=np.string_))
+                self.lbl_lc.update(np.array(rawlabels[6].encode('utf8'), dtype=np.string_))
+                self.lbl_lr.update(np.array(rawlabels[7].encode('utf8'), dtype=np.string_))
+                self.lbl_cl.update(np.array(rawlabels[3].encode('utf8'), dtype=np.string_))
+                self.lbl_cr.update(np.array(rawlabels[4].encode('utf8'), dtype=np.string_))
+                self.lbl_ul.update(np.array(rawlabels[0].encode('utf8'), dtype=np.string_))
+                self.lbl_uc.update(np.array(rawlabels[1].encode('utf8'), dtype=np.string_))
+                self.lbl_ur.update(np.array(rawlabels[2].encode('utf8'), dtype=np.string_))
+                # Update SSR label
+                self.ssrlbl.update(np.array(rawssrlabel.encode('utf8'), dtype=np.string_))
+                # Update micro label
+                self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
+                # Leader line update
+                leaderlines = np.array(leaderlines, dtype=np.float32)
+                self.leaderlines.set_vertex_count(int(len(leaderlines)/2))
+                self.leaderlines.update(vertex=leaderlines)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:
@@ -512,6 +531,35 @@ class Traffic(glh.RenderObject, layer=100):
 """
 Create label functions
 """
+
+
+def baselabel(rawlabel, actdata, data, i):
+    """
+    Function: Create base label
+    Args:
+        rawlabel:   string to add label [str]
+        actdata:    node data [class]
+        data:       aircraft data [class]
+        i:          index for data [int]
+    Returns:
+        rawlabel:   label string [str]
+
+    Created by: Bob van Dillen
+    Date: 13-1-2022
+    """
+
+    rawlabel += '%-8s' % data.id[i][:8]
+    if actdata.show_lbl == 2:
+        if data.alt[i] <= data.translvl:
+            rawlabel += '%-5d' % int(data.alt[i] / ft + 0.5)
+        else:
+            rawlabel += 'FL%03d' % int(data.alt[i] / ft / 100. + 0.5)
+        vsarrow = 30 if data.vs[i] > 0.25 else 31 if data.vs[i] < -0.25 else 32
+        rawlabel += '%1s  %-8d' % (chr(vsarrow),
+                                   int(data.cas[i] / kts + 0.5))
+    else:
+        rawlabel += 2*8*' '
+    return rawlabel
 
 
 def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i):
@@ -551,11 +599,6 @@ def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i):
     # TWR mode
     elif actdata.atcmode == 'TWR':
         rawlabels[lbl_i] = twrlabel(rawlabels[lbl_i], actdata, data, i)
-        rawmlabel += 3*' '
-        rawssrlabel += 7*3*' '
-    # BlueSky mode
-    else:
-        rawlabels[lbl_i] = baselabel(rawlabels[lbl_i], actdata, data, i)
         rawmlabel += 3*' '
         rawssrlabel += 7*3*' '
 
@@ -811,36 +854,6 @@ def twrlabel(rawlabel, actdata, data, i):
     else:
         rawlabel += 8*3*' '
 
-    return rawlabel
-
-
-def baselabel(rawlabel, actdata, data, i):
-    """
-    Function: Create base label
-    Args:
-        rawlabel:   string to add label [str]
-        actdata:    node data [class]
-        data:       aircraft data [class]
-        i:          index for data [int]
-    Returns:
-        rawlabel:   label string [str]
-
-    Created by: Bob van Dillen
-    Date: 13-1-2022
-    """
-
-    rawlabel += '%-8s' % data.id[i][:8]
-    if actdata.show_lbl == 2:
-        if data.alt[i] <= data.translvl:
-            rawlabel += '%-5d' % int(data.alt[i] / ft + 0.5)
-        else:
-            rawlabel += 'FL%03d' % int(data.alt[i] / ft / 100. + 0.5)
-        vsarrow = 30 if data.vs[i] > 0.25 else 31 if data.vs[i] < -0.25 else 32
-        rawlabel += '%1s  %-8d' % (chr(vsarrow),
-                                   int(data.cas[i] / kts + 0.5))
-        rawlabel += 8*' '
-    else:
-        rawlabel += 3*8*' '
     return rawlabel
 
 
