@@ -104,10 +104,15 @@ class LVNLVariables(Entity):
         Returns: -
         """
 
-        # Autopilot modes
-        bs.traf.swlnav[idx] = True
-        bs.traf.swvnav[idx] = True
-        bs.traf.swvnavspd[idx] = True
+        # Autopilot modes (check if there is a route)
+        if bs.traf.ap.route[idx].nwp > 0:
+            bs.traf.swlnav[idx] = True
+            bs.traf.swvnav[idx] = True
+            bs.traf.swvnavspd[idx] = True
+        else:
+            bs.traf.swlnav[idx] = False
+            bs.traf.swvnav[idx] = False
+            bs.traf.swvnavspd[idx] = False
 
         # Labels
         self.tracklbl[idx] = True
