@@ -92,6 +92,8 @@ class GuiClient(Client):
             data_changed.append('CUSTWPT')
         elif name == b'DISPLAYFLAG':
             sender_data.setflag(**data)
+            if data['flag'] == 'ATCMODE':
+                data_changed.append('ATCMODE')
         elif name == b'ECHO':
             
             data_changed.append('ECHOTEXT')
@@ -200,30 +202,7 @@ class nodeData:
         self.ssd_ownship   = set()
         self.atcmode       = settings.atc_mode
         # Display flags based on ATC mode
-        if settings.atc_mode.upper() == 'APP':
-            self.show_map = False
-            self.show_histsymb = True
-            self.show_aptdetails = False
-            self.show_wpt = 0
-            self.show_apt = 0
-        elif settings.atc_mode.upper() == 'ACC':
-            self.show_map = False
-            self.show_histsymb = True
-            self.show_aptdetails = False
-            self.show_wpt = 0
-            self.show_apt = 0
-        elif settings.atc_mode.upper() == 'TWR':
-            self.show_map = False
-            self.show_histsymb = False
-            self.show_aptdetails = True
-            self.show_wpt = 0
-            self.show_apt = 0
-        else:
-            self.show_map = True
-            self.show_aptdetails = True
-            self.show_wpt = 1
-            self.show_apt = 1
-            self.show_histsymb = False
+        self.set_atcmode(settings.atc_mode.upper())
 
     def siminit(self, shapes, **kwargs):
         self.__dict__.update(kwargs)
@@ -452,30 +431,7 @@ class nodeData:
             # Load new palette
             palette.init()
             # Display flags
-            if settings.atc_mode.upper() == 'APP':
-                self.show_map = False
-                self.show_histsymb = True
-                self.show_aptdetails = False
-                self.show_wpt = 0
-                self.show_apt = 0
-            elif settings.atc_mode.upper() == 'ACC':
-                self.show_map = False
-                self.show_histsymb = True
-                self.show_aptdetails = False
-                self.show_wpt = 0
-                self.show_apt = 0
-            elif settings.atc_mode.upper() == 'TWR':
-                self.show_map = False
-                self.show_histsymb = False
-                self.show_aptdetails = True
-                self.show_wpt = 0
-                self.show_apt = 0
-            else:
-                self.show_map = True
-                self.show_aptdetails = True
-                self.show_wpt = 1
-                self.show_apt = 1
-                self.show_histsymb = False
+            self.set_atcmode(args)
 
     def echo(self, text='', flags=0):
         if text:
@@ -495,3 +451,47 @@ class nodeData:
         else:
             remove = self.ssd_ownship.intersection(arg)
             self.ssd_ownship = self.ssd_ownship.union(arg) - remove
+
+    def set_atcmode(self, atcmode):
+        """
+        Function: Set the display properties for the ATC mode
+        Args:
+            atcmode:    ATC mode [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 7-2-2022
+        """
+
+        if atcmode.upper() == 'APP':
+            self.show_map = False
+            self.show_histsymb = True
+            self.show_aptdetails = False
+            self.show_wpt = 1
+            self.show_wptlbl = False
+            self.show_apt = 0
+            self.show_aptlbl = False
+        elif atcmode.upper() == 'ACC':
+            self.show_map = False
+            self.show_histsymb = True
+            self.show_aptdetails = False
+            self.show_wpt = 1
+            self.show_wptlbl = False
+            self.show_apt = 0
+            self.show_aptlbl = False
+        elif atcmode.upper() == 'TWR':
+            self.show_map = False
+            self.show_histsymb = False
+            self.show_aptdetails = True
+            self.show_wpt = 1
+            self.show_wptlbl = False
+            self.show_apt = 0
+            self.show_aptlbl = False
+        else:
+            self.show_map = True
+            self.show_histsymb = False
+            self.show_aptdetails = True
+            self.show_wpt = 1
+            self.show_wptlbl = True
+            self.show_apt = 1
+            self.show_aptlbl = True

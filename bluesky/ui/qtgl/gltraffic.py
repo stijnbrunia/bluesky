@@ -47,6 +47,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.alt = glh.GLBuffer()
         self.tas = glh.GLBuffer()
         self.color = glh.GLBuffer()
+        self.leadlinecolor = glh.GLBuffer()
         self.asasn = glh.GLBuffer()
         self.asase = glh.GLBuffer()
         self.histsymblat = glh.GLBuffer()
@@ -114,6 +115,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.alt.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.tas.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.color.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
+        self.leadlinecolor.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
         self.asasn.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.asase.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.rpz.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
@@ -216,7 +218,7 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Leader lines ---------------
 
-        self.leaderlines.create(vertex=MAX_NAIRCRAFT * 4, color=palette.aircraft)
+        self.leaderlines.create(vertex=MAX_NAIRCRAFT * 4, color=self.leadlinecolor)
         self.leaderlines.set_attribs(lat=self.leadlinelat, lon=self.leadlinelon)
 
         # --------------- CPA lines ---------------
@@ -498,6 +500,7 @@ class Traffic(glh.RenderObject, layer=100):
 
             self.cpalines.update(vertex=cpalines)
             self.color.update(color)
+            self.leadlinecolor.update(np.repeat(color, 2, axis=0))
 
             # BlueSky default label (ATC mode BLUESKY)
             if actdata.atcmode == 'BLUESKY':

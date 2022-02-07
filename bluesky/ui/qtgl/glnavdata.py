@@ -79,6 +79,17 @@ class Navdata(glh.RenderObject, layer=-10):
                 self.custwplblbuf.update(
                     np.array(nodedata.custwplbl, dtype=np.string_))
             self.ncustwpts = len(nodedata.custwplat)
+        if 'ATCMODE' in changed_elems:
+            self.runways.set_attribs(color=palette.runways)
+            self.thresholds.set_attribs(color=palette.thresholds)
+            self.taxiways.set_attribs(color=palette.taxiways)
+            self.pavement.set_attribs(color=palette.pavement)
+            self.waypoints.set_attribs(color=palette.wptsymbol)
+            self.wptlabels.set_attribs(color=palette.wptlabel)
+            self.customwp.set_attribs(color=palette.wptsymbol)
+            self.customwplbl.set_attribs(color=palette.wptlabel)
+            self.airports.set_attribs(color=palette.aptsymbol)
+            self.aptlabels.set_attribs(color=palette.aptlabel)
 
     def create(self):
         apt_size = settings.apt_size
@@ -194,9 +205,9 @@ class Navdata(glh.RenderObject, layer=-10):
             self.airports.draw(n_instances=nairports)
 
         # Draw wpt/apt labels
-        if actdata.show_apt:
+        if actdata.show_aptlbl:
             self.aptlabels.draw(n_instances=nairports)
-        if actdata.show_wpt:
+        if actdata.show_wptlbl:
             self.wptlabels.draw(n_instances=nwaypoints)
             if self.ncustwpts > 0:
                 self.customwplbl.draw(n_instances=self.ncustwpts)

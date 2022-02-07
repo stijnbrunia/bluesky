@@ -26,6 +26,8 @@ class Map(glh.RenderObject, layer=-100):
         self.vcount_coast = 0
         self.wraplon_loc = 0
 
+        bs.net.actnodedata_changed.connect(self.actdata_changed)
+
     def create(self):
         ''' Create GL objects. '''
         # ------- Coastlines -----------------------------
@@ -60,14 +62,9 @@ class Map(glh.RenderObject, layer=-100):
         # Send the (possibly) updated global uniforms to the buffer
         self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_LATLON)
 
-        # --- DRAW THE MAP AND COASTLINES ---------------------------------------------
-        # Show/don't show coastlines
         actdata = bs.net.get_nodedata()
-        if not actdata.show_coast:
-            self.coastlines.set_attribs(color=palette.background)
-        if actdata.show_coast:
-            self.coastlines.set_attribs(color=palette.coastlines)
 
+        # --- DRAW THE MAP AND COASTLINES ---------------------------------------------
         # Map and coastlines: don't wrap around in the shader
         self.shaderset.enable_wrap(False)
 
@@ -77,26 +74,31 @@ class Map(glh.RenderObject, layer=-100):
             else:
                 self.maptrans.draw()
         shaderset = glh.ShaderSet.selected
-        if shaderset.data.wrapdir == 0:
-            # Normal case, no wrap around
-            self.coastlines.draw(
-                first_vertex=0, vertex_count=self.vcount_coast)
-        else:
-            self.coastlines.bind()
-            shader = glh.ShaderProgram.bound_shader
-            wrapindex = np.uint32(
-                self.coastindices[int(shaderset.data.wraplon) + 180])
-            if shaderset.data.wrapdir == 1:
-                shader.setAttributeValue(self.wraplon_loc, 360.0)
+        if actdata.show_coast:
+            if shaderset.data.wrapdir == 0:
+                # Normal case, no wrap around
                 self.coastlines.draw(
-                    first_vertex=0, vertex_count=wrapindex)
-                shader.setAttributeValue(self.wraplon_loc, 0.0)
-                self.coastlines.draw(
-                    first_vertex=wrapindex, vertex_count=self.vcount_coast - wrapindex)
+                    first_vertex=0, vertex_count=self.vcount_coast)
             else:
-                shader.setAttributeValue(self.wraplon_loc, -360.0)
-                self.coastlines.draw(
-                    first_vertex=wrapindex, vertex_count=self.vcount_coast - wrapindex)
-                shader.setAttributeValue(self.wraplon_loc, 0.0)
-                self.coastlines.draw(
-                    first_vertex=0, vertex_count=wrapindex)
+                self.coastlines.bind()
+                shader = glh.ShaderProgram.bound_shader
+                wrapindex = np.uint32(
+                    self.coastindices[int(shaderset.data.wraplon) + 180])
+                if shaderset.data.wrapdir == 1:
+                    shader.setAttributeValue(self.wraplon_loc, 360.0)
+                    self.coastlines.draw(
+                        first_vertex=0, vertex_count=wrapindex)
+                    shader.setAttributeValue(self.wraplon_loc, 0.0)
+                    self.coastlines.draw(
+                        first_vertex=wrapindex, vertex_count=self.vcount_coast - wrapindex)
+                else:
+                    shader.setAttributeValue(self.wraplon_loc, -360.0)
+                    self.coastlines.draw(
+                        first_vertex=wrapindex, vertex_count=self.vcount_coast - wrapindex)
+                    shader.setAttributeValue(self.wraplon_loc, 0.0)
+                    self.coastlines.draw(
+                        first_vertex=0, vertex_count=wrapindex)
+
+    def actdata_changed(self, nodeid, nodedata, changed_elems):
+        if 'ATCMODE' in changed_elems:
+            self.coastlines.set_attribs(color=palette.coastlines)
