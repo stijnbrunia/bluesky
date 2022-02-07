@@ -185,6 +185,12 @@ class OpenSkySource:
             cmds   += list("SSRCODE "+ssrdata['callsign']+", "+ssrdata['squawk'])
             cmdst  += [0.01]*len(ssrdata)
 
+            # Labels
+            ssrlabel = data.loc[data['baro_altitude']/aero.ft >= 24500]
+            cmds += list("SSRLABEL "+ssrlabel['callsign']+", C")
+            cmds += list("TRACKLABEL "+ssrlabel['callsign'])
+            cmdst += [0.01]*2*len(ssrlabel)
+
             # Sort
             cmds_df = pd.DataFrame({'COMMAND': cmds, 'TIME': cmdst})
             cmds_df = cmds_df.sort_values(by=['TIME'])
@@ -298,6 +304,9 @@ class OpenSkySource:
             # Create commands
             cmds.append("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
             cmds.append("SETDATAFEED "+acid+" OPENSKY")
+            if float(acalt) >= 24500:
+                cmds.append("SSRLABEL "+acid+", C")
+                cmds.append("TRACKLABEL "+acid)
 
             # Remove aircraft from track data
             idrop = data.index[data['callsign'] == acid]
