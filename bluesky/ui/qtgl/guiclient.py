@@ -315,27 +315,31 @@ class nodeData:
                 else:
                     interval = 0.5  # [nm]
 
-                # First coordinates
-                newdata = [coordinates[0], coordinates[1]]
+                # Check if one line piece fits within the length of the dashed line
+                if length >= interval:
+                    # First coordinates
+                    newdata = [coordinates[0], coordinates[1]]
 
-                # Create the line segments
-                dist = 0
-                # Check if the end of the total line is reached
-                while dist+interval <= length:
-                    # End of the line
-                    lat1, lon1 = geo.kwikpos(newdata[-2], newdata[-1], qdr, interval)
-                    newdata += [lat1, lon1]
-                    dist += interval
-
-                    # Check if there still fits an line segment after the empty segment
-                    if dist+2*interval <= length:
-                        # End of the empty segment
-                        lat2, lon2 = geo.kwikpos(lat1, lon1, qdr, interval)
-                        newdata += [lat2, lon2]
-
+                    # Create the line segments
+                    dist = 0
+                    # Check if the end of the total line is reached
+                    while dist+interval <= length:
+                        # End of the line
+                        lat1, lon1 = geo.kwikpos(newdata[-2], newdata[-1], qdr, interval)
+                        newdata += [lat1, lon1]
                         dist += interval
-                    else:
-                        dist = length
+
+                        # Check if there still fits an line segment after the empty segment
+                        if dist+2*interval <= length:
+                            # End of the empty segment
+                            lat2, lon2 = geo.kwikpos(lat1, lon1, qdr, interval)
+                            newdata += [lat2, lon2]
+
+                            dist += interval
+                        else:
+                            dist = length
+                else:
+                    newdata = []
 
                 newdata = np.array(newdata, dtype=np.float32)
 
