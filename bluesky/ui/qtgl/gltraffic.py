@@ -12,52 +12,56 @@ from bluesky.tools.aero import ft, nm, kts
 
 # Register settings defaults
 settings.set_variable_defaults(
-    text_size=13, ac_size=16,
-    asas_vmin=200.0, asas_vmax=500.0)
+    text_size=13,
+    ac_size=16,
+    asas_vmin=200.0,
+    asas_vmax=500.0
+)
 
 palette.set_default_colours(
     aircraft=(0, 255, 0),
     conflict=(255, 160, 0),
     route=(255, 0, 255),
-    trails=(0, 255, 255))
+    trails=(0, 255, 255)
+)
 
 # Static defines
-MAX_NAIRCRAFT = 10000
-MAX_NCONFLICTS = 25000
-MAX_ROUTE_LENGTH = 500
-ROUTE_SIZE = 500
-TRAILS_SIZE = 1000000
+MAX_NAIRCRAFT       = 10000
+MAX_NCONFLICTS      = 25000
+MAX_ROUTE_LENGTH    = 500
+ROUTE_SIZE          = 500
+TRAILS_SIZE         = 1000000
 
 
 class Traffic(glh.RenderObject, layer=100):
     ''' Traffic OpenGL object. '''
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.initialized = False
-        self.route_acid = ''
-        self.asas_vmin = settings.asas_vmin
-        self.asas_vmax = settings.asas_vmax
+        self.initialized    = False
+        self.route_acid     = ''
+        self.asas_vmin      = settings.asas_vmin
+        self.asas_vmax      = settings.asas_vmax
 
         # --------------- Aircraft data ---------------
 
-        self.hdg = glh.GLBuffer()
-        self.rpz = glh.GLBuffer()
-        self.lat = glh.GLBuffer()
-        self.lon = glh.GLBuffer()
-        self.alt = glh.GLBuffer()
-        self.tas = glh.GLBuffer()
-        self.color = glh.GLBuffer()
-        self.leadlinecolor = glh.GLBuffer()
-        self.asasn = glh.GLBuffer()
-        self.asase = glh.GLBuffer()
-        self.histsymblat = glh.GLBuffer()
-        self.histsymblon = glh.GLBuffer()
-        self.leadlinelat = glh.GLBuffer()
-        self.leadlinelon = glh.GLBuffer()
+        self.hdg            = glh.GLBuffer()
+        self.rpz            = glh.GLBuffer()
+        self.lat            = glh.GLBuffer()
+        self.lon            = glh.GLBuffer()
+        self.alt            = glh.GLBuffer()
+        self.tas            = glh.GLBuffer()
+        self.color          = glh.GLBuffer()
+        self.leadlinecolor  = glh.GLBuffer()
+        self.asasn          = glh.GLBuffer()
+        self.asase          = glh.GLBuffer()
+        self.histsymblat    = glh.GLBuffer()
+        self.histsymblon    = glh.GLBuffer()
+        self.leadlinelat    = glh.GLBuffer()
+        self.leadlinelon    = glh.GLBuffer()
 
         # --------------- Label data ---------------
 
-        self.lbl = glh.GLBuffer()
+        self.lbl    = glh.GLBuffer()
         self.lbl_ll = glh.GLBuffer()
         self.lbl_lc = glh.GLBuffer()
         self.lbl_lr = glh.GLBuffer()
@@ -67,45 +71,45 @@ class Traffic(glh.RenderObject, layer=100):
         self.lbl_uc = glh.GLBuffer()
         self.lbl_ur = glh.GLBuffer()
         self.ssrlbl = glh.GLBuffer()
-        self.mlbl = glh.GLBuffer()
+        self.mlbl   = glh.GLBuffer()
 
         # --------------- Aircraft objects ---------------
 
-        self.ssd = glh.VertexArrayObject(glh.gl.GL_POINTS, shader_type='ssd')
-        self.protectedzone = glh.Circle()
-        self.ac_symbol = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
-        self.ac_symbollvnl = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
-        self.hist_symbol = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
-        self.cpalines = glh.VertexArrayObject(glh.gl.GL_LINES)
-        self.route = glh.VertexArrayObject(glh.gl.GL_LINES)
-        self.routelbl = glh.Text(settings.text_size, (12, 2))
-        self.rwaypoints = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
-        self.traillines = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.ssd            = glh.VertexArrayObject(glh.gl.GL_POINTS, shader_type='ssd')
+        self.protectedzone  = glh.Circle()
+        self.ac_symbol      = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
+        self.ac_symbollvnl  = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
+        self.hist_symbol    = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
+        self.cpalines       = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.route          = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.routelbl       = glh.Text(settings.text_size, (12, 2))
+        self.rwaypoints     = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
+        self.traillines     = glh.VertexArrayObject(glh.gl.GL_LINES)
 
         # --------------- Label objects ---------------
 
-        self.aclabels = glh.Text(settings.text_size, (8, 3))     # BlueSky default (ATC mode BLUESKY)
-        self.aclabels_ll = glh.Text(settings.text_size, (8, 4))  # lower-left
-        self.aclabels_lc = glh.Text(settings.text_size, (8, 4))  # lower-center
-        self.aclabels_lr = glh.Text(settings.text_size, (8, 4))  # lower-right
-        self.aclabels_cl = glh.Text(settings.text_size, (8, 4))  # center-left
-        self.aclabels_cr = glh.Text(settings.text_size, (8, 4))  # center-right
-        self.aclabels_ul = glh.Text(settings.text_size, (8, 4))  # upper-left
-        self.aclabels_uc = glh.Text(settings.text_size, (8, 4))  # upper-center
-        self.aclabels_ur = glh.Text(settings.text_size, (8, 4))  # upper-right
-        self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.aclabels       = glh.Text(settings.text_size, (8, 3))     # BlueSky default (ATC mode BLUESKY)
+        self.aclabels_ll    = glh.Text(settings.text_size, (8, 4))  # lower-left
+        self.aclabels_lc    = glh.Text(settings.text_size, (8, 4))  # lower-center
+        self.aclabels_lr    = glh.Text(settings.text_size, (8, 4))  # lower-right
+        self.aclabels_cl    = glh.Text(settings.text_size, (8, 4))  # center-left
+        self.aclabels_cr    = glh.Text(settings.text_size, (8, 4))  # center-right
+        self.aclabels_ul    = glh.Text(settings.text_size, (8, 4))  # upper-left
+        self.aclabels_uc    = glh.Text(settings.text_size, (8, 4))  # upper-center
+        self.aclabels_ur    = glh.Text(settings.text_size, (8, 4))  # upper-right
+        self.leaderlines    = glh.VertexArrayObject(glh.gl.GL_LINES)
 
-        self.ssrlabels = glh.Text(0.95*settings.text_size, (7, 3))
-        self.microlabels = glh.Text(0.95*settings.text_size, (3, 1))
+        self.ssrlabels      = glh.Text(0.95*settings.text_size, (7, 3))
+        self.microlabels    = glh.Text(0.95*settings.text_size, (3, 1))
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
     def create(self):
-        ac_size = settings.ac_size
-        text_size = settings.text_size
-        text_width = text_size
+        ac_size     = settings.ac_size
+        text_size   = settings.text_size
+        text_width  = text_size
         text_height = text_size*1.2307692307692308
-        wpt_size = settings.wpt_size
+        wpt_size    = settings.wpt_size
 
         # --------------- Aircraft data ---------------
 
@@ -226,10 +230,12 @@ class Traffic(glh.RenderObject, layer=100):
         self.cpalines.create(vertex=MAX_NCONFLICTS * 16, color=palette.conflict, usage=glh.GLBuffer.StreamDraw)
 
         # --------------- Aircraft Route ---------------
+
         self.route.create(vertex=ROUTE_SIZE * 8, color=palette.route, usage=glh.gl.GL_DYNAMIC_DRAW)
 
         self.routelbl.create(ROUTE_SIZE * 24, ROUTE_SIZE * 4, ROUTE_SIZE * 4,
                              palette.route, (wpt_size, 0.5 * wpt_size), instanced=True)
+
         rwptvertices = np.array([(-0.2 * wpt_size, -0.2 * wpt_size),
                                  (0.0,            -0.8 * wpt_size),
                                  (0.2 * wpt_size, -0.2 * wpt_size),
@@ -242,6 +248,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.rwaypoints.set_attribs(lat=self.routelbl.lat, lon=self.routelbl.lon, instance_divisor=1)
 
         # --------------- Aircraft Trails ---------------
+
         self.traillines.create(vertex=TRAILS_SIZE * 16, color=palette.trails)
         self.initialized = True
 
@@ -266,8 +273,7 @@ class Traffic(glh.RenderObject, layer=100):
 
         # PZ circles only when they are bigger than the A/C symbols
         if actdata.show_pz and actdata.zoom >= 0.15:
-            self.shaderset.set_vertex_scale_type(
-                self.shaderset.VERTEX_IS_METERS)
+            self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_METERS)
             self.protectedzone.draw(n_instances=actdata.naircraft)
 
         self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_SCREEN)
@@ -278,14 +284,17 @@ class Traffic(glh.RenderObject, layer=100):
         else:
             self.ac_symbollvnl.draw(n_instances=actdata.naircraft)
 
+        # Draw history symbols
         if actdata.show_histsymb and len(actdata.acdata.histsymblat) != 0:
             self.hist_symbol.set_attribs(color=palette.aircraft)
             self.hist_symbol.draw(n_instances=len(actdata.acdata.histsymblat))
 
+        # Draw route labels
         if self.routelbl.n_instances:
             self.rwaypoints.draw(n_instances=self.routelbl.n_instances)
             self.routelbl.draw()
 
+        # Draw traffic labels
         if actdata.atcmode == 'BLUESKY':
             if actdata.show_lbl >= 1:
                 self.aclabels.draw(n_instances=actdata.naircraft)
@@ -302,7 +311,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.microlabels.draw(n_instances=actdata.naircraft)
             self.leaderlines.draw()
 
-        # SSD
+        # Draw SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
             ssd_shader = glh.ShaderSet.get_shader('ssd')
             ssd_shader.bind()
@@ -395,21 +404,23 @@ class Traffic(glh.RenderObject, layer=100):
 
         self.glsurface.makeCurrent()
         actdata = bs.net.get_nodedata()
+
+        # Filer on altitude
         if actdata.filteralt:
-            idx = np.where(
-                (data.alt >= actdata.filteralt[0]) * (data.alt <= actdata.filteralt[1]))
-            data.lat = data.lat[idx]
-            data.lon = data.lon[idx]
+            idx         = np.where((data.alt >= actdata.filteralt[0]) * (data.alt <= actdata.filteralt[1]))
+            data.lat    = data.lat[idx]
+            data.lon    = data.lon[idx]
             data.selhdg = data.selhdg[idx]
-            data.trk = data.trk[idx]
+            data.trk    = data.trk[idx]
             data.selalt = data.selalt[idx]
-            data.alt = data.alt[idx]
-            data.tas = data.tas[idx]
-            data.vs = data.vs[idx]
-            data.rpz = data.rpz[idx]
-            data.type = data.type[idx]
-        naircraft = len(data.lat)
-        actdata.translvl = data.translvl
+            data.alt    = data.alt[idx]
+            data.tas    = data.tas[idx]
+            data.vs     = data.vs[idx]
+            data.rpz    = data.rpz[idx]
+            data.type   = data.type[idx]
+
+        naircraft           = len(data.lat)
+        actdata.translvl    = data.translvl
         # self.asas_vmin = data.vmin # TODO: array should be attribute not uniform
         # self.asas_vmax = data.vmax
 
@@ -432,27 +443,25 @@ class Traffic(glh.RenderObject, layer=100):
                 self.asase.update(np.array(data.asase, dtype=np.float32))
 
             # CPA lines to indicate conflicts
-            ncpalines = np.count_nonzero(data.inconf)
-
-            cpalines = np.zeros(4 * ncpalines, dtype=np.float32)
+            ncpalines   = np.count_nonzero(data.inconf)
+            cpalines    = np.zeros(4 * ncpalines, dtype=np.float32)
             self.cpalines.set_vertex_count(2 * ncpalines)
 
             # Labels and colors
-            rawlabel = ''
-            rawlabels = ['', '', '',
-                         '', '',
-                         '', '', '']
-            rawmlabel = ''
+            rawlabel    = ''
+            rawlabels   = ['', '', '',
+                           '', '',
+                           '', '', '']
+            rawmlabel   = ''
             rawssrlabel = ''
             leaderlines = []
-            color = np.empty(
-                (min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
-            selssd = np.zeros(naircraft, dtype=np.uint8)
-            confidx = 0
+            color       = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
+            selssd      = np.zeros(naircraft, dtype=np.uint8)
+            confidx     = 0
 
             zdata = zip(data.gs, data.id, data.inconf, data.ingroup, data.lat, data.lon, data.tcpamax, data.trk)
             for i, (gs, acid, inconf, ingroup, lat, lon, tcpa, trk) in enumerate(zdata):
-
+                # Check for maximum aircraft
                 if i >= MAX_NAIRCRAFT:
                     break
 
