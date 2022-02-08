@@ -58,6 +58,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.histsymblon    = glh.GLBuffer()
         self.leadlinelat    = glh.GLBuffer()
         self.leadlinelon    = glh.GLBuffer()
+        self.leadlinevert   = glh.GLBuffer()
 
         # --------------- Label data ---------------
 
@@ -127,6 +128,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.histsymblon.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
         self.leadlinelat.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
         self.leadlinelon.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
+        self.leadlinevert.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
 
         # --------------- Label data ---------------
 
@@ -174,7 +176,7 @@ class Traffic(glh.RenderObject, layer=100):
                                    (0.5 * ac_size, -0.5 * ac_size),
                                    (0.5 * ac_size, 0.5 * ac_size),
                                    (-0.5 * ac_size, 0.5 * ac_size)],
-                              dtype=np.float32)  # a square
+                                  dtype=np.float32)  # a square
         self.ac_symbollvnl.create(vertex=acverticeslvnl)
         self.ac_symbollvnl.set_attribs(lat=self.lat, lon=self.lon, color=self.color, instance_divisor=1)
 
@@ -222,8 +224,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Leader lines ---------------
 
-        self.leaderlines.create(vertex=MAX_NAIRCRAFT * 4, color=self.leadlinecolor)
-        self.leaderlines.set_attribs(lat=self.leadlinelat, lon=self.leadlinelon)
+        self.leaderlines.create(vertex=MAX_NAIRCRAFT*4, color=palette.aircraft, usage=glh.GLBuffer.DynamicDraw)
+        self.leaderlines.set_attribs(lat=self.lat, lon=self.lon)
 
         # --------------- CPA lines ---------------
 
@@ -531,8 +533,7 @@ class Traffic(glh.RenderObject, layer=100):
                 self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
                 # Leader line update
                 leaderlines = np.array(leaderlines, dtype=np.float32)
-                self.leaderlines.set_vertex_count(int(len(leaderlines)/2))
-                self.leaderlines.update(vertex=leaderlines)
+                self.leaderlines.vertex.update(leaderlines)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:
