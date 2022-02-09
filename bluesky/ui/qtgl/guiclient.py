@@ -92,6 +92,8 @@ class GuiClient(Client):
             data_changed.append('CUSTWPT')
         elif name == b'DISPLAYFLAG':
             sender_data.setflag(**data)
+            if data['flag'] == 'ATCMODE':
+                data_changed.append('ATCMODE')
         elif name == b'ECHO':
             
             data_changed.append('ECHOTEXT')
@@ -195,31 +197,12 @@ class nodeData:
         self.show_fir      = True
         self.show_lbl      = 2
         self.show_poly     = 1  # 0=invisible, 1=outline, 2=fill
-        if settings.atc_mode.upper() == 'BLUESKY':
-            self.show_map = True
-            self.show_aptdetails = True
-            self.show_wpt = 1
-            self.show_apt = 1
-            self.show_histsymb = False
-        else:
-            if settings.atc_mode.upper() == 'APP':
-                pass
-            if settings.atc_mode.upper() == 'TWR':
-                palette.background = (4, 90, 4)
-                self.show_aptdetails = True
-                self.show_histsymb = False
-            else:
-                self.show_aptdetails = False
-                self.show_histsymb = True
-            self.show_map = False
-            self.show_wpt = 0
-            self.show_apt = 0
         self.ssd_all       = False
         self.ssd_conflicts = False
         self.ssd_ownship   = set()
-
-        self.atcmode = settings.atc_mode
-
+        self.atcmode       = settings.atc_mode
+        # Display flags based on ATC mode
+        self.set_atcmode(settings.atc_mode.upper())
 
     def siminit(self, shapes, **kwargs):
         self.__dict__.update(kwargs)
@@ -311,27 +294,31 @@ class nodeData:
                 else:
                     interval = 0.5  # [nm]
 
-                # First coordinates
-                newdata = [coordinates[0], coordinates[1]]
+                # Check if one line piece fits within the length of the dashed line
+                if length >= interval:
+                    # First coordinates
+                    newdata = [coordinates[0], coordinates[1]]
 
-                # Create the line segments
-                dist = 0
-                # Check if the end of the total line is reached
-                while dist+interval <= length:
-                    # End of the line
-                    lat1, lon1 = geo.kwikpos(newdata[-2], newdata[-1], qdr, interval)
-                    newdata += [lat1, lon1]
-                    dist += interval
-
-                    # Check if there still fits an line segment after the empty segment
-                    if dist+2*interval <= length:
-                        # End of the empty segment
-                        lat2, lon2 = geo.kwikpos(lat1, lon1, qdr, interval)
-                        newdata += [lat2, lon2]
-
+                    # Create the line segments
+                    dist = 0
+                    # Check if the end of the total line is reached
+                    while dist+interval <= length:
+                        # End of the line
+                        lat1, lon1 = geo.kwikpos(newdata[-2], newdata[-1], qdr, interval)
+                        newdata += [lat1, lon1]
                         dist += interval
-                    else:
-                        dist = length
+
+                        # Check if there still fits an line segment after the empty segment
+                        if dist+2*interval <= length:
+                            # End of the empty segment
+                            lat2, lon2 = geo.kwikpos(lat1, lon1, qdr, interval)
+                            newdata += [lat2, lon2]
+
+                            dist += interval
+                        else:
+                            dist = length
+                else:
+                    newdata = []
 
                 newdata = np.array(newdata, dtype=np.float32)
 
@@ -438,19 +425,13 @@ class nodeData:
             self.show_histsymb = not self.show_histsymb
 
         elif flag == 'ATCMODE':
+            # Set ATC mode
             self.atcmode = args
-            if self.atcmode == 'APP':
-                palette.aircraft = (220, 220, 220)
-                palette.coastlines = (44, 126, 41)
-            elif self.atcmode == 'ACC':
-                palette.aircraft = (0, 255, 0)
-                palette.coastlines = (44, 126, 41)
-            elif self.atcmode == 'TWR':
-                palette.aircraft = (210, 210, 200)
-                palette.coastlines = (0, 0, 0)
-            else:
-                palette.aircraft = (0, 255, 0)
-                palette.coastlines = (85, 85, 115)
+            settings.atc_mode = args
+            # Load new palette
+            palette.init()
+            # Display flags
+            self.set_atcmode(args)
 
     def echo(self, text='', flags=0):
         if text:
@@ -470,3 +451,47 @@ class nodeData:
         else:
             remove = self.ssd_ownship.intersection(arg)
             self.ssd_ownship = self.ssd_ownship.union(arg) - remove
+
+    def set_atcmode(self, atcmode):
+        """
+        Function: Set the display properties for the ATC mode
+        Args:
+            atcmode:    ATC mode [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 7-2-2022
+        """
+
+        if atcmode.upper() == 'APP':
+            self.show_map = False
+            self.show_histsymb = True
+            self.show_aptdetails = False
+            self.show_wpt = 1
+            self.show_wptlbl = False
+            self.show_apt = 0
+            self.show_aptlbl = False
+        elif atcmode.upper() == 'ACC':
+            self.show_map = False
+            self.show_histsymb = True
+            self.show_aptdetails = False
+            self.show_wpt = 1
+            self.show_wptlbl = False
+            self.show_apt = 0
+            self.show_aptlbl = False
+        elif atcmode.upper() == 'TWR':
+            self.show_map = False
+            self.show_histsymb = False
+            self.show_aptdetails = True
+            self.show_wpt = 1
+            self.show_wptlbl = False
+            self.show_apt = 0
+            self.show_aptlbl = False
+        else:
+            self.show_map = True
+            self.show_histsymb = False
+            self.show_aptdetails = True
+            self.show_wpt = 1
+            self.show_wptlbl = True
+            self.show_apt = 1
+            self.show_aptlbl = True

@@ -129,6 +129,13 @@ class RadarWidget(glh.RenderWidget):
         # Update pan/zoom
         if 'PANZOOM' in changed_elems:
             self.panzoom(pan=nodedata.pan, zoom=nodedata.zoom, absolute=True, screenrange=nodedata.screenrange)
+        if 'ATCMODE' in changed_elems:
+            if nodedata.atcmode == 'APP':
+                self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=36.)
+            if nodedata.atcmode == 'ACC':
+                self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=120.)
+            if nodedata.atcmode == 'TWR':
+                self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=2.)
 
     def initializeGL(self):
         """Initialize OpenGL, VBOs, upload data on the GPU, etc."""

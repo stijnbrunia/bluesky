@@ -1,13 +1,22 @@
 ''' BlueSky colour palette loader. '''
 from os import path
 from bluesky import settings
-settings.set_variable_defaults(colour_palette='bluesky-default', gfx_path='data/graphics')
+settings.set_variable_defaults(atc_mode='BLUESKY', colour_palette='bluesky-default', gfx_path='data/graphics')
 
 def init():
+    # Determine palette based on ATC mode
+    if settings.atc_mode.upper() == 'APP':
+        palette = 'lvnl-app'
+    elif settings.atc_mode.upper() == 'ACC':
+        palette = 'lvnl-acc'
+    elif settings.atc_mode.upper() == 'TWR':
+        palette = 'lvnl-twr'
+    else:
+        palette = settings.colour_palette
     # Load the palette file selected in settings
-    pfile = path.join(settings.gfx_path, 'palettes', settings.colour_palette)
+    pfile = path.join(settings.gfx_path, 'palettes', palette)
     if path.isfile(pfile):
-        print('Loading palette ' + settings.colour_palette)
+        print('Loading palette ' + palette)
         exec(compile(open(pfile).read(), pfile, 'exec'), globals())
         return True
     else:

@@ -7,7 +7,7 @@ from bluesky.ui.qtgl import glhelpers as glh
 
 
 palette.set_default_colours(
-    polys=(0, 0, 255),
+    polys=(0, 255, 255),
     previewpoly=(0, 204, 255)
 ) 
 
@@ -42,7 +42,7 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
         self.allpfill.create(vertex=POLY_SIZE * 24,
                              color=np.append(palette.polys, 50))
-        self.allpoints.create(vertex=POLY_SIZE * 24, color=palette.polys)
+        self.allpoints.create(vertex=POLY_SIZE * 24, color=POLY_SIZE * 12)
 
     def draw(self):
         actdata = bs.net.get_nodedata()
@@ -133,6 +133,12 @@ class Poly(glh.RenderObject, layer=-20):
             # Points
             if nodedata.polyspoints:
                 contours, fills, colors = zip(*nodedata.polyspoints.values())
-                self.allpoints.update(vertex=np.concatenate(fills))
+                self.allpoints.update(vertex=np.concatenate(fills),
+                                      color=np.concatenate(colors))
             else:
                 self.allpoints.set_vertex_count(0)
+
+        if 'ATCMODE' in changed_elems:
+            self.allpfill.set_attribs(color=np.append(palette.polys, 50))
+            self.polyprev.set_attribs(color=palette.previewpoly)
+
