@@ -236,9 +236,9 @@ class TrafficDataFeed(Entity):
             applywind = bs.traf.alt[itraf] > 50.*aero.ft
 
             # Get wind data
-            bs.traf.windnorth[itraf], bs.traf.windeast[itraf] = bs.traf.wind.getdata(bs.traf.lat[itraf],
-                                                                                     bs.traf.lon[itraf],
-                                                                                     bs.traf.alt[itraf])
+            # bs.traf.windnorth[itraf], bs.traf.windeast[itraf] = bs.traf.wind.getdata(bs.traf.lat[itraf],
+            #                                                                          bs.traf.lon[itraf],
+            #                                                                          bs.traf.alt[itraf])
 
             # Determine true airspeed
             tasnorth = bs.traf.gsnorth[itraf] - bs.traf.windnorth[itraf]*applywind
