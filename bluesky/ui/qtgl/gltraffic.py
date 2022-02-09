@@ -224,8 +224,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Leader lines ---------------
 
-        self.leaderlines.create(vertex=MAX_NAIRCRAFT*4, color=palette.aircraft, usage=glh.GLBuffer.DynamicDraw)
-        self.leaderlines.set_attribs(lat=self.lat, lon=self.lon)
+        self.leaderlines.create(vertex=MAX_NAIRCRAFT*4, color=palette.aircraft)
+        self.leaderlines.set_attribs(lat=self.leadlinelat, lon=self.leadlinelon)
 
         # --------------- CPA lines ---------------
 
@@ -533,7 +533,7 @@ class Traffic(glh.RenderObject, layer=100):
                 self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
                 # Leader line update
                 leaderlines = np.array(leaderlines, dtype=np.float32)
-                self.leaderlines.vertex.update(leaderlines)
+                self.leaderlines.update(vertex=leaderlines)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:

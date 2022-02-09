@@ -42,7 +42,7 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
         self.allpfill.create(vertex=POLY_SIZE * 24,
                              color=np.append(palette.polys, 50))
-        self.allpoints.create(vertex=POLY_SIZE * 24, color=palette.polys)
+        self.allpoints.create(vertex=POLY_SIZE * 24, color=POLY_SIZE * 12)
 
     def draw(self):
         actdata = bs.net.get_nodedata()
