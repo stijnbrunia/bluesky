@@ -309,9 +309,12 @@ class TrafficDataFeed(Entity):
         """
 
         acid = bs.traf.id[idx]
-        self.datafeedids.append(acid)
-        self.datafeed[idx] = True
-        self.source[idx] = source
+        if acid not in self.datafeedids:
+            self.datafeedids.append(acid)
+            self.datafeed[idx] = True
+            self.source[idx] = source
+        else:
+            return False, acid+' state already taken from data source'
 
     def uco(self, idx):
         """
