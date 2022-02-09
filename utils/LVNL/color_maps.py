@@ -1,6 +1,6 @@
 import os
 
-files = ['752.scn']
+files = []
 
 path = os.path.expanduser("~") + "/PycharmProjects/bluesky/scenario/LVNL/Maps/mapid/"
 for file in files:

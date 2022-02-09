@@ -104,15 +104,27 @@ class LVNLVariables(Entity):
         Returns: -
         """
 
-        # Autopilot modes
-        bs.traf.swlnav[idx] = True
-        bs.traf.swvnav[idx] = True
-        bs.traf.swvnavspd[idx] = True
+        # Autopilot modes (check if there is a route)
+        if bs.traf.ap.route[idx].nwp > 0:
+            # Enable autopilot modes
+            bs.traf.swlnav[idx] = True
+            bs.traf.swvnav[idx] = True
+            bs.traf.swvnavspd[idx] = True
+        else:
+            # Set current heading/altitude/speed
+            bs.traf.selhdg[idx] = bs.traf.hdg[idx]
+            bs.traf.selalt[idx] = bs.traf.alt[idx]
+            bs.traf.selspd[idx] = bs.traf.cas[idx]
+            # Disable autopilot modes
+            bs.traf.swlnav[idx] = False
+            bs.traf.swvnav[idx] = False
+            bs.traf.swvnavspd[idx] = False
 
         # Labels
         self.tracklbl[idx] = True
         self.ssrlbl[idx] = ''
 
+        # Set UCO/REL
         bs.traf.trafdatafeed.uco(idx)
         self.uco[idx] = True
         self.rel[idx] = False
@@ -137,6 +149,7 @@ class LVNLVariables(Entity):
         self.tracklbl[idx] = False
         self.ssrlbl[idx] = 'C'
 
+        # Set UCO/REL
         self.uco[idx] = False
         self.rel[idx] = True
 
