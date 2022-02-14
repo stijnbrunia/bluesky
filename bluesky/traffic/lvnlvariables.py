@@ -273,59 +273,87 @@ class LVNLVariables(Entity):
 
         self.ssr[idx] = int(ssr)
 
-    @stack.command(name='SSRLABEL', brief='SSRLABEL CALLSIGN MODE')
-    def setssrlabel(self, idx: 'acid', ssrmode: str):
+    @stack.command(name='SSRLABEL', brief='SSRLABEL CALLSIGN')
+    def setssrlabel(self, idx: 'acid', *args):
         """
         Function: Set the SSR label
         Args:
             idx:        index for traffic arrays [int]
-            ssrmode:    ssr label mode [int]
+            *args:      arguments [tuple]
         Returns: -
 
         Created by: Bob van Dillen
         Date: 24-1-2022
         """
 
-        ssrmode = ssrmode.upper()
-
-        # Check if it is a valid mode
-        if ssrmode in ['A', 'C', 'ACID']:
-            # Get active modes
+        # No arguments passed
+        if len(args) == 0:
             if self.ssrlbl[idx]:
-                actmodes = self.ssrlbl[idx].split(';')
+                self.ssrlbl[idx] = ''
             else:
-                actmodes = []
+                self.ssrlbl[idx] = 'C'
 
-            # Remove/Append
-            if ssrmode in actmodes:
-                actmodes.remove(ssrmode)
-            else:
-                actmodes.append(ssrmode)
+        # Switch on/off
+        elif args[0].upper() == 'ON' or args[0].upper() == 'TRUE':
+            self.ssrlbl[idx] = 'C'
+        elif args[0].upper() == 'OFF' or args[0].upper() == 'FALSE':
+            self.ssrlbl[idx] = ''
 
-            # Reconstruct ssrlbl
-            ssrlbl = ''
-            for mode in actmodes:
-                ssrlbl += mode+';'
-            ssrlbl = ssrlbl[:-1]  # Leave out last ';'
-
-            self.ssrlbl[idx] = ssrlbl
-
+        # Switch modes on/off
         else:
-            return False, 'SSRLABEL: Not a valid SSR label item'
+            for ssrmode in args:
+                ssrmode = ssrmode.upper()
+
+                # Check if it is a valid mode
+                if ssrmode in ['A', 'C', 'ACID']:
+                    # Get active modes
+                    if self.ssrlbl[idx]:
+                        actmodes = self.ssrlbl[idx].split(';')
+                    else:
+                        actmodes = []
+
+                    # Remove/Append
+                    if ssrmode in actmodes:
+                        actmodes.remove(ssrmode)
+                    else:
+                        actmodes.append(ssrmode)
+
+                    # Reconstruct ssrlbl
+                    ssrlbl = ''
+                    for mode in actmodes:
+                        ssrlbl += mode+';'
+                    ssrlbl = ssrlbl[:-1]  # Leave out last ';'
+
+                    self.ssrlbl[idx] = ssrlbl
+
+            else:
+                return False, 'SSRLABEL: Not a valid SSR label item'
 
     @stack.command(name='TRACKLABEL', brief='TRACKLABEL CALLSIGN')
-    def settracklabel(self, idx: 'acid'):
+    def settracklabel(self, idx: 'acid', *args):
         """
         Function: Set the track label
         Args:
             idx:        index for traffic arrays [int]
+            *args:      arguments [tuple]
         Returns: -
 
         Created by: Bob van Dillen
         Date: 24-1-2022
         """
 
-        self.tracklbl[idx] = not self.tracklbl[idx]
+        # No arguments passed
+        if len(args) == 0:
+            self.tracklbl[idx] = not self.tracklbl[idx]
+
+        # Switch on/off
+        elif args[0].upper() == 'ON' or args[0].upper() == 'TRUE':
+            self.tracklbl[idx] = True
+        elif args[0].upper() == 'OFF' or args[0].upper() == 'FALSE':
+            self.tracklbl[idx] = False
+
+        else:
+            return False, 'TRACKLABEL: Not a valid argument'
 
     @stack.command(name='WTC', brief='WTC CALLSIGN WTC')
     def setwtc(self, idx: 'acid', wtc: str = ''):

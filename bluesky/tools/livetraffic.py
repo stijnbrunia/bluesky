@@ -186,9 +186,9 @@ class OpenSkySource:
             cmdst  += [0.01]*len(ssrdata)
 
             # Labels
-            ssrlabel = data.loc[data['baro_altitude']/aero.ft >= 24500]
-            cmds += list("SSRLABEL "+ssrlabel['callsign']+", C")
-            cmds += list("TRACKLABEL "+ssrlabel['callsign'])
+            ssrlabel = data.loc[(data['baro_altitude']/aero.ft <= 1500) | (data['baro_altitude']/aero.ft >= 24500)]
+            cmds += list("SSRLABEL "+ssrlabel['callsign']+", ON")
+            cmds += list("TRACKLABEL "+ssrlabel['callsign']+", OFF")
             cmdst += [0.01]*2*len(ssrlabel)
 
             # Sort
@@ -241,6 +241,14 @@ class OpenSkySource:
             hdg = np.array(data['true_track'])
             alt = np.array(data['baro_altitude'])
             gs = np.array(data['velocity'])
+
+            # Set labels
+            ssrlabel = data.loc[(data['baro_altitude']/aero.ft <= 1500) | (data['baro_altitude']/aero.ft >= 24500)]
+            tracklabel = data.loc[(1500 <= data['baro_altitude']/aero.ft) & (data['baro_altitude'] <= 24500)]
+            cmds += list('TRACKLABEL '+tracklabel['callsign']+', ON')
+            cmds += list('TRACKLABEL '+ssrlabel['callsign']+', OFF')
+            cmds += list('SSRLABEL '+tracklabel['callsign']+', OFF')
+            cmds += list('SSRLABEL '+ssrlabel['callsign']+', ON')
 
             # Delete inactive aircraft
             self.delete_old(cmds)
@@ -304,9 +312,9 @@ class OpenSkySource:
             # Create commands
             cmds.append("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
             cmds.append("SETDATAFEED "+acid+" OPENSKY")
-            if float(acalt) >= 24500:
-                cmds.append("SSRLABEL "+acid+", C")
-                cmds.append("TRACKLABEL "+acid)
+            if float(acalt) <= 1500 or float(acalt) >= 24500:
+                cmds.append("SSRLABEL "+acid+", ON")
+                cmds.append("TRACKLABEL "+acid+", OFF")
 
             # Remove aircraft from track data
             idrop = data.index[data['callsign'] == acid]
