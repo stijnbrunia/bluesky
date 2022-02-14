@@ -225,7 +225,7 @@ class OpenSkySource:
         running = True
 
         # Get new data every 12.5 seconds
-        if simtime-self.t_prev > 12.5:
+        if simtime-self.t_prev >= 12.5:
             data_datetime, data = self.request_data()
 
             # Commands
