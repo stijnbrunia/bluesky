@@ -327,7 +327,7 @@ class LVNLVariables(Entity):
                     self.ssrlbl[idx] = ssrlbl
 
             else:
-                return False, 'SSRLABEL: Not a valid SSR label items'
+                return False, 'SSRLABEL: Not a valid SSR label item'
 
     @stack.command(name='TRACKLABEL', brief='TRACKLABEL CALLSIGN')
     def settracklabel(self, idx: 'acid', *args):
