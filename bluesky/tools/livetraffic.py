@@ -186,7 +186,7 @@ class OpenSkySource:
             cmdst  += [0.01]*len(ssrdata)
 
             # Labels
-            ssrlabel = data.loc[(data['baro_altitude']/aero.ft <= 1500) | (data['baro_altitude']/aero.ft >= 24500)]
+            ssrlabel = data.loc[(data['baro_altitude']/aero.ft < 1500) | (data['baro_altitude']/aero.ft > 24500)]
             cmds += list("SSRLABEL "+ssrlabel['callsign']+", ON")
             cmds += list("TRACKLABEL "+ssrlabel['callsign']+", OFF")
             cmdst += [0.01]*2*len(ssrlabel)
@@ -243,7 +243,7 @@ class OpenSkySource:
             gs = np.array(data['velocity'])
 
             # Set labels
-            ssrlabel = data.loc[(data['baro_altitude']/aero.ft <= 1500) | (data['baro_altitude']/aero.ft >= 24500)]
+            ssrlabel = data.loc[(data['baro_altitude']/aero.ft < 1500) | (data['baro_altitude']/aero.ft > 24500)]
             tracklabel = data.loc[(1500 <= data['baro_altitude']/aero.ft) & (data['baro_altitude'] <= 24500)]
             cmds += list('TRACKLABEL '+tracklabel['callsign']+', ON')
             cmds += list('TRACKLABEL '+ssrlabel['callsign']+', OFF')
@@ -312,7 +312,7 @@ class OpenSkySource:
             # Create commands
             cmds.append("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
             cmds.append("SETDATAFEED "+acid+" OPENSKY")
-            if float(acalt) <= 1500 or float(acalt) >= 24500:
+            if float(acalt) < 1500 or float(acalt) > 24500:
                 cmds.append("SSRLABEL "+acid+", ON")
                 cmds.append("TRACKLABEL "+acid+", OFF")
 
