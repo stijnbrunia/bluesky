@@ -29,6 +29,7 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpfill = glh.VertexArrayObject(glh.gl.GL_TRIANGLES)
         # Points
         self.allpoints = glh.VertexArrayObject(glh.gl.GL_TRIANGLES)
+        self.pointslat = glh.GLBuffer()
 
         self.prevmousepos = (0, 0)
 
@@ -37,12 +38,31 @@ class Poly(glh.RenderObject, layer=-20):
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
     def create(self):
+        # --------------- Preview poly ---------------
         self.polyprev.create(vertex=POLYPREV_SIZE * 8,
                              color=palette.previewpoly, usage=glh.gl.GL_DYNAMIC_DRAW)
+
+        # --------------- Polys ---------------
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
+
+        # --------------- Fills ---------------
         self.allpfill.create(vertex=POLY_SIZE * 24,
                              color=np.append(palette.polys, 50))
-        self.allpoints.create(vertex=POLY_SIZE * 24, color=POLY_SIZE * 12)
+
+        # --------------- Points ---------------
+        # Latitude and longitude buffer
+        self.pointslat.create(POLY_SIZE * 16)
+        # Define vertices
+        point_size = 2
+        num_vert = 6
+        angles = np.linspace(0., 2 * np.pi, num_vert)
+        x = (point_size / 2) * np.sin(angles)
+        y = (point_size / 2) * np.cos(angles)
+        point_vert = np.empty(2 * num_vert, dtype=np.float32)
+        point_vert[0::2] = x
+        point_vert[1::2] = y
+        # Define VAO
+        self.allpoints.create(vertex=point_vert, color=POLY_SIZE * 12)
 
     def draw(self):
         actdata = bs.net.get_nodedata()
@@ -116,7 +136,7 @@ class Poly(glh.RenderObject, layer=-20):
         # Shape data change
         if 'SHAPE' in changed_elems:
             # Make Current
-            if nodedata.polys or nodedata.polyspoints:
+            if nodedata.polys or nodedata.points:
                 self.glsurface.makeCurrent()
             # Polys
             if nodedata.polys:
@@ -131,10 +151,10 @@ class Poly(glh.RenderObject, layer=-20):
                 self.allpolys.set_vertex_count(0)
                 self.allpfill.set_vertex_count(0)
             # Points
-            if nodedata.polyspoints:
+            if nodedata.points:
                 contours, fills, colors = zip(*nodedata.polyspoints.values())
-                self.allpoints.update(vertex=np.concatenate(fills),
-                                      color=np.concatenate(colors))
+                lat = np
+                self.allpoints.update(color=np.concatenate(colors))
             else:
                 self.allpoints.set_vertex_count(0)
 

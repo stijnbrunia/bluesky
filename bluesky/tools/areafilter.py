@@ -37,8 +37,8 @@ def defineArea(areaname, areatype, coordinates, top=1e9, bottom=-1e9, miscargs=N
     elif areatype == 'LINE':
         basic_shapes[areaname] = Line(areaname, coordinates)
     elif areatype == 'POINT':
-        coordinates += (0.09,)
-        basic_shapes[areaname] = Circle(areaname, coordinates)
+        # coordinates += (0.09,)
+        basic_shapes[areaname] = Point(areaname, coordinates)
     elif areatype == 'DASHEDLINE':
         basic_shapes[areaname] = Line(areaname, coordinates)
 

@@ -171,7 +171,7 @@ class nodeData:
     def clear_scen_data(self):
         # Clear all scenario-specific data for sender node
         self.polys = dict()
-        self.polyspoints = dict()
+        self.points = dict()
         self.custacclr = dict()
         self.custgrclr = dict()
         self.custwplbl = ''
@@ -236,7 +236,6 @@ class nodeData:
         # We're either updating a polygon, or deleting it. In both cases
         # we remove the current one.
         self.polys.pop(name, None)
-        self.polyspoints.pop(name, None)
 
         # Break up polyline list of (lat,lon)s into separate line segments
         if coordinates is not None:
@@ -252,16 +251,13 @@ class nodeData:
                                  coordinates[2], coordinates[3],
                                  coordinates[2], coordinates[1]], dtype=np.float32)
 
-            elif shape == 'CIRCLE' or shape == 'POINT':
+            elif shape == 'CIRCLE':
                 # Input data is latctr,lonctr,radius[nm]
                 # Convert circle into polyline list
 
                 # Circle parameters
                 Rearth = 6371000.0             # radius of the Earth [m]
-                if shape == 'CIRCLE':
-                    numPoints = 72             # number of straight line segments that make up the circrle
-                else:
-                    numPoints = 8              # number of straight line segments that make up the point
+                numPoints = 72                 # number of straight line segments that make up the circrle
 
                 # Inputs
                 lat0 = coordinates[0]              # latitude of the center of the circle [deg]
@@ -283,6 +279,7 @@ class nodeData:
                 newdata = np.empty(2 * numPoints, dtype=np.float32)  # Create empty array
                 newdata[0::2] = latCircle  # Fill array lat0,lon0,lat1,lon1....
                 newdata[1::2] = lonCircle
+
             elif shape == 'DASHEDLINE':
                 # Input data is lat0,lon0,lat1,lon1
                 # Get bearing and length
@@ -322,6 +319,9 @@ class nodeData:
 
                 newdata = np.array(newdata, dtype=np.float32)
 
+            elif shape == 'POINT':
+                newdata = np.array(coordinates, dtype=np.float32)  # [lat, lon]
+
             # Create polygon contour buffer
             # Distinguish between an open and a closed contour.
             # If this is a closed contour, add the first vertex again at the end
@@ -335,6 +335,9 @@ class nodeData:
                 contourbuf[1::4]   = newdata[1:-2:2]  # lon
                 contourbuf[2::4] = newdata[2::2]  # lat
                 contourbuf[3::4] = newdata[3::2]  # lon
+                fillbuf = np.array([], dtype=np.float32)
+            elif shape == 'POINT':
+                contourbuf = np.array(newdata, dtype=np.float32)
                 fillbuf = np.array([], dtype=np.float32)
             else:
                 contourbuf = np.empty(2 * len(newdata), dtype=np.float32)
@@ -354,7 +357,7 @@ class nodeData:
             # Store new or updated polygon by name, and concatenated with the
             # other polys
             if shape == 'POINT':
-                self.polyspoints[name] = (contourbuf, fillbuf, colorbuf)
+                self.points[name] = (contourbuf, fillbuf, colorbuf)
             else:
                 self.polys[name] = (contourbuf, fillbuf, colorbuf)
 
