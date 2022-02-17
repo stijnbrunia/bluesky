@@ -1,11 +1,17 @@
 ''' BlueSky OpenGL line and polygon (areafilter) drawing. '''
 import numpy as np
 import bluesky as bs
+from bluesky import settings
 from bluesky.ui import palette
 from bluesky.ui.qtgl import console
 from bluesky.ui.qtgl import glhelpers as glh
 
+# Default settings
+settings.set_variable_defaults(
+    point_size=3
+)
 
+# Default pallete
 palette.set_default_colours(
     polys=(0, 255, 255),
     previewpoly=(0, 204, 255)
@@ -28,8 +34,9 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpolys = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.allpfill = glh.VertexArrayObject(glh.gl.GL_TRIANGLES)
         # Points
-        self.allpoints = glh.VertexArrayObject(glh.gl.GL_TRIANGLES)
+        self.allpoints = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
         self.pointslat = glh.GLBuffer()
+        self.pointslon = glh.GLBuffer()
 
         self.prevmousepos = (0, 0)
 
@@ -50,19 +57,24 @@ class Poly(glh.RenderObject, layer=-20):
                              color=np.append(palette.polys, 50))
 
         # --------------- Points ---------------
-        # Latitude and longitude buffer
-        self.pointslat.create(POLY_SIZE * 16)
+        # OpenGL Buffers
+        self.pointslat.create(POLY_SIZE * 16, glh.GLBuffer.StreamDraw)
+        self.pointslon.create(POLY_SIZE * 16, glh.GLBuffer.StreamDraw)
+
         # Define vertices
-        point_size = 2
+        point_size = settings.point_size
         num_vert = 6
         angles = np.linspace(0., 2 * np.pi, num_vert)
         x = (point_size / 2) * np.sin(angles)
         y = (point_size / 2) * np.cos(angles)
-        point_vert = np.empty(2 * num_vert, dtype=np.float32)
-        point_vert[0::2] = x
-        point_vert[1::2] = y
+        point_vert = np.empty((num_vert, 2), dtype=np.float32)
+        point_vert.T[0] = x
+        point_vert.T[1] = y
+
         # Define VAO
-        self.allpoints.create(vertex=point_vert, color=POLY_SIZE * 12)
+        self.allpoints.create(vertex=point_vert)
+        self.allpoints.set_attribs(lat=self.pointslat, lon=self.pointslon, color=palette.polys,
+                                   instance_divisor=1)
 
     def draw(self):
         actdata = bs.net.get_nodedata()
@@ -78,9 +90,16 @@ class Poly(glh.RenderObject, layer=-20):
 
         # --- DRAW CUSTOM SHAPES (WHEN AVAILABLE) -----------------------------
         if actdata.show_poly > 0:
+            # Polys
             self.allpolys.draw()
-            self.allpoints.draw()
+
+            # Points (set vertex is screen size)
+            self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_SCREEN)
+            self.allpoints.draw(n_instances=len(actdata.points))
+
+            # Draw fills
             if actdata.show_poly > 1:
+                self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_LATLON)
                 self.allpfill.draw()
         
     def cmdline_stacked(self, cmd, args):
@@ -138,6 +157,7 @@ class Poly(glh.RenderObject, layer=-20):
             # Make Current
             if nodedata.polys or nodedata.points:
                 self.glsurface.makeCurrent()
+
             # Polys
             if nodedata.polys:
                 contours, fills, colors = zip(*nodedata.polys.values())
@@ -150,14 +170,15 @@ class Poly(glh.RenderObject, layer=-20):
             else:
                 self.allpolys.set_vertex_count(0)
                 self.allpfill.set_vertex_count(0)
+
             # Points
             if nodedata.points:
-                contours, fills, colors = zip(*nodedata.polyspoints.values())
-                lat = np
-                self.allpoints.update(color=np.concatenate(colors))
-            else:
-                self.allpoints.set_vertex_count(0)
+                contours, fills, colors = zip(*nodedata.points.values())
+                contours = np.concatenate(contours)
+                self.pointslat.update(np.array(contours[::2], dtype=np.float32))
+                self.pointslon.update(np.array(contours[1::2], dtype=np.float32))
 
+        # ATCMODE data change
         if 'ATCMODE' in changed_elems:
             self.allpfill.set_attribs(color=np.append(palette.polys, 50))
             self.polyprev.set_attribs(color=palette.previewpoly)
