@@ -3,6 +3,9 @@ This python file contains the button definitions for the Approach functional tid
 
 Created by: Bob van Dillen
 Date: 9-12-2021
+Edited by: Mitchell de Keijzer
+Date: 17-02-2022
+Changes: Added ILS, TFL menu
 """
 
 
@@ -22,14 +25,17 @@ appmain = [['a1', 'UCO',            ['lambda: tidcmds.setcmd("UCO")']],
            ['c1', 'EFL',            ['lambda: tidcmds.setcmd("EFL")',
                                      'lambda: appmain.close()',
                                      'lambda: show_basetid("appefl", "appefl")']],
-           ['c2', 'TFL',            ['lambda: None']],
+           ['c2', 'TFL',            ['lambda: tidcmds.setcmd("TFL")',
+                                     'lambda: appmain.close()',
+                                     'lambda: show_basetid("apptfl", "apptfl")']],
            ['c3', 'LBL',            ['lambda: tidcmds.setcmd("TRACKLABEL")']],
            ['c4', 'ERA',            ['lambda: None']],
 
            ['d1', 'SPD',            ['lambda: tidcmds.setcmd("SPD")',
                                      'lambda: appmain.close()',
                                      'lambda: show_basetid("appspd", "appspd")']],
-           ['d2', 'DPL',            ['lambda: None']],
+           ['d2', 'DPL',            ['lambda: appmain.close()',
+                                     'lambda: show_basetid("appdpl", "appdpl")']],
            ['d3', 'PBR',            ['lambda: console.Console._instance.stack("OP")']],
            ['d4', 'RWY',            ['lambda: tidcmds.setcmd("RWY")',
                                      'lambda: appmain.close()',
@@ -293,6 +299,40 @@ appefl = [['a1', '',            None],
                                  'lambda: show_basetid("appmain", "appmain")']]
           ]
 
+apptfl = [['a1', '130',          ['lambda: tidcmds.setarg("130", 1)']],
+          ['a2', '200',          ['lambda: tidcmds.setarg("200", 1)']],
+          ['a3', '250',          ['lambda: tidcmds.setarg("250", 1)']],
+          ['a4', '',             None],
+
+          ['b1', '180',          ['lambda: tidcmds.setarg("180", 1)']],
+          ['b2', '240',          ['lambda: tidcmds.setarg("240", 1)']],
+          ['b3', 'RCL\nVALUE',   ['lambda: None']],
+          ['b4', '',             None],
+
+          ['c1', '7',           ['lambda: tidcmds.addchar("7")']],
+          ['c2', '4',           ['lambda: tidcmds.addchar("4")']],
+          ['c3', '1',           ['lambda: tidcmds.addchar("1")']],
+          ['c4', '',             None],
+
+          ['d1', '8',           ['lambda: tidcmds.addchar("8")']],
+          ['d2', '5',           ['lambda: tidcmds.addchar("5")']],
+          ['d3', '2',           ['lambda: tidcmds.addchar("2")']],
+          ['d4', '0',           ['lambda: tidcmds.addchar("0")']],
+
+          ['e1', '9',           ['lambda: tidcmds.addchar("9")']],
+          ['e2', '6',           ['lambda: tidcmds.addchar("6")']],
+          ['e3', '3',           ['lambda: tidcmds.addchar("3")']],
+          ['e4', '',             None],
+
+          ['f1', 'COR',         ['lambda: tidcmds.cor()',
+                                 'lambda: appefl.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']],
+          ['f2', 'CLR',         ['lambda: tidcmds.clr()']],
+          ['f3', '',             None],
+          ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
+                                 'lambda: appefl.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']]
+          ]
 
 appspd = [['a1', '250',         ['lambda: tidcmds.setarg("250", 1)']],
           ['a2', '180',         ['lambda: tidcmds.setarg("180", 1)']],
@@ -414,3 +454,106 @@ apprwy = [['a1', '06',          ['lambda: tidcmds.addarg("06")']],
           ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
                                  'lambda: apprwy.close()']]
           ]
+
+
+appdpl = [['a1', 'FD1',         ['lambda: None']],
+          ['a2', 'AR1',         ['lambda: None']],
+          ['a3', 'APL',         ['lambda: None']],
+          ['a4', 'RAP',         ['lambda: None']],
+
+          ['b1', 'FD2',         ['lambda: None']],
+          ['b2', 'AR2',         ['lambda: None']],
+          ['b3', 'ASU',         ['lambda: None']],
+          ['b4', 'TRD',         ['lambda: None']],
+
+          ['c1', 'TW1',         ['lambda: None']],
+          ['c2', 'GC1',         ['lambda: None']],
+          ['c3', 'AS1',         ['lambda: None']],
+          ['c4', 'OPL',         ['lambda: None']],
+
+          ['d1', 'TW2',         ['lambda: None']],
+          ['d2', 'GC2',         ['lambda: None']],
+          ['d3', 'AS2',         ['lambda: None']],
+          ['d4', 'DEL',         ['lambda: None']],
+
+          ['e1', 'TWW',         ['lambda: None']],
+          ['e2', 'GCW',         ['lambda: None']],
+          ['e3', 'AS3',         ['lambda: None']],
+          ['e4', 'PRT',         ['lambda: None']],
+
+          ['f1', 'COR',         ['lambda: tidcmds.cor()']],
+          ['f2', 'ACC\nSECT',   ['lambda: appdpl.close()',
+                                 'lambda: show_basetid("accsect", "accsect")']],
+          ['f3', 'FIC\nMORE',   ['lambda: appdpl.close()',
+                                 'lambda: show_basetid("ficmore", "ficmore")']],
+          ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
+                                 'lambda: appdpl.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']]
+          ]
+
+
+accsect = [['a1', 'RA1',         ['lambda: None']],
+           ['a2', '',            None],
+           ['a3', 'PL1',         ['lambda: None']],
+           ['a4', '',            None],
+
+           ['b1', 'RA2',         ['lambda: None']],
+           ['b2', 'IN2',         ['lambda: None']],
+           ['b3', 'PL2',         ['lambda: None']],
+           ['b4', 'ATP',         ['lambda: None']],
+
+           ['c1', 'RA3',         ['lambda: None']],
+           ['c2', 'IN3',         ['lambda: None']],
+           ['c3', 'PL3',         ['lambda: None']],
+           ['c4', 'RIV',         ['lambda: None']],
+
+           ['d1', 'RA4',         ['lambda: None']],
+           ['d2', '',            None],
+           ['d3', 'PL4',         ['lambda: None']],
+           ['d4', 'SUG',         ['lambda: None']],
+
+           ['e1', 'RA5',         ['lambda: None']],
+           ['e2', '',            ['lambda: None']],
+           ['e3', 'PL5',         ['lambda: None']],
+           ['e4', '',            None],
+
+           ['f1', 'COR',         ['lambda: tidcmds.cor()']],
+           ['f2', 'APP\nTWR',    ['lambda: None']],
+           ['f3', 'FIC\nMORE',   ['lambda: None']],
+           ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
+                                 'lambda: appdpl.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']]
+           ]
+
+ficmore = [['a1', 'RA1',         ['lambda: None']],
+           ['a2', '',            None],
+           ['a3', 'PL1',         ['lambda: None']],
+           ['a4', '',            None],
+
+           ['b1', 'RA2',         ['lambda: None']],
+           ['b2', 'IN2',         ['lambda: None']],
+           ['b3', 'PL2',         ['lambda: None']],
+           ['b4', 'ATP',         ['lambda: None']],
+
+           ['c1', 'RA3',         ['lambda: None']],
+           ['c2', 'IN3',         ['lambda: None']],
+           ['c3', 'PL3',         ['lambda: None']],
+           ['c4', 'RIV',         ['lambda: None']],
+
+           ['d1', 'RA4',         ['lambda: None']],
+           ['d2', '',            None],
+           ['d3', 'PL4',         ['lambda: None']],
+           ['d4', 'SUG',         ['lambda: None']],
+
+           ['e1', 'RA5',         ['lambda: None']],
+           ['e2', '',            ['lambda: None']],
+           ['e3', 'PL5',         ['lambda: None']],
+           ['e4', '',            None],
+
+           ['f1', 'COR',         ['lambda: tidcmds.cor()']],
+           ['f2', 'APP\nTWR',    ['lambda: None']],
+           ['f3', 'FIC\nMORE',   ['lambda: None']],
+           ['f4', 'EXQ',         ['lambda: tidcmds.exq()',
+                                 'lambda: appdpl.close()',
+                                 'lambda: show_basetid("appmain", "appmain")']]
+           ]

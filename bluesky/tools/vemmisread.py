@@ -228,7 +228,7 @@ class VEMMISRead:
         # Compute angle
         qdr = np.degrees(np.arctan2(self.tracks['LATITUDE'], self.tracks['LONGITUDE']))
         qdr = np.where(qdr < 0, qdr+360, qdr)
-        # Comute disctance from ARP
+        # Compute distance from ARP
         d = np.array(np.sqrt(self.tracks['LATITUDE']**2 + self.tracks['LONGITUDE']**2))
 
         # Compute latitude and longitude, based on distance and angle from ARP

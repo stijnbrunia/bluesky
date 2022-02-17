@@ -122,6 +122,9 @@ class TIDCmds:
 
         Created by: Bob van Dillen
         Date: 28-1-2022
+        Edited by: Mitchell de Keijzer
+        Date: 17-02-2022
+        Changed: added TFL
         """
 
         actdata = bs.net.get_nodedata()
@@ -138,7 +141,7 @@ class TIDCmds:
 
                 # Loop over commands
                 for cmd, args in zip(self.cmdslst, self.argslst):
-                    if cmd == 'EFL':
+                    if cmd == 'EFL' or 'TFL':
                         cmd = 'ALT'
                         addfl = True
                     else:
