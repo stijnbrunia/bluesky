@@ -58,8 +58,8 @@ class Poly(glh.RenderObject, layer=-20):
 
         # --------------- Points ---------------
         # OpenGL Buffers
-        self.pointslat.create(POLY_SIZE * 16, glh.GLBuffer.StreamDraw)
-        self.pointslon.create(POLY_SIZE * 16, glh.GLBuffer.StreamDraw)
+        self.pointslat.create(POLY_SIZE * 16)
+        self.pointslon.create(POLY_SIZE * 16)
 
         # Define vertices
         point_size = settings.point_size
@@ -73,7 +73,7 @@ class Poly(glh.RenderObject, layer=-20):
 
         # Define VAO
         self.allpoints.create(vertex=point_vert)
-        self.allpoints.set_attribs(lat=self.pointslat, lon=self.pointslon, color=palette.polys,
+        self.allpoints.set_attribs(lat=self.pointslat, lon=self.pointslon, color=POLY_SIZE * 8,
                                    instance_divisor=1)
 
     def draw(self):
@@ -174,9 +174,12 @@ class Poly(glh.RenderObject, layer=-20):
             # Points
             if nodedata.points:
                 contours, fills, colors = zip(*nodedata.points.values())
+                # Update positions
                 contours = np.concatenate(contours)
                 self.pointslat.update(np.array(contours[::2], dtype=np.float32))
                 self.pointslon.update(np.array(contours[1::2], dtype=np.float32))
+                # Update colors
+                self.allpoints.update(color=np.concatenate(colors))
 
         # ATCMODE data change
         if 'ATCMODE' in changed_elems:

@@ -227,10 +227,18 @@ class nodeData:
         elif groupid:
             self.custgrclr[groupid] = tuple(color)
         else:
-            contourbuf, fillbuf, colorbuf = self.polys.get(polyid)
-            color = tuple(color) + (255,)
-            colorbuf = np.array(len(contourbuf) // 2 * color, dtype=np.uint8)
-            self.polys[polyid] = (contourbuf, fillbuf, colorbuf)
+            # Polys
+            if polyid in self.polys:
+                contourbuf, fillbuf, colorbuf = self.polys.get(polyid)
+                color = tuple(color) + (255,)
+                colorbuf = np.array(len(contourbuf) // 2 * color, dtype=np.uint8)
+                self.polys[polyid] = (contourbuf, fillbuf, colorbuf)
+            # Points
+            else:
+                contourbuf, fillbuf, colorbuf = self.points.get(polyid)
+                color = tuple(color) + (255,)
+                colorbuf = np.array(len(contourbuf) // 2 * color, dtype=np.uint8)
+                self.points[polyid] = (contourbuf, fillbuf, colorbuf)
 
     def update_poly_data(self, name, shape='', coordinates=None, color=None, miscargs=None):
         # We're either updating a polygon, or deleting it. In both cases
