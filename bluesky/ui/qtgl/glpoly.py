@@ -5,6 +5,7 @@ from bluesky import settings
 from bluesky.ui import palette
 from bluesky.ui.qtgl import console
 from bluesky.ui.qtgl import glhelpers as glh
+from bluesky.tools import geo
 
 # Default settings
 settings.set_variable_defaults(
@@ -20,7 +21,8 @@ palette.set_default_colours(
 # Static defines
 POLYPREV_SIZE = 100
 POLY_SIZE = 2000
-
+l_dotted = 3    # [pixels]
+l_dashed = 10   # [pixels]
 
 class Poly(glh.RenderObject, layer=-20):
     ''' Poly OpenGL object. '''
@@ -32,6 +34,8 @@ class Poly(glh.RenderObject, layer=-20):
 
         # Fixed polygons
         self.allpolys = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.alldotted = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.alldashed = glh.VertexArrayObject(glh.gl.GL_LINES)
         self.allpfill = glh.VertexArrayObject(glh.gl.GL_TRIANGLES)
         # Points
         self.allpoints = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
@@ -42,6 +46,7 @@ class Poly(glh.RenderObject, layer=-20):
 
         bs.Signal('cmdline_stacked').connect(self.cmdline_stacked)
         bs.Signal('radarmouse').connect(self.previewpoly)
+        bs.Signal('panzoom').connect(self.dotted_dashed)
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
     def create(self):
@@ -51,6 +56,12 @@ class Poly(glh.RenderObject, layer=-20):
 
         # --------------- Polys ---------------
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
+
+        # --------------- Dotted lines ---------------
+        self.alldotted.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
+
+        # --------------- Dotted lines ---------------
+        self.alldashed.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
 
         # --------------- Fills ---------------
         self.allpfill.create(vertex=POLY_SIZE * 24,
@@ -148,6 +159,102 @@ class Poly(glh.RenderObject, layer=-20):
 
                 except ValueError:
                     pass
+
+    def dotted_dashed(self, finished=False):
+        """
+        Function: Update the dotted and dashed line segments
+        Args:
+            finished:   Not used
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 18-2-2022
+        """
+
+        # Get node data
+        actdata = bs.net.get_nodedata()
+
+        # Get coordinates of dotted/dashed line segments
+        contours, fills, colors = zip(*actdata.dotted.values())
+        dotted_coords = np.concatenate(contours)
+        contours, fills, colors = zip(*actdata.dashed.values())
+        dashed_coords = np.concatenate(contours)
+
+        # Convert lat/lon to screen pixel coordinates
+        dotted_x, dotted_y = self.glsurface.LatLonTopixelCoords(dotted_coords[::2], dotted_coords[1::2])
+        dashed_x, dashed_y = self.glsurface.LatLonTopixelCoords(dashed_coords[::2], dashed_coords[1::2])
+
+        # Determine angle between start and end of the line segments and length
+        dotted_angle = np.arctan2(dotted_y[1::2]-dotted_y[::2], dotted_x[1::2]-dotted_x[::2])
+        dotted_length = np.sqrt((dotted_x[1::2]-dotted_x[::2])*(dotted_x[1::2]-dotted_x[::2]) +
+                                (dotted_y[1::2]-dotted_y[::2])*(dotted_y[1::2]-dotted_y[::2]))
+
+        dashed_angle = np.arctan2(dashed_y[1::2]-dashed_y[::2], dashed_x[1::2]-dashed_x[::2])
+        dashed_length = np.sqrt((dashed_x[1::2]-dashed_x[::2])*(dashed_x[1::2]-dashed_x[::2]) +
+                                (dashed_y[1::2]-dashed_y[::2])*(dashed_y[1::2]-dashed_y[::2]))
+
+    def line_interval(self, lat, lon, interval):
+        """
+        Function: Devide a line in segments
+        Args:
+            lat:        latitudes of lines [array]
+            lon:        longitudes of lines [array]
+            interval:   segment interval [float]
+        Returns:
+            lat:        latitudes of line segments [array]
+            lon:        longitudes of line segments [array]
+
+        Created by: Bob van Dillen
+        Date: 18-2-2022
+        """
+
+        # Convert to screen pixel coordinates
+        x, y = self.glsurface.LatLonTopixelCoords(lat, lon)
+
+        angle = np.arctan2(y[1::2]-y[::2], x[1::2]-x[::2])
+        # Reshape for processing
+        angle = angle.reshape(len(angle), 1)
+        length = np.sqrt((x[1::2]-x[::2])*(x[1::2]-x[::2]) + (y[1::2]-y[::2])*(y[1::2]-y[::2]))
+
+        # Determine angle and distance between line start and end point
+        # angle, dist = geo.kwikqdrdist_matrix(lat[::2], lon[::2], lat[1::2], lon[1::2])
+
+        # Determine number of segments (including empty segments (line-empty-line-...))
+        n_segments = length//interval
+
+        # Determine amount of line segments (make number of segments odd)
+        if (n_segments % 2) == 0:
+            n_lines = n_segments - 1
+        else:
+            n_lines = n_segments
+        # Reshape for processing
+        n_lines = n_lines.reshape(len(n_lines), 1)
+
+        # Create matrix for line segment coordinates
+        '''
+        Example:
+        Start            Matrix        Angles
+        [[x1 x2 x3]] * ( [[1 2 0]  * cos([[angle1 angle2 angle3]]) )
+                          [1 2 3]
+                          [1 0 0]]
+        
+        line 1 has 2 line segments
+        line 2 has 3 line segments
+        line 3 has 1 line segment
+        '''
+        n_matrix = np.arange(np.max(n_lines)+1)
+        n_matrix = np.broadcast_to(n_matrix, (len(n_lines), np.max(n_lines)))
+        n_matrix = n_matrix*(n_matrix <= n_lines)
+
+        # x =
+
+
+
+
+
+
+
+
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Update buffers when a different node is selected, or when

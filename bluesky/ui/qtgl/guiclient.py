@@ -171,6 +171,8 @@ class nodeData:
     def clear_scen_data(self):
         # Clear all scenario-specific data for sender node
         self.polys = dict()
+        self.dotted = dict()
+        self.dashed = dict()
         self.points = dict()
         self.custacclr = dict()
         self.custgrclr = dict()

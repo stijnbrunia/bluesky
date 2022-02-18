@@ -189,6 +189,46 @@ class RadarWidget(glh.RenderWidget):
         lon = self.panlon + glx / (self.zoom * self.flat_earth)
         return lat, lon
 
+    def GLxyTopixelCoords(self, glx, gly):
+        """
+        Function: Convert GL projection coordinates to screen pixel coordinates
+        Args:
+            glx:    GL projection x coordinate [float]
+            gly:    GL projection y coordinate [float]
+        Returns:
+            x:      screen pixel x coordinate [float]
+            y:      screen pixel y coordinate [float]
+
+        Created by: Bob van Dillen
+        Date: 18-2-2022
+        """
+
+        x = ((glx + 1.0)*self.prevwidth)/2.0
+        y = ((-gly + 1.0)*self.prevheight)/2.0
+
+        return x, y
+
+    def LatLonTopixelCoords(self, lat, lon):
+        """
+        Function: Convert lat/lon coordinates to screen pixel coordinates
+        Args:
+            lat:    latitude [float]
+            lon:    longitude [float]
+        Returns:
+            x:      screen pixel x coordinate [float]
+            y:      screen pixel y coordinate [float]
+
+        Created by: Bob van Dillen
+        Date: 18-2-2022
+        """
+
+        gly = (lat - self.panlat)*(self.zoom * self.ar)
+        glx = (lon - self.panlon)*(self.zoom * self.flat_earth)
+
+        x, y = self.GLxyTopixelCoords(glx, gly)
+
+        return x, y
+
     def viewportlatlon(self):
         ''' Return the viewport bounds in lat/lon coordinates. '''
         return (self.panlat + 1.0 / (self.zoom * self.ar),
