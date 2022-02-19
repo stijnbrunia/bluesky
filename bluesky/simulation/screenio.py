@@ -246,7 +246,7 @@ class ScreenIO:
     def filteralt(self, *args):
         bs.net.send_event(b'DISPLAYFLAG', dict(flag='FILTERALT', args=args))
 
-    def objappend(self, objtype, objname, data, miscargs=None):
+    def objappend(self, objtype, objname, data):
         """Add a drawing object to the radar screen using the following inputs:
            objtype: "LINE"/"POLY" /"BOX"/"CIRCLE" = string with type of object
            objname: string with a name as key for reference
@@ -255,7 +255,7 @@ class ScreenIO:
                     BOX : lat0,lon0,lat1,lon1   (bounding box coordinates)
                     CIRCLE: latctr,lonctr,radiusnm  (circle parameters)
         """
-        bs.net.send_event(b'SHAPE', dict(name=objname, shape=objtype, coordinates=data, miscargs=miscargs))
+        bs.net.send_event(b'SHAPE', dict(name=objname, shape=objtype, coordinates=data))
 
     def event(self, eventname, eventdata, sender_rte):
         if eventname == b'PANZOOM':

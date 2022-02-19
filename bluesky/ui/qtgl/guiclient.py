@@ -242,7 +242,7 @@ class nodeData:
                 colorbuf = np.array(len(contourbuf) // 2 * color, dtype=np.uint8)
                 self.points[polyid] = (contourbuf, fillbuf, colorbuf)
 
-    def update_poly_data(self, name, shape='', coordinates=None, color=None, miscargs=None):
+    def update_poly_data(self, name, shape='', coordinates=None, color=None):
         # We're either updating a polygon, or deleting it. In both cases
         # we remove the current one.
         self.polys.pop(name, None)
@@ -290,44 +290,8 @@ class nodeData:
                 newdata[0::2] = latCircle  # Fill array lat0,lon0,lat1,lon1....
                 newdata[1::2] = lonCircle
 
-            elif shape == 'DASHEDLINE':
-                # Input data is lat0,lon0,lat1,lon1
-                # Get bearing and length
-                qdr, length = geo.qdrdist(coordinates[0], coordinates[1], coordinates[2], coordinates[3])
-
-                # Set the interval
-                if miscargs:
-                    interval = miscargs  # [nm]
-                else:
-                    interval = 0.5  # [nm]
-
-                # Check if one line piece fits within the length of the dashed line
-                if length >= interval:
-                    # First coordinates
-                    newdata = [coordinates[0], coordinates[1]]
-
-                    # Create the line segments
-                    dist = 0
-                    # Check if the end of the total line is reached
-                    while dist+interval <= length:
-                        # End of the line
-                        lat1, lon1 = geo.kwikpos(newdata[-2], newdata[-1], qdr, interval)
-                        newdata += [lat1, lon1]
-                        dist += interval
-
-                        # Check if there still fits an line segment after the empty segment
-                        if dist+2*interval <= length:
-                            # End of the empty segment
-                            lat2, lon2 = geo.kwikpos(lat1, lon1, qdr, interval)
-                            newdata += [lat2, lon2]
-
-                            dist += interval
-                        else:
-                            dist = length
-                else:
-                    newdata = []
-
-                newdata = np.array(newdata, dtype=np.float32)
+            elif shape == 'DOTTEDLINE' or shape == 'DASHEDLINE':
+                newdata = np.array(coordinates, dtype=np.float32)
 
             elif shape == 'POINT':
                 newdata = np.array(coordinates, dtype=np.float32)  # [lat, lon]
@@ -336,7 +300,7 @@ class nodeData:
             # Distinguish between an open and a closed contour.
             # If this is a closed contour, add the first vertex again at the end
             # and add a fill shape
-            if shape == 'DASHEDLINE':
+            if shape == 'DOTTEDLINE' or shape == 'DASHEDLINE':
                 contourbuf = np.array(newdata, dtype=np.float32)
                 fillbuf = np.array([], dtype=np.float32)
             elif shape[-4:] == 'LINE':
@@ -368,6 +332,10 @@ class nodeData:
             # other polys
             if shape == 'POINT':
                 self.points[name] = (contourbuf, fillbuf, colorbuf)
+            elif shape == 'DOTTEDLINE':
+                self.dotted[name] = (contourbuf, fillbuf, colorbuf)
+            elif shape == 'DASHEDLINE':
+                self.dashed[name] = (contourbuf, fillbuf, colorbuf)
             else:
                 self.polys[name] = (contourbuf, fillbuf, colorbuf)
 

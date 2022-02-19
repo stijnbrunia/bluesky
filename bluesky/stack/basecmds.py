@@ -161,10 +161,16 @@ def initbasecmds():
             "Create an aircraft that is in conflict with 'targetid'",
         ],
         "DASHEDLINE": [
-            "DASHEDLINE name, interval, lat, lon, lat, lon",
-            "txt,float,latlon,latlon",
-            lambda name, *args: areafilter.defineArea(name, "DASHEDLINE", args[1:], miscargs=args[0]),
+            "DASHEDLINE name, lat, lon, lat, lon",
+            "txt,latlon,latlon",
+            lambda name, *coords: areafilter.defineArea(name, "DASHEDLINE", coords),
             "Draw a dashed line"
+        ],
+        "DOTTEDLINE": [
+            "DOTTEDLINE name, lat, lon, lat, lon",
+            "txt,latlon,latlon",
+            lambda name, *coords: areafilter.defineArea(name, "DOTTEDLINE", coords),
+            "Draw a dotted line"
         ],
         "DATE": [
             "DATE [day,month,year,HH:MM:SS.hh]",

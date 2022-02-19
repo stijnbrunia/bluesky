@@ -174,8 +174,8 @@ class RadarWidget(glh.RenderWidget):
         """Convert screen pixel coordinates to GL projection coordinates (x, y range -1 -- 1)
         """
         # GL coordinates (x, y range -1 -- 1)
-        glx = (float(2.0 * x) / self.prevwidth - 1.0)
-        gly = -(float(2.0 * y) / self.prevheight - 1.0)
+        glx = (2.0 * x / self.prevwidth - 1.0)
+        gly = -(2.0 * y / self.prevheight - 1.0)
         return glx, gly
 
     def pixelCoordsToLatLon(self, x, y):
