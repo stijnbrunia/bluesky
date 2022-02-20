@@ -290,12 +290,12 @@ class Poly(glh.RenderObject, layer=-20):
         y_segments = y_start+dy
 
         # Convert to lat/lon
-        lat_out, lon_out = self.glsurface.pixelCoordsToLatLon(x_segments, y_segments)
+        lat_segments, lon_segments = self.glsurface.pixelCoordsToLatLon(x_segments, y_segments)
 
         # Create contours array
-        contours = np.empty(2*len(lat_out), dtype=np.float32)
-        contours[::2] = lat_out
-        contours[1::2] = lon_out
+        contours = np.empty(2*len(lat_segments), dtype=np.float32)
+        contours[::2] = lat_segments
+        contours[1::2] = lon_segments
 
         return contours
 

@@ -95,7 +95,6 @@ class GuiClient(Client):
             if data['flag'] == 'ATCMODE':
                 data_changed.append('ATCMODE')
         elif name == b'ECHO':
-            
             data_changed.append('ECHOTEXT')
         elif name == b'PANZOOM':
             sender_data.panzoom(**data)
