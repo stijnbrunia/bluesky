@@ -58,10 +58,10 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
 
         # --------------- Dotted lines ---------------
-        self.alldotted.create(vertex=POLY_SIZE * 24, color=palette.polys)
+        self.alldotted.create(vertex=POLY_SIZE * 16, color=palette.polys)
 
         # --------------- Dotted lines ---------------
-        self.alldashed.create(vertex=POLY_SIZE * 24, color=palette.polys)
+        self.alldashed.create(vertex=POLY_SIZE * 16, color=palette.polys)
 
         # --------------- Fills ---------------
         self.allpfill.create(vertex=POLY_SIZE * 24,
@@ -114,6 +114,67 @@ class Poly(glh.RenderObject, layer=-20):
             if actdata.show_poly > 1:
                 self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_LATLON)
                 self.allpfill.draw()
+
+    def actdata_changed(self, nodeid, nodedata, changed_elems):
+        ''' Update buffers when a different node is selected, or when
+            the data of the current node is updated. '''
+        # Shape data change
+        if 'SHAPE' in changed_elems:
+            # Make Current
+            if nodedata.polys or nodedata.points or nodedata.dotted or nodedata.dashed:
+                self.glsurface.makeCurrent()
+
+            # Polys
+            if nodedata.polys:
+                contours, fills, colors = zip(*nodedata.polys.values())
+                # Create contour buffer with color
+                self.allpolys.update(vertex=np.concatenate(contours),
+                                     color=np.concatenate(colors))
+
+                # Create fill buffer
+                self.allpfill.update(vertex=np.concatenate(fills))
+            else:
+                self.allpolys.set_vertex_count(0)
+                self.allpfill.set_vertex_count(0)
+
+            # Points
+            if nodedata.points:
+                # Retrieve data
+                contours, fills, colors = zip(*nodedata.points.values())
+                contours = np.concatenate(contours)
+                # Update buffers
+                self.pointslat.update(np.array(contours[::2], dtype=np.float32))
+                self.pointslon.update(np.array(contours[1::2], dtype=np.float32))
+                self.allpoints.update(color=np.concatenate(colors))
+
+            # Dotted lines
+            if nodedata.dotted:
+                # Retrieve data
+                contours, fills, colors = zip(*nodedata.dotted.values())
+                contours = np.concatenate(contours)
+                # Devide into segments
+                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dotted)
+                # Update buffer
+                self.alldotted.update(vertex=np.array(contours, dtype=np.float32))
+            else:
+                self.alldotted.set_vertex_count(0)
+
+            # Dashed lines
+            if nodedata.dashed:
+                # Retrieve data
+                contours, fills, colors = zip(*nodedata.dashed.values())
+                contours = np.concatenate(contours)
+                # Devide into segments
+                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dashed)
+                # Update buffer
+                self.alldashed.update(vertex=np.array(contours, dtype=np.float32))
+            else:
+                self.alldashed.set_vertex_count(0)
+
+        # ATCMODE data change
+        if 'ATCMODE' in changed_elems:
+            self.allpfill.set_attribs(color=np.append(palette.polys, 50))
+            self.polyprev.set_attribs(color=palette.previewpoly)
         
     def cmdline_stacked(self, cmd, args):
         if cmd in ['AREA', 'BOX', 'POLY', 'POLYGON', 'CIRCLE', 'LINE', 'POLYLINE']:
@@ -292,6 +353,9 @@ class Poly(glh.RenderObject, layer=-20):
         # Convert to lat/lon
         lat_segments, lon_segments = self.glsurface.pixelCoordsToLatLon(x_segments, y_segments)
 
+        # Only draw line segments in view
+        lat_segments, lon_segments = self.latlon_inview(lat_segments, lon_segments)
+
         # Create contours array
         contours = np.empty(2*len(lat_segments), dtype=np.float32)
         contours[::2] = lat_segments
@@ -299,65 +363,40 @@ class Poly(glh.RenderObject, layer=-20):
 
         return contours
 
-    def actdata_changed(self, nodeid, nodedata, changed_elems):
-        ''' Update buffers when a different node is selected, or when
-            the data of the current node is updated. '''
-        # Shape data change
-        if 'SHAPE' in changed_elems:
-            # Make Current
-            if nodedata.polys or nodedata.points or nodedata.dotted or nodedata.dashed:
-                self.glsurface.makeCurrent()
+    def latlon_inview(self, lat, lon):
+        """
+        Function: Delete line segments which are not in view
+        Args:
+            lat:    latitude [array]
+            lon:    longitude [array]
+        Returns:
+            lat:    latitude [array]
+            lon:    longitude [array]
 
-            # Polys
-            if nodedata.polys:
-                contours, fills, colors = zip(*nodedata.polys.values())
-                # Create contour buffer with color
-                self.allpolys.update(vertex=np.concatenate(contours),
-                                     color=np.concatenate(colors))
+        Created by: Bob van Dillen
+        Date: 20-2-2022
+        """
 
-                # Create fill buffer
-                self.allpfill.update(vertex=np.concatenate(fills))
-            else:
-                self.allpolys.set_vertex_count(0)
-                self.allpfill.set_vertex_count(0)
+        # Get screen view
+        viewport = self.glsurface.viewportlatlon()
 
-            # Points
-            if nodedata.points:
-                # Retrieve data
-                contours, fills, colors = zip(*nodedata.points.values())
-                contours = np.concatenate(contours)
-                # Update buffers
-                self.pointslat.update(np.array(contours[::2], dtype=np.float32))
-                self.pointslon.update(np.array(contours[1::2], dtype=np.float32))
-                self.allpoints.update(color=np.concatenate(colors))
+        # Get lat/lon to draw
+        lat_draw = np.logical_and(lat <= viewport[0], lat >= viewport[2])
+        lon_draw = np.logical_and(lon <= viewport[3], lon >= viewport[1])
 
-            # Dotted lines
-            if nodedata.dotted:
-                # Retrieve data
-                contours, fills, colors = zip(*nodedata.dotted.values())
-                contours = np.concatenate(contours)
-                # Devide into segments
-                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dotted)
-                # Update buffer
-                self.alldotted.update(vertex=np.array(contours, dtype=np.float32))
-            else:
-                self.alldotted.set_vertex_count(0)
+        # Get indices to draw
+        ilat = np.nonzero(lat_draw)[0]
+        ilon = np.nonzero(lon_draw)[0]
+        idraw = np.intersect1d(ilat, ilon, assume_unique=True)
 
-            # Dashed lines
-            if nodedata.dashed:
-                # Retrieve data
-                contours, fills, colors = zip(*nodedata.dashed.values())
-                contours = np.concatenate(contours)
-                # Devide into segments
-                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dashed)
-                # Update buffer
-                self.alldashed.update(vertex=np.array(contours, dtype=np.float32))
-            else:
-                self.alldashed.set_vertex_count(0)
+        # Get start (even) and end (odd) indices for line segments in view
+        start_end = np.where(idraw % 2 == 0, idraw+1, idraw-1)
 
+        # Get indices of line segments to draw
+        idraw = np.unique(np.append(idraw, start_end))
 
-        # ATCMODE data change
-        if 'ATCMODE' in changed_elems:
-            self.allpfill.set_attribs(color=np.append(palette.polys, 50))
-            self.polyprev.set_attribs(color=palette.previewpoly)
+        # Take lat/lon
+        lat = lat[idraw]
+        lon = lon[idraw]
 
+        return lat, lon
