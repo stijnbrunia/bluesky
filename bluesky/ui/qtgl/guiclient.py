@@ -246,6 +246,9 @@ class nodeData:
         # We're either updating a polygon, or deleting it. In both cases
         # we remove the current one.
         self.polys.pop(name, None)
+        self.dotted.pop(name, None)
+        self.dashed.pop(name, None)
+        self.points.pop(name, None)
 
         # Break up polyline list of (lat,lon)s into separate line segments
         if coordinates is not None:

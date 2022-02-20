@@ -9,6 +9,8 @@ from bluesky.tools import geo
 
 # Default settings
 settings.set_variable_defaults(
+    interval_dotted=3,
+    interval_dashed=10,
     point_size=3
 )
 
@@ -21,8 +23,6 @@ palette.set_default_colours(
 # Static defines
 POLYPREV_SIZE = 100
 POLY_SIZE = 2000
-l_dotted = 3    # [pixels]
-l_dashed = 10   # [pixels]
 
 class Poly(glh.RenderObject, layer=-20):
     ''' Poly OpenGL object. '''
@@ -58,10 +58,10 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
 
         # --------------- Dotted lines ---------------
-        self.alldotted.create(vertex=POLY_SIZE * 16, color=palette.polys)
+        self.alldotted.create(vertex=POLY_SIZE * 24, color=palette.polys)
 
         # --------------- Dotted lines ---------------
-        self.alldashed.create(vertex=POLY_SIZE * 16, color=palette.polys)
+        self.alldashed.create(vertex=POLY_SIZE * 24, color=palette.polys)
 
         # --------------- Fills ---------------
         self.allpfill.create(vertex=POLY_SIZE * 24,
@@ -183,7 +183,7 @@ class Poly(glh.RenderObject, layer=-20):
             dotted_coords = np.concatenate(contours)
 
             # Compute line segments contours
-            contours_dotted = self.line_interval(dotted_coords[::2], dotted_coords[1::2], l_dotted)
+            contours_dotted = self.line_interval(dotted_coords[::2], dotted_coords[1::2], settings.interval_dotted)
 
             # Update buffer
             self.alldotted.update(vertex=np.array(contours_dotted, dtype=np.float32))
@@ -197,7 +197,7 @@ class Poly(glh.RenderObject, layer=-20):
             dashed_coords = np.concatenate(contours)
 
             # Compute line segments contours
-            contours_dashed = self.line_interval(dashed_coords[::2], dashed_coords[1::2], l_dashed)
+            contours_dashed = self.line_interval(dashed_coords[::2], dashed_coords[1::2], settings.interval_dashed)
 
             # Update buffer
             self.alldashed.update(vertex=np.array(contours_dashed, dtype=np.float32))
@@ -212,8 +212,7 @@ class Poly(glh.RenderObject, layer=-20):
             lon:        longitudes of lines [array]
             interval:   segment interval [float]
         Returns:
-            lat:        latitudes of line segments [array]
-            lon:        longitudes of line segments [array]
+            contours:   contours of the line segments [array]
 
         Created by: Bob van Dillen
         Date: 18-2-2022
@@ -222,9 +221,15 @@ class Poly(glh.RenderObject, layer=-20):
         # Get screen pixel coordinates for the start and end points
         x, y = self.glsurface.LatLonTopixelCoords(lat, lon)
 
+        # Start and end points
+        x0 = x[::2]
+        x1 = x[1::2]
+        y0 = y[::2]
+        y1 = y[1::2]
+
         # Determine angle and distance between line start and end point
-        angle = np.arctan2(y[1::2]-y[::2], x[1::2]-x[::2])
-        length = np.sqrt((x[1::2]-x[::2])*(x[1::2]-x[::2]) + (y[1::2]-y[::2])*(y[1::2]-y[::2]))
+        angle = np.arctan2(y1-y0, x1-x0)
+        length = np.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
 
         # Determine angle and distance between line start and end point
         # angle, length = geo.kwikqdrdist_matrix(lat[::2], lon[::2], lat[1::2], lon[1::2])
@@ -237,38 +242,34 @@ class Poly(glh.RenderObject, layer=-20):
         n_segments = n_segments.astype(np.int32)
 
         '''
-        Constructing an array with the dx:
-        [[0 l*cos(a1) 2*l*cos(a1) ... n*l*cos(a1)]
-         [0 l*cos(a2) 2*l*cos(a2) ... n*l*cos(a2)]
-                           ...
-         [0 l*cos(am) 2*l*cos(am) ... n*l*cos(am)]]
-        
-        Similar for dy (with sine)
+        Constructing an array with the number of segments for all lines:
+        [[0 1 2 ... n]  --> [0 1 2 3 0 1 2 0 ... ]
+         [0 1 2 ... n]
+              ...
+         [0 1 2 ... n]]
         '''
         # Creating 0, 1, 2, ... , n array
         dl = np.arange(np.max(n_segments+1))
         dl = np.broadcast_to(dl, (len(n_segments), len(dl)))
 
+        # Reshape segments count
+        n = n_segments.reshape(len(n_segments), 1)
+
+        # Take number of segments for every line
+        dl = np.extract(dl <= n, dl)
+
+        '''
+        Multiply elementwise with cosine of the angle for dx (i = interval):
+        [0 1 2 3 0 1 ... ] * [i*cos(a1) i*cos(a1) i*cos(a1) i*cos(a1) i*cos(a2) i*cos(a2) ... ]
+        
+        Similar for y (sine)
+        '''
         # Reshaping angle array
-        angle = angle.reshape(len(angle), 1)
+        angle = np.repeat(angle, n_segments+1)
 
         # Creating dx and dy array
         dx = dl*interval*np.cos(angle)
         dy = dl*interval*np.sin(angle)
-
-        '''
-        Taking only the relevant dx:
-        [0 l*cos(a1) 2*l*cos(a1) 0 l*cos(a2) 0 ... ]
-        
-        Similar for dy
-        '''
-        # Reshape segments count
-        n = n_segments.reshape(len(n_segments), 1)
-        l = length.reshape(len(length), 1)
-
-        # Create array with relevant dx and dy
-        dx = np.extract(np.abs(dx) <= np.abs(l*np.cos(angle)), dx)
-        dy = np.extract(np.abs(dy) <= np.abs(l*np.sin(angle)), dy)
 
         '''
         Create repeated initial x array (x[::2]):
@@ -276,23 +277,23 @@ class Poly(glh.RenderObject, layer=-20):
         
         Similar for y
         '''
-        x0 = np.repeat(x[::2], n_segments+1)
-        y0 = np.repeat(y[::2], n_segments+1)
+        x_start = np.repeat(x0, n_segments+1)
+        y_start = np.repeat(y0, n_segments+1)
 
         '''
         Add dx to initial x:
-        [x1 x1+l*cos(a1) x1+2*l*cos(a1) x2 x2+l*cos(a2) x3 ... ]
+        [x1 x1+i*cos(a1) x1+2*i*cos(a1) x1+3*cos(a1) x2 x2+i*cos(a2) ... ]
         
         Similar for y
         '''
-        x_out = x0+dx
-        y_out = y0+dy
+        x_segments = x_start+dx
+        y_segments = y_start+dy
 
         # Convert to lat/lon
-        lat_out, lon_out = self.glsurface.pixelCoordsToLatLon(x_out, y_out)
+        lat_out, lon_out = self.glsurface.pixelCoordsToLatLon(x_segments, y_segments)
 
         # Create contours array
-        contours = np.empty(2*len(lat_out))
+        contours = np.empty(2*len(lat_out), dtype=np.float32)
         contours[::2] = lat_out
         contours[1::2] = lon_out
 
@@ -304,7 +305,7 @@ class Poly(glh.RenderObject, layer=-20):
         # Shape data change
         if 'SHAPE' in changed_elems:
             # Make Current
-            if nodedata.polys or nodedata.points:
+            if nodedata.polys or nodedata.points or nodedata.dotted or nodedata.dashed:
                 self.glsurface.makeCurrent()
 
             # Polys
@@ -322,17 +323,38 @@ class Poly(glh.RenderObject, layer=-20):
 
             # Points
             if nodedata.points:
+                # Retrieve data
                 contours, fills, colors = zip(*nodedata.points.values())
-                # Update positions
                 contours = np.concatenate(contours)
+                # Update buffers
                 self.pointslat.update(np.array(contours[::2], dtype=np.float32))
                 self.pointslon.update(np.array(contours[1::2], dtype=np.float32))
-                # Update colors
                 self.allpoints.update(color=np.concatenate(colors))
 
-            # Dotted and/or dashed line
-            if nodedata.dotted or nodedata.dashed:
-                self.dotted_dashed()
+            # Dotted lines
+            if nodedata.dotted:
+                # Retrieve data
+                contours, fills, colors = zip(*nodedata.dotted.values())
+                contours = np.concatenate(contours)
+                # Devide into segments
+                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dotted)
+                # Update buffer
+                self.alldotted.update(vertex=np.array(contours, dtype=np.float32))
+            else:
+                self.alldotted.set_vertex_count(0)
+
+            # Dashed lines
+            if nodedata.dashed:
+                # Retrieve data
+                contours, fills, colors = zip(*nodedata.dashed.values())
+                contours = np.concatenate(contours)
+                # Devide into segments
+                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dashed)
+                # Update buffer
+                self.alldashed.update(vertex=np.array(contours, dtype=np.float32))
+            else:
+                self.alldashed.set_vertex_count(0)
+
 
         # ATCMODE data change
         if 'ATCMODE' in changed_elems:
