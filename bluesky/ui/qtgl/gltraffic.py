@@ -828,35 +828,6 @@ def leading_zeros(number):
         return str(round(number))
 
 
-def get_lblpos(lblpos):
-    """
-    Function: Get the position of the label for the label list
-    Args:
-        lblpos: position of the label [str]
-    Returns:
-        index for rawlabels list [int]
-    Created by: Bob van Dillen
-    Date: 12-1-2022
-    """
-
-    if lblpos == 'LL':
-        return 5
-    if lblpos == 'LC':
-        return 6
-    if lblpos == 'LR':
-        return 7
-    if lblpos == 'CL':
-        return 3
-    if lblpos == 'CR':
-        return 4
-    if lblpos == 'UL':
-        return 0
-    if lblpos == 'UC':
-        return 1
-    if lblpos == 'UR':
-        return 2
-
-
 def vertex_offset(actdata, data, i):
     """
     Function: Get the vertex offset
