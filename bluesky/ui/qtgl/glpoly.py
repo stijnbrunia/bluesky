@@ -130,6 +130,7 @@ class Poly(glh.RenderObject, layer=-20):
                 # Create contour buffer with color
                 self.allpolys.update(vertex=np.concatenate(contours),
                                      color=np.concatenate(colors))
+                print(np.concatenate(colors))
 
                 # Create fill buffer
                 self.allpfill.update(vertex=np.concatenate(fills))

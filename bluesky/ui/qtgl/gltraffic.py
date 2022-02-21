@@ -98,16 +98,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.ssrlabels      = glh.Text(0.95*settings.text_size, (7, 3))
         self.microlabels    = glh.Text(0.95*settings.text_size, (3, 1))
 
-        self.leaderlines = glh.VertexArrayObject(glh.gl.GL_LINES)
-
-        # self.aclabels_ll    = glh.Text(settings.text_size, (8, 4))  # lower-left
-        # self.aclabels_lc    = glh.Text(settings.text_size, (8, 4))  # lower-center
-        # self.aclabels_lr    = glh.Text(settings.text_size, (8, 4))  # lower-right
-        # self.aclabels_cl    = glh.Text(settings.text_size, (8, 4))  # center-left
-        # self.aclabels_cr    = glh.Text(settings.text_size, (8, 4))  # center-right
-        # self.aclabels_ul    = glh.Text(settings.text_size, (8, 4))  # upper-left
-        # self.aclabels_uc    = glh.Text(settings.text_size, (8, 4))  # upper-center
-        # self.aclabels_ur    = glh.Text(settings.text_size, (8, 4))  # upper-right
+        self.leaderlines = glh.Line()
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
@@ -144,15 +135,6 @@ class Traffic(glh.RenderObject, layer=100):
         self.mlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
 
         self.offset.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-
-        # self.lbl_ll.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        # self.lbl_lc.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        # self.lbl_lr.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        # self.lbl_cl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        # self.lbl_cr.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        # self.lbl_ul.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        # self.lbl_uc.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        # self.lbl_ur.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
 
         # --------------- SSD ---------------
 
@@ -237,8 +219,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Leader lines ---------------
 
-        self.leaderlines.create(vertex=MAX_NAIRCRAFT*4, color=palette.aircraft)
-        self.leaderlines.set_attribs(lat=self.lat, lon=self.lon, instance_divisor=1)
+        self.leaderlines.create(vertex=MAX_NAIRCRAFT*4, lat=MAX_NAIRCRAFT*4, lon=MAX_NAIRCRAFT*4,
+                                color=MAX_NAIRCRAFT*4)
 
         # --------------- CPA lines ---------------
 
@@ -319,15 +301,6 @@ class Traffic(glh.RenderObject, layer=100):
             self.microlabels.draw(n_instances=actdata.naircraft)
 
             self.leaderlines.draw()
-
-            # self.aclabels_ll.draw(n_instances=actdata.naircraft)
-            # self.aclabels_lc.draw(n_instances=actdata.naircraft)
-            # self.aclabels_lr.draw(n_instances=actdata.naircraft)
-            # self.aclabels_cl.draw(n_instances=actdata.naircraft)
-            # self.aclabels_cr.draw(n_instances=actdata.naircraft)
-            # self.aclabels_ul.draw(n_instances=actdata.naircraft)
-            # self.aclabels_uc.draw(n_instances=actdata.naircraft)
-            # self.aclabels_ur.draw(n_instances=actdata.naircraft)
 
         # Draw SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
@@ -547,24 +520,16 @@ class Traffic(glh.RenderObject, layer=100):
                 self.lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
             # LVNL labels
             else:
-                self.lbl_lvnl.update(np.array(rawlabel_lvnl.encode('utf8'), dtype=np.string_))
                 # Update track label
-                # self.lbl_ll.update(np.array(rawlabels[5].encode('utf8'), dtype=np.string_))
-                # self.lbl_lc.update(np.array(rawlabels[6].encode('utf8'), dtype=np.string_))
-                # self.lbl_lr.update(np.array(rawlabels[7].encode('utf8'), dtype=np.string_))
-                # self.lbl_cl.update(np.array(rawlabels[3].encode('utf8'), dtype=np.string_))
-                # self.lbl_cr.update(np.array(rawlabels[4].encode('utf8'), dtype=np.string_))
-                # self.lbl_ul.update(np.array(rawlabels[0].encode('utf8'), dtype=np.string_))
-                # self.lbl_uc.update(np.array(rawlabels[1].encode('utf8'), dtype=np.string_))
-                # self.lbl_ur.update(np.array(rawlabels[2].encode('utf8'), dtype=np.string_))
+                self.lbl_lvnl.update(np.array(rawlabel_lvnl.encode('utf8'), dtype=np.string_))
                 # Update SSR label
                 self.ssrlbl.update(np.array(rawssrlabel.encode('utf8'), dtype=np.string_))
                 # Update micro label
                 self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
-
+                # Label position
                 self.offset.update(np.array(offset, dtype=np.float32))
                 # Leader line update
-                self.leaderlines.update(vertex=np.array(leaderlines, dtype=np.float32))
+                self.leaderlines.update(vertex=leaderlines, lat=data.lat, lon=data.lon, color=color)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:

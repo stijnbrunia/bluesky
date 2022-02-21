@@ -887,6 +887,7 @@ class Circle(VertexArrayObject):
         #     radius * np.sin(np.linspace(0.0, 2.0 * np.pi, nsegments)))), dtype=np.float32)
         super().create(vertex=np.array(vertices, dtype=np.float32), **attribs)
 
+
 class Rectangle(VertexArrayObject):
     ''' Convenience class for a rectangle. '''
 
@@ -901,16 +902,69 @@ class Rectangle(VertexArrayObject):
                           (0.5 * h, -0.5 * w), (0.5 * h, 0.5 * w)], dtype=np.float32)
         super().create(vertex=vrect)
 
+
 class Line(VertexArrayObject):
+    """
+    Class definition: Convenient class for drawing lines
+    Methods:
+        create():   Create the VAO
+        update():   Update the buffers
+
+    Created by: Bob van Dillen
+    Date: 21-2-2022
+    """
+
     def __init__(self, shader_type='normal', parent=None):
         super().__init__(gl.GL_LINES, shader_type, parent)
 
-    def create(self, vertex, lat, lon):
-        super().create(vertex=vertex, lat=lat, lon=lon)
+    def create(self, vertex, lat, lon, color, **attribs):
+        """
+        Function: Create the VAO
+        Args:
+            vertex:     vertex buffer size [int] / vertices [array]
+            lat:        latitude buffer size [int]
+            lon:        longitude buffer size [int]
+            color:      color buffer size [int]
+            **attribs:  Other attributes
+        Returns: -
 
-    def update(self, vertex, lat, lon):
-        lat = np.repeat
+        Created by: Bob van Dillen
+        Date: 21-2-2022
+        """
 
+        super().create(vertex=vertex, lat=lat, lon=lon, color=color, usage=GLBuffer.StreamDraw, **attribs)
+
+    def update(self, vertex=None, lat=None, lon=None, color=None):
+        """
+        Function: Update the buffers
+        Args:
+            vertex:     vertices [array]
+            lat:        latitudes [array]
+            lon:        longitudes [array]
+            color:      colors [array]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 21-2-2022
+        """
+
+        # Update vertex
+        if vertex is not None:
+            super().update(vertex=vertex)
+
+        # Update lat/lon
+        if lat is not None and lon is not None:
+            # Repeat the lat/lon for every vertex
+            lat = np.repeat(np.array(lat, dtype=np.float32), 2)
+            lon = np.repeat(np.array(lon, dtype=np.float32), 2)
+            super().update(lat=lat, lon=lon)
+
+        # Update color
+        if color is not None:
+            # Repeat the color for every vertex
+            color = np.repeat(np.array(color, dtype=np.uint8), 2, axis=0)
+            color = np.ravel(color)
+            super().update(color=color)
 
 
 class GLBuffer(QOpenGLBuffer):
