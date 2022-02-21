@@ -132,10 +132,13 @@ class RadarWidget(glh.RenderWidget):
         if 'ATCMODE' in changed_elems:
             if nodedata.atcmode == 'APP':
                 self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=36.)
+                self.set_background()
             if nodedata.atcmode == 'ACC':
                 self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=120.)
+                self.set_background()
             if nodedata.atcmode == 'TWR':
                 self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=2.)
+                self.set_background()
 
     def initializeGL(self):
         """Initialize OpenGL, VBOs, upload data on the GPU, etc."""
@@ -153,6 +156,29 @@ class RadarWidget(glh.RenderWidget):
 
         self.initialized = True
 
+    def set_background(self, color=None):
+        """
+        Function: Change the background color
+        Args:
+            color:  red, blue, green, color [tuple]
+        Returns: -
+
+        Create by: Bob van Dillen
+        Date: 21-2-2022
+        """
+
+        self.makeCurrent()
+
+        # Define color
+        if color:
+            rgb_background = color
+        else:
+            rgb_background = palette.background
+
+        # Set the background color (r,b,g in range [0, 1]
+        glh.gl.glClearColor(rgb_background[0]/255, rgb_background[1]/255, rgb_background[2]/255, 0)
+        glh.gl.glEnable(glh.gl.GL_BLEND)
+        glh.gl.glBlendFunc(glh.gl.GL_SRC_ALPHA, glh.gl.GL_ONE_MINUS_SRC_ALPHA)
 
     def resizeGL(self, width, height):
         """Called upon window resizing: reinitialize the viewport."""
