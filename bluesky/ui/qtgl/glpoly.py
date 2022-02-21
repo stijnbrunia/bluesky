@@ -309,7 +309,6 @@ class Poly(glh.RenderObject, layer=-20):
               ...
          [0 1 2 ... n]]
         '''
-        # Creating 0, 1, 2, ... , n array
         dl = np.arange(np.max(n_segments+1))
         dl = np.broadcast_to(dl, (len(n_segments), len(dl)))
 
