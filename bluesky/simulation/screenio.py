@@ -364,7 +364,7 @@ class ScreenIO:
         # Always update data (take aircraft create/delete into account)
         data['arr'][idata]      = np.array(bs.traf.lvnlvars.arr)[itraf]
         data['arr']             = data['arr'].tolist()
-        data['lblpos'][idata]   = np.array(bs.traf.lvnlvars.lblpos)[itraf]
+        data['lblpos'][idata]   = bs.traf.lvnlvars.lblpos[itraf]
         data['lblpos']          = data['lblpos'].tolist()
         data['mlbl'][idata]     = np.array(bs.traf.lvnlvars.mlbl)[itraf]
         data['mlbl']            = data['mlbl'].tolist()

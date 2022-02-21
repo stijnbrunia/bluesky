@@ -478,6 +478,7 @@ class VertexArrayObject(QOpenGLVertexArrayObject):
         self.max_instance_divisor = 0
         self.single_color = None
         self.single_scale = None
+        self.single_offset = None
 
     def set_primitive_type(self, primitive_type):
         ''' Set the primitive type for this VAO. '''
@@ -543,6 +544,10 @@ class VertexArrayObject(QOpenGLVertexArrayObject):
                     if len(data) == 3:
                         # Add full alpha if none is given
                         self.single_color = np.append(self.single_color, 255)
+                    continue
+                # Single vertex offset attribute
+                if name == 'vertex_offset' and np.size(data) == 2:
+                    self.single_offset = np.append(attrib.loc, data)
                     continue
                 # If the input is an array create a new GL buffer
                 buf = GLBuffer()
@@ -619,6 +624,9 @@ class VertexArrayObject(QOpenGLVertexArrayObject):
         if self.single_scale is not None:
             shader.setAttributeValue(*self.single_scale)
 
+        if self.single_offset is not None:
+            shader.setAttributeValue(*self.single_offset)
+
         if n_instances > 0:
             gl.glDrawArraysInstanced(
                 primitive_type, first_vertex, vertex_count, n_instances * self.max_instance_divisor)
@@ -641,7 +649,14 @@ class Text(VertexArrayObject):
         if not self.font.isCreated():
             self.font.create()
         w, h = self.charsize, self.charsize * self.font.char_ar
-        x, y = vertex_offset or (0.0, 0.0)
+
+        # Set offset
+        if isinstance(vertex_offset, QOpenGLBuffer):
+            x, y = (0., 0.)
+        else:
+            x, y = vertex_offset or (0.0, 0.0)
+
+        # Compute vertices
         if instanced:
             vertices, texcoords = self.font.char(x, y, w, h)
         else:
@@ -651,16 +666,27 @@ class Text(VertexArrayObject):
                 vertices += v
                 texcoords += t
 
-        self.set_attribs(vertex=np.array(vertices, dtype=np.float32),
-                         texcoords=np.array(texcoords, dtype=np.float32))
+        # Set vertex and texture coords
+        self.set_attribs(vertex=np.array(vertices, dtype=np.float32), texcoords=np.array(texcoords, dtype=np.float32))
 
+        # Set instanced
         if instanced:
-            self.set_attribs(texdepth=text, instance_divisor=1,
-                             datatype=gl.GL_UNSIGNED_BYTE)
+            self.set_attribs(texdepth=text, instance_divisor=1, datatype=gl.GL_UNSIGNED_BYTE)
+
+        # Define divisor
         divisor = self.blocksize[0] * self.blocksize[1] if instanced else 0
+
+        # Set lat/lon
         if lat is not None and lon is not None:
             self.set_attribs(lat=lat, lon=lon, instance_divisor=divisor)
 
+        # Set vertex_offset
+        if isinstance(vertex_offset, QOpenGLBuffer):
+            self.set_attribs(vert_offset=vertex_offset, instance_divisor=divisor)
+        else:
+            self.set_attribs(vert_offset=np.array([0, 0], dtype=np.float32), instance_divisor=divisor)
+
+        # Set color
         if color:
             self.set_attribs(color=color, instance_divisor=divisor)
 
@@ -874,6 +900,17 @@ class Rectangle(VertexArrayObject):
         vrect = np.array([(-0.5 * h, 0.5 * w), (-0.5 * h, -0.5 * w),
                           (0.5 * h, -0.5 * w), (0.5 * h, 0.5 * w)], dtype=np.float32)
         super().create(vertex=vrect)
+
+class Line(VertexArrayObject):
+    def __init__(self, shader_type='normal', parent=None):
+        super().__init__(gl.GL_LINES, shader_type, parent)
+
+    def create(self, vertex, lat, lon):
+        super().create(vertex=vertex, lat=lat, lon=lon)
+
+    def update(self, vertex, lat, lon):
+        lat = np.repeat
+
 
 
 class GLBuffer(QOpenGLBuffer):

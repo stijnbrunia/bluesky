@@ -39,7 +39,7 @@ class LVNLVariables(Entity):
             self.arr = []                                # Arrival/Stack
             self.dtg_tbar = np.array([])                 # Distance to T-Bar point
             self.flighttype = []                         # Flight type
-            self.lblpos = []                             # Label position
+            self.lblpos = np.array([])                   # Label position
             self.mlbl = np.array([], dtype=np.bool)      # Show micro label
             self.rel = np.array([], dtype=np.bool)       # Release
             self.rwy = []                                # Runway
@@ -63,7 +63,7 @@ class LVNLVariables(Entity):
 
         super().create(n)
 
-        self.lblpos[-n:] = ['UL']
+        self.lblpos[-n:] = 0
         self.tracklbl[-n:] = True
         self.mlbl[-n:] = False
 
@@ -190,8 +190,8 @@ class LVNLVariables(Entity):
         if isinstance(flighttype, str):
             self.flighttype[idx] = flighttype.upper()
 
-    @stack.command(name='POSLABEL', brief='POSLABEL CALLSIGN LL/LC/LR/CL/CR/UL/UC/UR')
-    def poslabel(self, idx: 'acid', labelposition: str):
+    @stack.command(name='POSLABEL', brief='POSLABEL CALLSIGN ANGLE')
+    def poslabel(self, idx: 'acid', angle: float):
         """
         Function: Set position of the label
         Args:
@@ -203,10 +203,7 @@ class LVNLVariables(Entity):
         Date: 12-1-2021
         """
 
-        if labelposition.upper() in ['LL', 'LC', 'LR', 'CL', 'CR', 'UL', 'UC', 'UR']:
-            self.lblpos[idx] = labelposition.upper()
-        else:
-            return False, 'POSLABEL: Not a valid label position'
+        self.lblpos[idx] = angle
 
     @stack.command(name='MICROLABEL', brief='MICROLABEL CALLSIGN')
     def setmlabel(self, idx: 'acid'):
