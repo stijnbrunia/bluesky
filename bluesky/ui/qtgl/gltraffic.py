@@ -42,6 +42,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.asas_vmin      = settings.asas_vmin
         self.asas_vmax      = settings.asas_vmax
 
+        bs.Signal('labelpos').connect(self.update_labelpos)
+
         # --------------- Aircraft data ---------------
 
         self.hdg            = glh.GLBuffer()
@@ -67,16 +69,8 @@ class Traffic(glh.RenderObject, layer=100):
         self.ssrlbl     = glh.GLBuffer()
         self.mlbl       = glh.GLBuffer()
 
+        self.offset_array = np.array([], dtype=np.float32)
         self.offset     = glh.GLBuffer()
-
-        # self.lbl_ll = glh.GLBuffer()
-        # self.lbl_lc = glh.GLBuffer()
-        # self.lbl_lr = glh.GLBuffer()
-        # self.lbl_cl = glh.GLBuffer()
-        # self.lbl_cr = glh.GLBuffer()
-        # self.lbl_ul = glh.GLBuffer()
-        # self.lbl_uc = glh.GLBuffer()
-        # self.lbl_ur = glh.GLBuffer()
 
         # --------------- Aircraft objects ---------------
 
@@ -192,30 +186,6 @@ class Traffic(glh.RenderObject, layer=100):
                               (ac_size, -1.1*ac_size), instanced=True)
         self.microlabels.create(self.mlbl, self.lat, self.lon, self.color,
                                 (-3*0.8*text_size-ac_size, 0.5*ac_size), instanced=True)
-
-        # self.aclabels_ll.create(self.lbl_ll, self.lat, self.lon, self.color,
-        #                         (-8*text_size-5*ac_size, -text_height-5*ac_size),
-        #                         instanced=True)
-        # self.aclabels_lc.create(self.lbl_lc, self.lat, self.lon, self.color,
-        #                         (ac_size, -text_height-ac_size),
-        #                         instanced=True)
-        # self.aclabels_lr.create(self.lbl_lr, self.lat, self.lon, self.color,
-        #                         (5*ac_size, -text_height-5*ac_size),
-        #                         instanced=True)
-        # self.aclabels_cl.create(self.lbl_cl, self.lat, self.lon, self.color,
-        #                         (-8*text_size-7*ac_size, 0),
-        #                         instanced=True)
-        # self.aclabels_cr.create(self.lbl_cr, self.lat, self.lon, self.color,
-        #                         (7*ac_size, 0), instanced=True)
-        # self.aclabels_ul.create(self.lbl_ul, self.lat, self.lon, self.color,
-        #                         (-8*text_size-5*ac_size, 3*text_height+5*ac_size),
-        #                         instanced=True)
-        # self.aclabels_uc.create(self.lbl_uc, self.lat, self.lon, self.color,
-        #                         (ac_size, 3*text_height+ac_size),
-        #                         instanced=True)
-        # self.aclabels_ur.create(self.lbl_ur, self.lat, self.lon, self.color,
-        #                         (5*ac_size, 3*text_height+5*ac_size),
-        #                         instanced=True)
 
         # --------------- Leader lines ---------------
 
@@ -445,7 +415,7 @@ class Traffic(glh.RenderObject, layer=100):
             rawssrlabel = ''
 
             leaderlines = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.float32)
-            offset      = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
+            self.offset_array = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
 
             color       = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
             selssd      = np.zeros(naircraft, dtype=np.uint8)
@@ -477,7 +447,7 @@ class Traffic(glh.RenderObject, layer=100):
                         rawmlabel     += mlabel
                         rawssrlabel   += ssrlabel
 
-                    offset[i, :]      = vertex_offset(actdata, data, i)
+                    self.offset_array[i, :]      = vertex_offset(actdata, data, i)
                     leaderlines[i, :] = leaderline_vertex(actdata, data, i)
 
                 # Colours
@@ -527,7 +497,7 @@ class Traffic(glh.RenderObject, layer=100):
                 # Update micro label
                 self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
                 # Label position
-                self.offset.update(np.array(offset, dtype=np.float32))
+                self.offset.update(np.array(self.offset_array, dtype=np.float32))
                 # Leader line update
                 self.leaderlines.update(vertex=leaderlines, lat=data.lat, lon=data.lon, color=color)
             
@@ -535,6 +505,10 @@ class Traffic(glh.RenderObject, layer=100):
             if self.route_acid in data.id:
                 idx = data.id.index(self.route_acid)
                 self.route.vertex.update(np.array([data.lat[idx], data.lon[idx]], dtype=np.float32))
+
+    def update_labelpos(self, x, y):
+        print('Label position update:', x, y)
+
 
 
 """
@@ -847,11 +821,25 @@ def vertex_offset(actdata, data, i):
     text_size   = settings.text_size
     text_width  = text_size
     text_height = text_size * 1.2307692307692308
+    block_size = (4*text_height, 8*text_width)
 
-    radius = 3*text_height + ac_size
-    angle  = np.radians(data.lblpos[i])
+    # Determine angle in radians
+    angle = np.radians(data.lblpos[i]) % (2*np.pi)  # 0 - 2*pi
 
-    vertices = (radius*np.cos(angle), radius*np.sin(angle))
+    # Determine radius based on label position
+    if 0.25*np.pi <= angle < 0.75*np.pi:
+        radius = block_size[0] + 4*ac_size
+    elif 0.75*np.pi <= angle < 1.25*np.pi:
+        radius = block_size[1] + 4*ac_size
+    elif 1.25*np.pi <= angle < 1.75*np.pi:
+        radius = text_height + 4*ac_size
+    else:
+        radius = block_size[0] + ac_size
+
+    cosa = np.cos(angle)
+    sina = np.sin(angle)
+
+    vertices = (radius*cosa, radius*sina)
 
     return vertices
 
@@ -878,8 +866,10 @@ def leaderline_vertex(actdata, data, i):
 
     radius = 3*text_height + ac_size
     angle  = np.radians(data.lblpos[i])
+    cosa = np.cos(angle)
+    sina = np.sin(angle)
 
-    vertices = (ac_size, ac_size, radius*np.cos(angle), radius*np.sin(angle))
+    vertices = (ac_size*cosa, ac_size*sina, radius*cosa, radius*sina)
 
     return vertices
 

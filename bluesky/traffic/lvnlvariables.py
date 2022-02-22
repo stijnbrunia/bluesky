@@ -63,9 +63,9 @@ class LVNLVariables(Entity):
 
         super().create(n)
 
-        self.lblpos[-n:] = 0
+        self.lblpos[-n:]   = 0
         self.tracklbl[-n:] = True
-        self.mlbl[-n:] = False
+        self.mlbl[-n:]     = False
 
     @timed_function(name='lvnlvars', dt=0.1)
     def update(self):
@@ -195,8 +195,8 @@ class LVNLVariables(Entity):
         """
         Function: Set position of the label
         Args:
-            idx:            index for traffic arrays [int]
-            labelposition:  position of the label [str]
+            idx:    index for traffic arrays [int]
+            angle:  angular position of the label [str]
         Returns: -
 
         Created by: Bob van Dillen

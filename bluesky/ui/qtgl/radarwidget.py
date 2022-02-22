@@ -121,6 +121,8 @@ class RadarWidget(glh.RenderWidget):
         bs.net.actnodedata_changed.connect(self.actdata_changed)
         self.mouse_event = Signal('radarmouse')
         self.panzoom_event = Signal('panzoom')
+        self.labelpos_event = Signal('labelpos')
+
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Update buffers when a different node is selected, or when
@@ -403,7 +405,7 @@ class RadarWidget(glh.RenderWidget):
                 self.panzoomchanged = True
                 return self.panzoom(pan, zoom, self.mousepos)
 
-        elif event.type() == QEvent.MouseButtonPress and event.button() & Qt.LeftButton:
+        elif event.type() == QEvent.MouseButtonPress and (event.button() & Qt.LeftButton or event.button() & Qt.RightButton):
             self.mousedragged = False
             # For mice we pan with control/command and mouse movement.
             # Mouse button press marks the beginning of a pan
@@ -429,6 +431,8 @@ class RadarWidget(glh.RenderWidget):
                 self.prevmousepos = (event.x(), event.y())
                 self.panzoomchanged = True
                 return self.panzoom(pan=(dlat, dlon))
+            elif event.buttons() & Qt.RightButton:
+                self.labelpos_event.emit(event.x(), event.y())
 
         elif event.type() == QEvent.TouchBegin:
             # Accept touch start to enable reception of follow-on touch update and touch end events
