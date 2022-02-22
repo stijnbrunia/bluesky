@@ -47,6 +47,7 @@ class Coefficient:
                 if acmod == synomod:
                     continue
                 self.synodict[acmod] = synomod
+                # print(acmod, synomod, 'CHECKEN')
 
         self.acs_fixwing = self._load_all_fixwing_flavor()
         self.engines_fixwing = pd.read_csv(fixwing_engine_db, encoding="utf-8")

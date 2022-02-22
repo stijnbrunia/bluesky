@@ -63,11 +63,14 @@ class OpenAP(PerfBase):
         super().create(n)
 
         actype = bs.traf.type[-1].upper()
-
+        # print(self.coeff.dragpolar_fixwing)
+        # print(self.coeff.actypes_fixwing)
         # Check synonym file if not in open ap actypes
+        # if (actype not in self.coeff.actypes_rotor) and (
+        #     actype not in self.coeff.dragpolar_fixwing):
         if (actype not in self.coeff.actypes_rotor) and (
-            actype not in self.coeff.dragpolar_fixwing
-        ):
+                actype not in self.coeff.actypes_fixwing):
+
             if actype in self.coeff.synodict.keys():
                 warn = f"Warning: {actype} replaced by {self.coeff.synodict[actype]}"
                 print(warn)
@@ -95,6 +98,8 @@ class OpenAP(PerfBase):
 
             # populate fuel flow model
             es = self.coeff.acs_fixwing[actype]["engines"]
+            if len(list(es.keys())) == 0:
+                print(es)
             e = es[list(es.keys())[0]]
             coeff_a, coeff_b, coeff_c = thrust.compute_eng_ff_coeff(
                 e["ff_idl"], e["ff_app"], e["ff_co"], e["ff_to"]
