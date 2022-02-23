@@ -42,6 +42,11 @@ class Traffic(glh.RenderObject, layer=100):
         self.asas_vmin      = settings.asas_vmin
         self.asas_vmax      = settings.asas_vmax
 
+        # --------------- Label position ---------------
+
+        self.id_prev        = []
+        self.labelpos       = np.array([], dtype=np.float32)
+        self.leaderlinepos  = np.array([], dtype=np.float32)
         bs.Signal('labelpos').connect(self.update_labelpos)
 
         # --------------- Aircraft data ---------------
@@ -53,14 +58,10 @@ class Traffic(glh.RenderObject, layer=100):
         self.alt            = glh.GLBuffer()
         self.tas            = glh.GLBuffer()
         self.color          = glh.GLBuffer()
-        self.leadlinecolor  = glh.GLBuffer()
         self.asasn          = glh.GLBuffer()
         self.asase          = glh.GLBuffer()
         self.histsymblat    = glh.GLBuffer()
         self.histsymblon    = glh.GLBuffer()
-        self.leadlinelat    = glh.GLBuffer()
-        self.leadlinelon    = glh.GLBuffer()
-        self.leadlinevert   = glh.GLBuffer()
 
         # --------------- Label data ---------------
 
@@ -69,8 +70,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.ssrlbl     = glh.GLBuffer()
         self.mlbl       = glh.GLBuffer()
 
-        self.offset_array = np.array([], dtype=np.float32)
-        self.offset     = glh.GLBuffer()
+        self.lbloffset     = glh.GLBuffer()
 
         # --------------- Aircraft objects ---------------
 
@@ -92,7 +92,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.ssrlabels      = glh.Text(0.95*settings.text_size, (7, 3))
         self.microlabels    = glh.Text(0.95*settings.text_size, (3, 1))
 
-        self.leaderlines = glh.Line()
+        self.leaderlines    = glh.Line()
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
@@ -111,15 +111,11 @@ class Traffic(glh.RenderObject, layer=100):
         self.alt.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.tas.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.color.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
-        self.leadlinecolor.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
         self.asasn.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.asase.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.rpz.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.histsymblat.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
         self.histsymblon.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
-        self.leadlinelat.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
-        self.leadlinelon.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
-        self.leadlinevert.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
 
         # --------------- Label data ---------------
 
@@ -128,7 +124,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.ssrlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.mlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
 
-        self.offset.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+        self.lbloffset.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
 
         # --------------- SSD ---------------
 
@@ -181,7 +177,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.aclabels.create(self.lbl, self.lat, self.lon, self.color,
                              (ac_size, -0.5 * ac_size), instanced=True)
         self.aclabels_lvnl.create(self.lbl_lvnl, self.lat, self.lon, self.color,
-                                  self.offset, instanced=True)
+                                  self.lbloffset, instanced=True)
         self.ssrlabels.create(self.ssrlbl, self.lat, self.lon, self.color,
                               (ac_size, -1.1*ac_size), instanced=True)
         self.microlabels.create(self.mlbl, self.lat, self.lon, self.color,
@@ -253,7 +249,6 @@ class Traffic(glh.RenderObject, layer=100):
 
         # Draw history symbols
         if actdata.show_histsymb and len(actdata.acdata.histsymblat) != 0:
-            self.hist_symbol.set_attribs(color=palette.aircraft)
             self.hist_symbol.draw(n_instances=len(actdata.acdata.histsymblat))
 
         # Draw route labels
@@ -270,7 +265,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.ssrlabels.draw(n_instances=actdata.naircraft)
             self.microlabels.draw(n_instances=actdata.naircraft)
 
-            self.leaderlines.draw()
+            # self.leaderlines.draw()
 
         # Draw SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
@@ -397,8 +392,6 @@ class Traffic(glh.RenderObject, layer=100):
             self.rpz.update(np.array(data.rpz, dtype=np.float32))
             self.histsymblat.update(np.array(data.histsymblat, dtype=np.float32))
             self.histsymblon.update(np.array(data.histsymblon, dtype=np.float32))
-            self.leadlinelat.update(np.repeat(np.array(data.lat, dtype=np.float32), 2))
-            self.leadlinelon.update(np.repeat(np.array(data.lon, dtype=np.float32), 2))
             if hasattr(data, 'asasn') and hasattr(data, 'asase'):
                 self.asasn.update(np.array(data.asasn, dtype=np.float32))
                 self.asase.update(np.array(data.asase, dtype=np.float32))
@@ -414,8 +407,15 @@ class Traffic(glh.RenderObject, layer=100):
             rawmlabel   = ''
             rawssrlabel = ''
 
-            leaderlines = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.float32)
-            self.offset_array = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
+            # Label position
+            if data.id != self.id_prev:
+                idchange = True
+                idcreate = np.setdiff1d(data.id, self.id_prev).tolist()
+            else:
+                idchange = False
+                idcreate = []
+            labelpos      = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
+            leaderlinepos = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.float32)
 
             color       = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
             selssd      = np.zeros(naircraft, dtype=np.uint8)
@@ -428,6 +428,7 @@ class Traffic(glh.RenderObject, layer=100):
                 if i >= MAX_NAIRCRAFT:
                     break
 
+                # Labels
                 if actdata.atcmode == 'BLUESKY':
                     rawlabel += baselabel(actdata, data, i)
                 else:
@@ -447,8 +448,17 @@ class Traffic(glh.RenderObject, layer=100):
                         rawmlabel     += mlabel
                         rawssrlabel   += ssrlabel
 
-                    self.offset_array[i, :]      = vertex_offset(actdata, data, i)
-                    leaderlines[i, :] = leaderline_vertex(actdata, data, i)
+                    # Label position
+                    if idchange:
+                        if acid in idcreate:
+                            labelpos[i] = [50, 0]
+                        else:
+                            i_prev = self.id_prev.index(acid)
+                            labelpos[i] = self.labelpos[i_prev]
+                            leaderlinepos[i] = self.leaderlinepos[i_prev]
+                    else:
+                        labelpos[i] = self.labelpos[i]
+                        leaderlinepos[i] = self.leaderlinepos[i]
 
                 # Colours
                 if inconf:
@@ -483,7 +493,6 @@ class Traffic(glh.RenderObject, layer=100):
 
             self.cpalines.update(vertex=cpalines)
             self.color.update(color)
-            self.leadlinecolor.update(np.repeat(color, 2, axis=0))
 
             # BlueSky default label (ATC mode BLUESKY)
             if actdata.atcmode == 'BLUESKY':
@@ -497,17 +506,63 @@ class Traffic(glh.RenderObject, layer=100):
                 # Update micro label
                 self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
                 # Label position
-                self.offset.update(np.array(self.offset_array, dtype=np.float32))
+                self.labelpos = labelpos
+                self.id_prev = data.id
+                self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
                 # Leader line update
-                self.leaderlines.update(vertex=leaderlines, lat=data.lat, lon=data.lon, color=color)
+                self.leaderlinepos = leaderlinepos
+                self.leaderlines.update(vertex=self.leaderlinepos, lat=data.lat, lon=data.lon, color=color)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:
                 idx = data.id.index(self.route_acid)
                 self.route.vertex.update(np.array([data.lat[idx], data.lon[idx]], dtype=np.float32))
 
-    def update_labelpos(self, x, y):
-        print('Label position update:', x, y)
+    def update_labelpos(self, x, y, finished=False):
+        """
+        Function: Update the label position for the selected aircraft
+        Args:
+            x:  Cursor x pixel coordinate
+            y:  Cursor y pixel coordinate
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 22-2-2022
+        """
+
+        # Node data
+        actdata = bs.net.get_nodedata()
+
+        # Get index selected aircraft
+        idx = misc.get_indices(actdata.acdata.id, console.Console._instance.id_select)
+
+        # Check if selected aircraft exists
+        if len(idx) != 0:
+            idx = idx[0]
+
+            # Get the label offset in pixel coordinates
+            offsetx = self.labelpos[idx][0]
+            offsety = self.labelpos[idx][1]
+
+            # Get the lat/lon
+            lat = actdata.acdata.lat[idx]
+            lon = actdata.acdata.lon[idx]
+
+            # Get the aircraft position in pixel coordinates
+            xpos, ypos = self.glsurface.LatLonTopixelCoords(lat, lon)
+
+            # Get the new label offset coordinates
+            xlabel = x-xpos
+            ylabel = -(y-ypos)
+
+            self.labelpos[idx][0] = xlabel
+            self.labelpos[idx][1] = ylabel
+
+            self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
+
+
+
+
 
 
 
@@ -824,7 +879,7 @@ def vertex_offset(actdata, data, i):
     block_size = (4*text_height, 8*text_width)
 
     # Determine angle in radians
-    angle = np.radians(data.lblpos[i]) % (2*np.pi)  # 0 - 2*pi
+    angle = np.radians(data.labelpos[i]) % (2*np.pi)  # 0 - 2*pi
 
     # Determine radius based on label position
     if 0.25*np.pi <= angle < 0.75*np.pi:
@@ -865,7 +920,7 @@ def leaderline_vertex(actdata, data, i):
     text_height = text_size * 1.2307692307692308
 
     radius = 3*text_height + ac_size
-    angle  = np.radians(data.lblpos[i])
+    angle  = np.radians(data.labelpos[i])
     cosa = np.cos(angle)
     sina = np.sin(angle)
 

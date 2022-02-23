@@ -98,6 +98,7 @@ class RadarWidget(glh.RenderWidget):
         self.initialized = False
 
         self.panzoomchanged = False
+        self.labelposchanged = False
         self.mousedragged = False
         self.mousepos = (0, 0)
         self.prevmousepos = (0, 0)
@@ -432,7 +433,8 @@ class RadarWidget(glh.RenderWidget):
                 self.panzoomchanged = True
                 return self.panzoom(pan=(dlat, dlon))
             elif event.buttons() & Qt.RightButton:
-                self.labelpos_event.emit(event.x(), event.y())
+                self.labelpos_event.emit(event.x(), event.y(), False)
+                self.labelposchanged = True
 
         elif event.type() == QEvent.TouchBegin:
             # Accept touch start to enable reception of follow-on touch update and touch end events
@@ -440,11 +442,15 @@ class RadarWidget(glh.RenderWidget):
 
         # Update pan/zoom to simulation thread only when the pan/zoom gesture is finished
         elif (event.type() == QEvent.MouseButtonRelease or
-              event.type() == QEvent.TouchEnd) and self.panzoomchanged:
-            self.panzoomchanged = False
-            bs.net.send_event(b'PANZOOM', dict(pan=(self.panlat, self.panlon),
-                                               zoom=self.zoom, ar=self.ar, absolute=True))
-            self.panzoom_event.emit(True)
+              event.type() == QEvent.TouchEnd) and (self.panzoomchanged or self.labelposchanged):
+            if self.panzoomchanged:
+                self.panzoomchanged = False
+                bs.net.send_event(b'PANZOOM', dict(pan=(self.panlat, self.panlon),
+                                                   zoom=self.zoom, ar=self.ar, absolute=True))
+                self.panzoom_event.emit(True)
+            if self.labelposchanged:
+                self.labelposchanged = False
+                self.labelpos_event.emit(event.x(), event.y(), True)
         else:
             return super().event(event)
         

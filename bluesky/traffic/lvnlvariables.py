@@ -39,7 +39,6 @@ class LVNLVariables(Entity):
             self.arr = []                                # Arrival/Stack
             self.dtg_tbar = np.array([])                 # Distance to T-Bar point
             self.flighttype = []                         # Flight type
-            self.lblpos = np.array([])                   # Label position
             self.mlbl = np.array([], dtype=np.bool)      # Show micro label
             self.rel = np.array([], dtype=np.bool)       # Release
             self.rwy = []                                # Runway
@@ -63,7 +62,7 @@ class LVNLVariables(Entity):
 
         super().create(n)
 
-        self.lblpos[-n:]   = 0
+        #self.labelpos      = np.append(self.labelpos[:-n], [])
         self.tracklbl[-n:] = True
         self.mlbl[-n:]     = False
 
@@ -189,21 +188,6 @@ class LVNLVariables(Entity):
 
         if isinstance(flighttype, str):
             self.flighttype[idx] = flighttype.upper()
-
-    @stack.command(name='POSLABEL', brief='POSLABEL CALLSIGN ANGLE')
-    def poslabel(self, idx: 'acid', angle: float):
-        """
-        Function: Set position of the label
-        Args:
-            idx:    index for traffic arrays [int]
-            angle:  angular position of the label [str]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 12-1-2021
-        """
-
-        self.lblpos[idx] = angle
 
     @stack.command(name='MICROLABEL', brief='MICROLABEL CALLSIGN')
     def setmlabel(self, idx: 'acid'):

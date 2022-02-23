@@ -333,9 +333,8 @@ class ScreenIO:
 
             # Always update data
             data['arr']         = np.array(bs.traf.lvnlvars.arr)
-            data['lblpos']      = np.array(bs.traf.lvnlvars.lblpos)
             data['mlbl']        = np.array(bs.traf.lvnlvars.mlbl)
-            data['rel']         = np.array(bs.traf.lvnlvars.rel)
+            data['rel']         = bs.traf.lvnlvars.rel
             data['rwy']         = np.array(bs.traf.lvnlvars.rwy)
             data['selhdg']      = bs.traf.selhdg
             data['selalt']      = bs.traf.selalt
@@ -364,12 +363,9 @@ class ScreenIO:
         # Always update data (take aircraft create/delete into account)
         data['arr'][idata]      = np.array(bs.traf.lvnlvars.arr)[itraf]
         data['arr']             = data['arr'].tolist()
-        data['lblpos'][idata]   = bs.traf.lvnlvars.lblpos[itraf]
-        data['lblpos']          = data['lblpos'].tolist()
         data['mlbl'][idata]     = np.array(bs.traf.lvnlvars.mlbl)[itraf]
         data['mlbl']            = data['mlbl'].tolist()
-        data['rel'][idata]      = np.array(bs.traf.lvnlvars.rel)[itraf]
-        data['rel']             = data['rel'].tolist()
+        data['rel'][idata]      = bs.traf.lvnlvars.rel[itraf]
         data['rwy'][idata]      = np.array(bs.traf.lvnlvars.rwy)[itraf]
         data['rwy']             = data['rwy'].tolist()
         data['selhdg'][idata]   = bs.traf.selhdg[itraf]
