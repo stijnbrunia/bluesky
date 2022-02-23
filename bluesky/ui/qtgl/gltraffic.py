@@ -70,7 +70,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.ssrlbl     = glh.GLBuffer()
         self.mlbl       = glh.GLBuffer()
 
-        self.lbloffset     = glh.GLBuffer()
+        self.lbloffset  = glh.GLBuffer()
 
         # --------------- Aircraft objects ---------------
 
@@ -265,7 +265,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.ssrlabels.draw(n_instances=actdata.naircraft)
             self.microlabels.draw(n_instances=actdata.naircraft)
 
-            # self.leaderlines.draw()
+            self.leaderlines.draw()
 
         # Draw SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
@@ -288,6 +288,9 @@ class Traffic(glh.RenderObject, layer=100):
                                     nodedata.traillon0,
                                     nodedata.traillat1,
                                     nodedata.traillon1)
+        if 'ATCMODE' in changed_elems:
+            self.hist_symbol.set_attribs(color=palette.aircraft)
+
 
     def update_trails_data(self, lat0, lon0, lat1, lon1):
         ''' Update GPU buffers with route data from simulation. '''
@@ -401,7 +404,7 @@ class Traffic(glh.RenderObject, layer=100):
             cpalines    = np.zeros(4 * ncpalines, dtype=np.float32)
             self.cpalines.set_vertex_count(2 * ncpalines)
 
-            # Labels and colors
+            # Labels
             rawlabel    = ''
             rawlabel_lvnl = ''
             rawmlabel   = ''
@@ -417,7 +420,9 @@ class Traffic(glh.RenderObject, layer=100):
             labelpos      = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
             leaderlinepos = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.float32)
 
+            # Colors
             color       = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
+
             selssd      = np.zeros(naircraft, dtype=np.uint8)
             confidx     = 0
 
@@ -452,13 +457,20 @@ class Traffic(glh.RenderObject, layer=100):
                     if idchange:
                         if acid in idcreate:
                             labelpos[i] = [50, 0]
+                            leaderlinepos[i] = leaderline_vertices(actdata, 50, 0)
                         else:
                             i_prev = self.id_prev.index(acid)
                             labelpos[i] = self.labelpos[i_prev]
-                            leaderlinepos[i] = self.leaderlinepos[i_prev]
+                            if data.tracklbl[i]:
+                                leaderlinepos[i] = self.leaderlinepos[i]
+                            else:
+                                leaderlinepos[i] = [0, 0, 0, 0]
                     else:
                         labelpos[i] = self.labelpos[i]
-                        leaderlinepos[i] = self.leaderlinepos[i]
+                        if data.tracklbl[i]:
+                            leaderlinepos[i] = self.leaderlinepos[i]
+                        else:
+                            leaderlinepos[i] = [0, 0, 0, 0]
 
                 # Colours
                 if inconf:
@@ -470,7 +482,7 @@ class Traffic(glh.RenderObject, layer=100):
                              4] = [lat, lon, lat1, lon1]
                     confidx += 1
                 # Selected aircraft
-                elif acid == console.Console._instance.id_select and actdata.atcmode != 'BLUESKY':
+                elif actdata.atcmode != 'BLUESKY' and acid == console.Console._instance.id_select:
                     rgb = (218, 218, 0) + (255,)
                     color[i, :] = rgb
                 else:
@@ -518,7 +530,7 @@ class Traffic(glh.RenderObject, layer=100):
                 idx = data.id.index(self.route_acid)
                 self.route.vertex.update(np.array([data.lat[idx], data.lon[idx]], dtype=np.float32))
 
-    def update_labelpos(self, x, y, finished=False):
+    def update_labelpos(self, x, y):
         """
         Function: Update the label position for the selected aircraft
         Args:
@@ -530,6 +542,13 @@ class Traffic(glh.RenderObject, layer=100):
         Date: 22-2-2022
         """
 
+        # Sizes
+        ac_size = settings.ac_size
+        text_size = settings.text_size
+        text_width = text_size
+        text_height = text_size * 1.2307692307692308
+        block_size = (4*text_height, 8*text_width)
+
         # Node data
         actdata = bs.net.get_nodedata()
 
@@ -537,37 +556,32 @@ class Traffic(glh.RenderObject, layer=100):
         idx = misc.get_indices(actdata.acdata.id, console.Console._instance.id_select)
 
         # Check if selected aircraft exists
-        if len(idx) != 0:
+        if len(idx) != 0 and actdata.acdata.tracklbl[idx]:
             idx = idx[0]
 
-            # Get the label offset in pixel coordinates
+            # Current offset
             offsetx = self.labelpos[idx][0]
             offsety = self.labelpos[idx][1]
 
-            # Get the lat/lon
-            lat = actdata.acdata.lat[idx]
-            lon = actdata.acdata.lon[idx]
+            # Get cursor position change
+            dx = x - self.glsurface.prevmousepos[0]
+            dy = y - self.glsurface.prevmousepos[1]
 
-            # Get the aircraft position in pixel coordinates
-            xpos, ypos = self.glsurface.LatLonTopixelCoords(lat, lon)
+            # Add cursor position change to label position
+            self.labelpos[idx][0] += dx
+            self.labelpos[idx][1] -= dy
 
-            # Get the new label offset coordinates
-            xlabel = x-xpos
-            ylabel = -(y-ypos)
-
-            self.labelpos[idx][0] = xlabel
-            self.labelpos[idx][1] = ylabel
-
+            # Update label offset
             self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
 
+            # Leader lines
+            self.leaderlinepos[idx] = leaderline_vertices(actdata, offsetx, offsety)
 
-
-
-
+            self.leaderlines.update(vertex=self.leaderlinepos)
 
 
 """
-Create label functions
+Static functions
 """
 
 
@@ -857,75 +871,49 @@ def leading_zeros(number):
         return str(round(number))
 
 
-def vertex_offset(actdata, data, i):
+def leaderline_vertices(actdata, offsetx, offsety):
     """
-    Function: Get the vertex offset
+    Function: Compute the vertices for the leader line
     Args:
-        actdata:        node data [dict]
-        data:           aircraft data [class]
-        i:              index for data [int]
-    Returns:
-        vertices:       vertices [tuple]
+        actdata:    node data [class]
+        offsetx:    label offset x pixel coordinates [int]
+        offsety:    label offset y pixel coordinates [int]
+    Returns: -
 
     Created by: Bob van Dillen
-    Date: 21-2-2022
+    Date: 23-2-2022
     """
 
     # Sizes
-    ac_size     = settings.ac_size
-    text_size   = settings.text_size
-    text_width  = text_size
+    ac_size = settings.ac_size
+    text_size = settings.text_size
+    text_width = text_size
     text_height = text_size * 1.2307692307692308
-    block_size = (4*text_height, 8*text_width)
-
-    # Determine angle in radians
-    angle = np.radians(data.labelpos[i]) % (2*np.pi)  # 0 - 2*pi
-
-    # Determine radius based on label position
-    if 0.25*np.pi <= angle < 0.75*np.pi:
-        radius = block_size[0] + 4*ac_size
-    elif 0.75*np.pi <= angle < 1.25*np.pi:
-        radius = block_size[1] + 4*ac_size
-    elif 1.25*np.pi <= angle < 1.75*np.pi:
-        radius = text_height + 4*ac_size
+    if actdata.atcmode == 'APP':
+        block_size = (4*text_height, 7*text_width)
     else:
-        radius = block_size[0] + ac_size
+        block_size = (4*text_height, 8*text_width)
 
-    cosa = np.cos(angle)
-    sina = np.sin(angle)
+    # Compute the angle
+    angle = np.arctan2(offsety, offsetx)
 
-    vertices = (radius*cosa, radius*sina)
-
-    return vertices
-
-
-def leaderline_vertex(actdata, data, i):
-    """
-    Function: Get the vertex for the leader line
-    Args:
-        actdata:        node data [dict]
-        data:           aircraft data [class]
-        i:              index for data [int]
-    Returns:
-        vertices:       leader lines vertices [array]
-
-    Created by: Bob van Dillen
-    Date: 2-2-2022
-    """
-
-    # Sizes
-    ac_size     = settings.ac_size
-    text_size   = settings.text_size
-    text_width  = text_size
-    text_height = text_size * 1.2307692307692308
-
-    radius = 3*text_height + ac_size
-    angle  = np.radians(data.labelpos[i])
-    cosa = np.cos(angle)
-    sina = np.sin(angle)
-
-    vertices = (ac_size*cosa, ac_size*sina, radius*cosa, radius*sina)
+    # Label is on top of aircaft symbol
+    if -block_size[1] <= offsetx <= 0 and -text_height <= offsety <= 3*text_height:
+        vertices = [0, 0, 0, 0]
+    # Label is to the right of the aircraft symbol
+    elif offsetx >= 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx, offsety]
+    # Label is above the aircraft symbol
+    elif offsetx >= -block_size[1] and offsety >= 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx+0.5*block_size[1], offsety-3*text_height]
+    # Label is below the aircraft symbol
+    elif offsetx >= -block_size[1] and offsety <= 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx+0.5*block_size[1], offsety+text_height]
+    # Label is to the left of the aircraft sym
+    elif offsetx < 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx+block_size[1], offsety]
+    # For safety every other situation
+    else:
+        vertices = [0, 0, 0, 0]
 
     return vertices
-
-

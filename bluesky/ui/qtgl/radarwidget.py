@@ -423,7 +423,7 @@ class RadarWidget(glh.RenderWidget):
         elif event.type() == QEvent.MouseMove:
             self.mousedragged = True
             self.mousepos = (event.x(), event.y())
-            if event.buttons() & Qt.LeftButton:
+            if event.buttons() & Qt.RightButton:
                 dlat = 0.003 * \
                     (event.y() - self.prevmousepos[1]) / (self.zoom * self.ar)
                 dlon = 0.003 * \
@@ -432,8 +432,9 @@ class RadarWidget(glh.RenderWidget):
                 self.prevmousepos = (event.x(), event.y())
                 self.panzoomchanged = True
                 return self.panzoom(pan=(dlat, dlon))
-            elif event.buttons() & Qt.RightButton:
-                self.labelpos_event.emit(event.x(), event.y(), False)
+            elif event.buttons() & Qt.LeftButton:
+                self.labelpos_event.emit(event.x(), event.y())
+                self.prevmousepos = (event.x(), event.y())
                 self.labelposchanged = True
 
         elif event.type() == QEvent.TouchBegin:
@@ -450,7 +451,7 @@ class RadarWidget(glh.RenderWidget):
                 self.panzoom_event.emit(True)
             if self.labelposchanged:
                 self.labelposchanged = False
-                self.labelpos_event.emit(event.x(), event.y(), True)
+                self.labelpos_event.emit(event.x(), event.y())
         else:
             return super().event(event)
         
