@@ -24,6 +24,7 @@ layout (location = 3) in float lon;
 layout (location = 4) in float orientation;
 layout (location = 5) in vec4 color;
 layout (location = 6) in int texdepth;
+layout (location = 7) in vec2 vert_offset;
 
 out vec3 texcoords_fs;
 out vec4 color_fs;
@@ -48,7 +49,7 @@ void main() {
     position -= vec2(panlon, panlat);
     position *= (zoom * flat_earth);
 
-    vec2 vertex_out = mrot * vertex + ceil(0.5 * position * screen_width);
+    vec2 vertex_out = mrot * (vertex + vert_offset) + ceil(0.5 * position * screen_width);
 
     // When text_dims is non-zero we are drawing instanced
     if (block_size[0] > 0) {

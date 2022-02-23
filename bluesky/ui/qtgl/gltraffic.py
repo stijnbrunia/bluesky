@@ -42,6 +42,13 @@ class Traffic(glh.RenderObject, layer=100):
         self.asas_vmin      = settings.asas_vmin
         self.asas_vmax      = settings.asas_vmax
 
+        # --------------- Label position ---------------
+
+        self.id_prev        = []
+        self.labelpos       = np.array([], dtype=np.float32)
+        self.leaderlinepos  = np.array([], dtype=np.float32)
+        bs.Signal('labelpos').connect(self.update_labelpos)
+
         # --------------- Aircraft data ---------------
 
         self.hdg            = glh.GLBuffer()
@@ -51,28 +58,19 @@ class Traffic(glh.RenderObject, layer=100):
         self.alt            = glh.GLBuffer()
         self.tas            = glh.GLBuffer()
         self.color          = glh.GLBuffer()
-        self.leadlinecolor  = glh.GLBuffer()
         self.asasn          = glh.GLBuffer()
         self.asase          = glh.GLBuffer()
         self.histsymblat    = glh.GLBuffer()
         self.histsymblon    = glh.GLBuffer()
-        self.leadlinelat    = glh.GLBuffer()
-        self.leadlinelon    = glh.GLBuffer()
-        self.leadlinevert   = glh.GLBuffer()
 
         # --------------- Label data ---------------
 
-        self.lbl    = glh.GLBuffer()
-        self.lbl_ll = glh.GLBuffer()
-        self.lbl_lc = glh.GLBuffer()
-        self.lbl_lr = glh.GLBuffer()
-        self.lbl_cl = glh.GLBuffer()
-        self.lbl_cr = glh.GLBuffer()
-        self.lbl_ul = glh.GLBuffer()
-        self.lbl_uc = glh.GLBuffer()
-        self.lbl_ur = glh.GLBuffer()
-        self.ssrlbl = glh.GLBuffer()
-        self.mlbl   = glh.GLBuffer()
+        self.lbl        = glh.GLBuffer()
+        self.lbl_lvnl   = glh.GLBuffer()
+        self.ssrlbl     = glh.GLBuffer()
+        self.mlbl       = glh.GLBuffer()
+
+        self.lbloffset  = glh.GLBuffer()
 
         # --------------- Aircraft objects ---------------
 
@@ -89,19 +87,12 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Label objects ---------------
 
-        self.aclabels       = glh.Text(settings.text_size, (8, 3))     # BlueSky default (ATC mode BLUESKY)
-        self.aclabels_ll    = glh.Text(settings.text_size, (8, 4))  # lower-left
-        self.aclabels_lc    = glh.Text(settings.text_size, (8, 4))  # lower-center
-        self.aclabels_lr    = glh.Text(settings.text_size, (8, 4))  # lower-right
-        self.aclabels_cl    = glh.Text(settings.text_size, (8, 4))  # center-left
-        self.aclabels_cr    = glh.Text(settings.text_size, (8, 4))  # center-right
-        self.aclabels_ul    = glh.Text(settings.text_size, (8, 4))  # upper-left
-        self.aclabels_uc    = glh.Text(settings.text_size, (8, 4))  # upper-center
-        self.aclabels_ur    = glh.Text(settings.text_size, (8, 4))  # upper-right
-        self.leaderlines    = glh.VertexArrayObject(glh.gl.GL_LINES)
-
+        self.aclabels       = glh.Text(settings.text_size, (8, 3))  # BlueSky default (ATC mode BLUESKY)
+        self.aclabels_lvnl  = glh.Text(settings.text_size, (8, 4))
         self.ssrlabels      = glh.Text(0.95*settings.text_size, (7, 3))
         self.microlabels    = glh.Text(0.95*settings.text_size, (3, 1))
+
+        self.leaderlines    = glh.Line()
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
@@ -120,29 +111,20 @@ class Traffic(glh.RenderObject, layer=100):
         self.alt.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.tas.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.color.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
-        self.leadlinecolor.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
         self.asasn.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.asase.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.rpz.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.histsymblat.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
         self.histsymblon.create(MAX_NAIRCRAFT * 16, glh.GLBuffer.StreamDraw)
-        self.leadlinelat.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
-        self.leadlinelon.create(MAX_NAIRCRAFT * 8, glh.GLBuffer.StreamDraw)
-        self.leadlinevert.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
 
         # --------------- Label data ---------------
 
         self.lbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_ll.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_lc.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_lr.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_cl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_cr.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_ul.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_uc.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.lbl_ur.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+        self.lbl_lvnl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.ssrlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.mlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+
+        self.lbloffset.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
 
         # --------------- SSD ---------------
 
@@ -191,32 +173,11 @@ class Traffic(glh.RenderObject, layer=100):
                                      color=palette.aircraft, instance_divisor=1)
 
         # --------------- Aircraft labels ---------------
+
         self.aclabels.create(self.lbl, self.lat, self.lon, self.color,
                              (ac_size, -0.5 * ac_size), instanced=True)
-        self.aclabels_ll.create(self.lbl_ll, self.lat, self.lon, self.color,
-                                (-8*text_size-5*ac_size, -text_height-5*ac_size),
-                                instanced=True)
-        self.aclabels_lc.create(self.lbl_lc, self.lat, self.lon, self.color,
-                                (ac_size, -text_height-ac_size),
-                                instanced=True)
-        self.aclabels_lr.create(self.lbl_lr, self.lat, self.lon, self.color,
-                                (5*ac_size, -text_height-5*ac_size),
-                                instanced=True)
-        self.aclabels_cl.create(self.lbl_cl, self.lat, self.lon, self.color,
-                                (-8*text_size-7*ac_size, 0),
-                                instanced=True)
-        self.aclabels_cr.create(self.lbl_cr, self.lat, self.lon, self.color,
-                                (7*ac_size, 0), instanced=True)
-        self.aclabels_ul.create(self.lbl_ul, self.lat, self.lon, self.color,
-                                (-8*text_size-5*ac_size, 3*text_height+5*ac_size),
-                                instanced=True)
-        self.aclabels_uc.create(self.lbl_uc, self.lat, self.lon, self.color,
-                                (ac_size, 3*text_height+ac_size),
-                                instanced=True)
-        self.aclabels_ur.create(self.lbl_ur, self.lat, self.lon, self.color,
-                                (5*ac_size, 3*text_height+5*ac_size),
-                                instanced=True)
-
+        self.aclabels_lvnl.create(self.lbl_lvnl, self.lat, self.lon, self.color,
+                                  self.lbloffset, instanced=True)
         self.ssrlabels.create(self.ssrlbl, self.lat, self.lon, self.color,
                               (ac_size, -1.1*ac_size), instanced=True)
         self.microlabels.create(self.mlbl, self.lat, self.lon, self.color,
@@ -224,8 +185,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Leader lines ---------------
 
-        self.leaderlines.create(vertex=MAX_NAIRCRAFT*4, color=palette.aircraft)
-        self.leaderlines.set_attribs(lat=self.leadlinelat, lon=self.leadlinelon)
+        self.leaderlines.create(vertex=MAX_NAIRCRAFT*4, lat=MAX_NAIRCRAFT*4, lon=MAX_NAIRCRAFT*4,
+                                color=MAX_NAIRCRAFT*4)
 
         # --------------- CPA lines ---------------
 
@@ -288,7 +249,6 @@ class Traffic(glh.RenderObject, layer=100):
 
         # Draw history symbols
         if actdata.show_histsymb and len(actdata.acdata.histsymblat) != 0:
-            self.hist_symbol.set_attribs(color=palette.aircraft)
             self.hist_symbol.draw(n_instances=len(actdata.acdata.histsymblat))
 
         # Draw route labels
@@ -301,16 +261,10 @@ class Traffic(glh.RenderObject, layer=100):
             if actdata.show_lbl >= 1:
                 self.aclabels.draw(n_instances=actdata.naircraft)
         else:
-            self.aclabels_ll.draw(n_instances=actdata.naircraft)
-            self.aclabels_lc.draw(n_instances=actdata.naircraft)
-            self.aclabels_lr.draw(n_instances=actdata.naircraft)
-            self.aclabels_cl.draw(n_instances=actdata.naircraft)
-            self.aclabels_cr.draw(n_instances=actdata.naircraft)
-            self.aclabels_ul.draw(n_instances=actdata.naircraft)
-            self.aclabels_uc.draw(n_instances=actdata.naircraft)
-            self.aclabels_ur.draw(n_instances=actdata.naircraft)
+            self.aclabels_lvnl.draw(n_instances=actdata.naircraft)
             self.ssrlabels.draw(n_instances=actdata.naircraft)
             self.microlabels.draw(n_instances=actdata.naircraft)
+
             self.leaderlines.draw()
 
         # Draw SSD
@@ -334,6 +288,9 @@ class Traffic(glh.RenderObject, layer=100):
                                     nodedata.traillon0,
                                     nodedata.traillat1,
                                     nodedata.traillon1)
+        if 'ATCMODE' in changed_elems:
+            self.hist_symbol.set_attribs(color=palette.aircraft)
+
 
     def update_trails_data(self, lat0, lon0, lat1, lon1):
         ''' Update GPU buffers with route data from simulation. '''
@@ -438,8 +395,6 @@ class Traffic(glh.RenderObject, layer=100):
             self.rpz.update(np.array(data.rpz, dtype=np.float32))
             self.histsymblat.update(np.array(data.histsymblat, dtype=np.float32))
             self.histsymblon.update(np.array(data.histsymblon, dtype=np.float32))
-            self.leadlinelat.update(np.repeat(np.array(data.lat, dtype=np.float32), 2))
-            self.leadlinelon.update(np.repeat(np.array(data.lon, dtype=np.float32), 2))
             if hasattr(data, 'asasn') and hasattr(data, 'asase'):
                 self.asasn.update(np.array(data.asasn, dtype=np.float32))
                 self.asase.update(np.array(data.asase, dtype=np.float32))
@@ -449,34 +404,73 @@ class Traffic(glh.RenderObject, layer=100):
             cpalines    = np.zeros(4 * ncpalines, dtype=np.float32)
             self.cpalines.set_vertex_count(2 * ncpalines)
 
-            # Labels and colors
+            # Labels
             rawlabel    = ''
-            rawlabels   = ['', '', '',
-                           '', '',
-                           '', '', '']
+            rawlabel_lvnl = ''
             rawmlabel   = ''
             rawssrlabel = ''
-            leaderlines = []
+
+            # Label position
+            if data.id != self.id_prev:
+                idchange = True
+                idcreate = np.setdiff1d(data.id, self.id_prev).tolist()
+            else:
+                idchange = False
+                idcreate = []
+            labelpos      = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
+            leaderlinepos = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.float32)
+
+            # Colors
             color       = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
+
             selssd      = np.zeros(naircraft, dtype=np.uint8)
             confidx     = 0
 
+            # Loop over aircraft
             zdata = zip(data.gs, data.id, data.inconf, data.ingroup, data.lat, data.lon, data.tcpamax, data.trk)
             for i, (gs, acid, inconf, ingroup, lat, lon, tcpa, trk) in enumerate(zdata):
                 # Check for maximum aircraft
                 if i >= MAX_NAIRCRAFT:
                     break
 
-                # BlueSky default label (ATC mode BLUESKY)
+                # Labels
                 if actdata.atcmode == 'BLUESKY':
-                    rawlabel = baselabel(rawlabel, actdata, data, i)
-                # LVNL labels
+                    rawlabel += baselabel(actdata, data, i)
                 else:
-                    # Labels
-                    rawlabels, rawmlabel, rawssrlabel = create_aclabel(rawlabels, rawmlabel, rawssrlabel,
-                                                                       actdata, data, i)
-                    # Leaderlines
-                    leaderlines = leaderline_vertex(leaderlines, actdata, data, i)
+                    if actdata.atcmode == 'APP':
+                        label, mlabel, ssrlabel = applabel(actdata, data, i)
+                        rawlabel_lvnl += label
+                        rawmlabel     += mlabel
+                        rawssrlabel   += ssrlabel
+                    elif actdata.atcmode == 'ACC':
+                        label, mlabel, ssrlabel = acclabel(actdata, data, i)
+                        rawlabel_lvnl += label
+                        rawmlabel     += mlabel
+                        rawssrlabel   += ssrlabel
+                    elif actdata.atcmode == 'TWR':
+                        label, mlabel, ssrlabel = twrlabel(actdata, data, i)
+                        rawlabel_lvnl += label
+                        rawmlabel     += mlabel
+                        rawssrlabel   += ssrlabel
+
+                    # Label position
+                    if idchange:
+                        if acid in idcreate:
+                            labelpos[i] = [50, 0]
+                            leaderlinepos[i] = leaderline_vertices(actdata, 50, 0)
+                        else:
+                            i_prev = self.id_prev.index(acid)
+                            labelpos[i] = self.labelpos[i_prev]
+                            if data.tracklbl[i]:
+                                leaderlinepos[i] = self.leaderlinepos[i]
+                            else:
+                                leaderlinepos[i] = [0, 0, 0, 0]
+                    else:
+                        labelpos[i] = self.labelpos[i]
+                        if data.tracklbl[i]:
+                            leaderlinepos[i] = self.leaderlinepos[i]
+                        else:
+                            leaderlinepos[i] = [0, 0, 0, 0]
 
                 # Colours
                 if inconf:
@@ -488,7 +482,7 @@ class Traffic(glh.RenderObject, layer=100):
                              4] = [lat, lon, lat1, lon1]
                     confidx += 1
                 # Selected aircraft
-                elif acid == console.Console._instance.id_select and actdata.atcmode != 'BLUESKY':
+                elif actdata.atcmode != 'BLUESKY' and acid == console.Console._instance.id_select:
                     rgb = (218, 218, 0) + (255,)
                     color[i, :] = rgb
                 else:
@@ -511,7 +505,6 @@ class Traffic(glh.RenderObject, layer=100):
 
             self.cpalines.update(vertex=cpalines)
             self.color.update(color)
-            self.leadlinecolor.update(np.repeat(color, 2, axis=0))
 
             # BlueSky default label (ATC mode BLUESKY)
             if actdata.atcmode == 'BLUESKY':
@@ -519,38 +512,83 @@ class Traffic(glh.RenderObject, layer=100):
             # LVNL labels
             else:
                 # Update track label
-                self.lbl_ll.update(np.array(rawlabels[5].encode('utf8'), dtype=np.string_))
-                self.lbl_lc.update(np.array(rawlabels[6].encode('utf8'), dtype=np.string_))
-                self.lbl_lr.update(np.array(rawlabels[7].encode('utf8'), dtype=np.string_))
-                self.lbl_cl.update(np.array(rawlabels[3].encode('utf8'), dtype=np.string_))
-                self.lbl_cr.update(np.array(rawlabels[4].encode('utf8'), dtype=np.string_))
-                self.lbl_ul.update(np.array(rawlabels[0].encode('utf8'), dtype=np.string_))
-                self.lbl_uc.update(np.array(rawlabels[1].encode('utf8'), dtype=np.string_))
-                self.lbl_ur.update(np.array(rawlabels[2].encode('utf8'), dtype=np.string_))
+                self.lbl_lvnl.update(np.array(rawlabel_lvnl.encode('utf8'), dtype=np.string_))
                 # Update SSR label
                 self.ssrlbl.update(np.array(rawssrlabel.encode('utf8'), dtype=np.string_))
                 # Update micro label
                 self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
+                # Label position
+                self.labelpos = labelpos
+                self.id_prev = data.id
+                self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
                 # Leader line update
-                leaderlines = np.array(leaderlines, dtype=np.float32)
-                self.leaderlines.update(vertex=leaderlines)
+                self.leaderlinepos = leaderlinepos
+                self.leaderlines.update(vertex=self.leaderlinepos, lat=data.lat, lon=data.lon, color=color)
             
             # If there is a visible route, update the start position
             if self.route_acid in data.id:
                 idx = data.id.index(self.route_acid)
                 self.route.vertex.update(np.array([data.lat[idx], data.lon[idx]], dtype=np.float32))
 
+    def update_labelpos(self, x, y):
+        """
+        Function: Update the label position for the selected aircraft
+        Args:
+            x:  Cursor x pixel coordinate
+            y:  Cursor y pixel coordinate
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 22-2-2022
+        """
+
+        # Sizes
+        ac_size = settings.ac_size
+        text_size = settings.text_size
+        text_width = text_size
+        text_height = text_size * 1.2307692307692308
+        block_size = (4*text_height, 8*text_width)
+
+        # Node data
+        actdata = bs.net.get_nodedata()
+
+        # Get index selected aircraft
+        idx = misc.get_indices(actdata.acdata.id, console.Console._instance.id_select)
+
+        # Check if selected aircraft exists
+        if len(idx) != 0 and actdata.acdata.tracklbl[idx]:
+            idx = idx[0]
+
+            # Current offset
+            offsetx = self.labelpos[idx][0]
+            offsety = self.labelpos[idx][1]
+
+            # Get cursor position change
+            dx = x - self.glsurface.prevmousepos[0]
+            dy = y - self.glsurface.prevmousepos[1]
+
+            # Add cursor position change to label position
+            self.labelpos[idx][0] += dx
+            self.labelpos[idx][1] -= dy
+
+            # Update label offset
+            self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
+
+            # Leader lines
+            self.leaderlinepos[idx] = leaderline_vertices(actdata, offsetx, offsety)
+
+            self.leaderlines.update(vertex=self.leaderlinepos)
+
 
 """
-Create label functions
+Static functions
 """
 
 
-def baselabel(rawlabel, actdata, data, i):
+def baselabel(actdata, data, i):
     """
     Function: Create base label
     Args:
-        rawlabel:   string to add label [str]
         actdata:    node data [class]
         data:       aircraft data [class]
         i:          index for data [int]
@@ -561,313 +599,254 @@ def baselabel(rawlabel, actdata, data, i):
     Date: 13-1-2022
     """
 
-    rawlabel += '%-8s' % data.id[i][:8]
+    # Empty label
+    label = ''
+
+    label += '%-8s' % data.id[i][:8]
     if actdata.show_lbl == 2:
         if data.alt[i] <= data.translvl:
-            rawlabel += '%-5d' % int(data.alt[i] / ft + 0.5)
+            label += '%-5d' % int(data.alt[i] / ft + 0.5)
         else:
-            rawlabel += 'FL%03d' % int(data.alt[i] / ft / 100. + 0.5)
+            label += 'FL%03d' % int(data.alt[i] / ft / 100. + 0.5)
         vsarrow = 30 if data.vs[i] > 0.25 else 31 if data.vs[i] < -0.25 else 32
-        rawlabel += '%1s  %-8d' % (chr(vsarrow),
-                                   int(data.cas[i] / kts + 0.5))
+        label += '%1s  %-8d' % (chr(vsarrow),
+                                int(data.cas[i] / kts + 0.5))
     else:
-        rawlabel += 2*8*' '
-    return rawlabel
+        label += 2*8*' '
+    return label
 
 
-def create_aclabel(rawlabels, rawmlabel, rawssrlabel, actdata, data, i):
-    """
-    Function: Create the labels for an aircraft
-    Args:
-        rawlabels:      aircraft labels [list]
-        rawmlabel:      micro label [str]
-        rawssrlabel:    ssr label [str]
-        actdata:        node data [class]
-        data:           aircraft data [class]
-        i:              index for data [int]
-    Returns:
-        rawlabels:      aircraft labels [list]
-        rawmlabel:      micro label [str]
-        rawssrlabel:    ssr label [str]
-
-    Created by: Bob van Dillen
-    Date: 12-1-2022
-    """
-
-    # Get track label position
-    lbl_i = get_lblpos(data.lblpos[i])
-    # Other track label positions are empty
-    for n in range(len(rawlabels)):
-        if n != lbl_i:
-            rawlabels[n] += 8*4*' '
-
-    # APP mode
-    if actdata.atcmode == 'APP':
-        rawlabels[lbl_i], rawmlabel, rawssrlabel = applabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                            data, i)
-    # ACC mode
-    elif actdata.atcmode == 'ACC':
-        rawlabels[lbl_i], rawmlabel, rawssrlabel = acclabel(rawlabels[lbl_i], rawmlabel, rawssrlabel, actdata,
-                                                            data, i)
-    # TWR mode
-    elif actdata.atcmode == 'TWR':
-        rawlabels[lbl_i] = twrlabel(rawlabels[lbl_i], actdata, data, i)
-        rawmlabel += 3*' '
-        rawssrlabel += 7*3*' '
-
-    return rawlabels, rawmlabel, rawssrlabel
-
-
-def get_lblpos(lblpos):
-    """
-    Function: Get the position of the label for the label list
-    Args:
-        lblpos: position of the label [str]
-    Returns:
-        index for rawlabels list [int]
-
-    Created by: Bob van Dillen
-    Date: 12-1-2022
-    """
-
-    if lblpos == 'LL':
-        return 5
-    if lblpos == 'LC':
-        return 6
-    if lblpos == 'LR':
-        return 7
-    if lblpos == 'CL':
-        return 3
-    if lblpos == 'CR':
-        return 4
-    if lblpos == 'UL':
-        return 0
-    if lblpos == 'UC':
-        return 1
-    if lblpos == 'UR':
-        return 2
-
-
-def applabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i):
+def applabel(actdata, data, i):
     """
     Function: Create approach label
     Args:
-        rawlabel:       string to add label [str]
-        rawmlabel:      string to add micro label [str]
-        rawssrlabel:    string to add ssr label [str]
-        actdata:        node data [class]
-        data:           aircraft data [class]
-        i:              index for data [int]
+        actdata:    node data [class]
+        data:       aircraft data [class]
+        i:          index for data [int]
     Returns:
-        rawlabel:       track label string [str]
-        rawmlabel:      micro label string [str]
-        rawssrlabel:    ssr label string [str]
+        label:      track label string [str]
+        mlabel:     micro label string [str]
+        ssrlabel:   ssr label string [str]
 
     Created by: Bob van Dillen
     Date: 21-12-2021
     """
 
+    # Empty labels
+    label    = ''
+    mlabel   = ''
+    ssrlabel = ''
+
     # Track label
     if data.tracklbl[i]:
         # Line 1
-        rawlabel += '%-8s' % data.id[i][:8]
+        label += '%-8s' % data.id[i][:8]
 
         # Line 2
-        rawlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
+        label += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
         if data.alt[i] < actdata.translvl:
-            rawlabel += '%-1s' % 'A'
+            label += '%-1s' % 'A'
         else:
-            rawlabel += '%-1s' % ' '
+            label += '%-1s' % ' '
         if data.uco[i] and data.selalt[i] != 0:
-            rawlabel += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
+            label += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
         else:
-            rawlabel += '%-3s' % '   '
-        rawlabel += '%-1s' % ' '
+            label += '%-3s' % '   '
+        label += '%-1s' % ' '
 
         # Line 3
-        rawlabel += '%-4s' % str(data.type[i])[:4]
+        label += '%-4s' % str(data.type[i])[:4]
         if data.uco[i] and data.selhdg[i] != 0:
-            rawlabel += '%-3s' % leading_zeros(data.selhdg[i])[:3]
+            label += '%-3s' % leading_zeros(data.selhdg[i])[:3]
         elif data.flighttype[i] == 'INBOUND':
-            rawlabel += '%-3s' % data.arr[i].replace('ARTIP', 'ATP')[:3]
+            label += '%-3s' % data.arr[i].replace('ARTIP', 'ATP')[:3]
         elif data.flighttype[i] == 'OUTBOUND':
-            rawlabel += '%-3s' % data.sid[i][:3]
+            label += '%-3s' % data.sid[i][:3]
         else:
-            rawlabel += '%-3s' % '   '
-        rawlabel += '%-1s' % ' '
+            label += '%-3s' % '   '
+        label += '%-1s' % ' '
 
         # Line 4
-        rawlabel += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
+        label += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
         if data.wtc[i].upper() == 'H' or data.wtc[i].upper() == 'J':
-            rawlabel += '%-1s' % str(data.wtc[i])[:1]
+            label += '%-1s' % str(data.wtc[i])[:1]
         else:
-            rawlabel += '%-1s' % ' '
+            label += '%-1s' % ' '
         if data.uco[i] and data.selspd[i] != 0:
-            rawlabel += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
+            label += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
         else:
-            rawlabel += '%-3s' % 'SPD'
-        rawlabel += '%-1s' % ' '
+            label += '%-3s' % 'SPD'
+        label += '%-1s' % ' '
     else:
-        rawlabel += 8*4*' '
+        label += 8*4*' '
 
     # Micro label
     if data.mlbl[i]:
         if data.flighttype[i].upper() == 'OUTBOUND':
-            rawmlabel += '  '+chr(30)
+            mlabel += '  '+chr(30)
         else:
-            rawmlabel += '%-3s' % data.rwy[i][:3]
+            mlabel += '%-3s' % data.rwy[i][:3]
     else:
-        rawmlabel += 3*' '
+        mlabel += 3*' '
 
     # SSR label
     ssrlbl = data.ssrlbl[i].split(';')
     # Mode A
     if 'A' in ssrlbl and data.ssr[i] != 0:
-        rawssrlabel += '%-7s' % str(data.ssr[i])[:7]
+        ssrlabel += '%-7s' % str(data.ssr[i])[:7]
     else:
-        rawssrlabel += 7*' '
+        ssrlabel += 7*' '
     # Mode C
     if 'C' in ssrlbl:
-        rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
+        ssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
         if data.alt[i] < actdata.translvl:
-            rawssrlabel += '%-4s' % 'A   '
+            ssrlabel += '%-4s' % 'A   '
         else:
-            rawssrlabel += '%-4s' % '    '
+            ssrlabel += '%-4s' % '    '
     else:
-        rawssrlabel += 7*' '
+        ssrlabel += 7*' '
     # ACID
     if 'ACID' in ssrlbl:
-        rawssrlabel += '%-7s' % data.id[i][:7]
+        ssrlabel += '%-7s' % data.id[i][:7]
     else:
-        rawssrlabel += 7*' '
+        ssrlabel += 7*' '
 
-    return rawlabel, rawmlabel, rawssrlabel
+    return label, mlabel, ssrlabel
 
 
-def acclabel(rawlabel, rawmlabel, rawssrlabel, actdata, data, i):
+def acclabel(actdata, data, i):
     """
     Function: Create acc label
     Args:
-        rawlabel:       string to add label [str]
-        rawmlabel:      string to add micro label [str]
-        rawssrlabel:    string to add ssr label [str]
-        actdata:        node data [class]
-        data:           aircraft data [class]
-        i:              index for data [int]
+        actdata:    node data [class]
+        data:       aircraft data [class]
+        i:          index for data [int]
     Returns:
-        rawlabel:       track label string [str]
-        rawmlabel:      micro label string [str]
-        rawssrlabel:    ssr label string [str]
+        label:      track label string [str]
+        mlabel:     micro label string [str]
+        ssrlabel:   ssr label string [str]
 
     Created by: Bob van Dillen
     Date: 21-12-2021
     """
+
+    # Empty labels
+    label    = ''
+    ssrlabel = ''
+    mlabel   = ''
 
     # Track label
     if data.tracklbl[i]:
         # Line 1
-        rawlabel += '%-8s' % data.id[i][:8]
+        label += '%-8s' % data.id[i][:8]
 
         # Line 2
-        rawlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
+        label += '%-3s' % leading_zeros(data.alt[i]/ft/100)[-3:]
         if data.alt[i] < actdata.translvl:
-            rawlabel += '%-1s' % 'A'
+            label += '%-1s' % 'A'
         else:
-            rawlabel += '%-1s' % ' '
+            label += '%-1s' % ' '
         if data.uco[i] and data.selalt[i] != 0:
-            rawlabel += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
+            label += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
         else:
-            rawlabel += '%-3s' % '   '
-        rawlabel += '%-1s' % ' '
+            label += '%-3s' % '   '
+        label += '%-1s' % ' '
 
         # Line 3
-        rawlabel += '%-3s' % '...'
-        rawlabel += '%-1s' % ' '
-        rawlabel += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
+        label += '%-3s' % '...'
+        label += '%-1s' % ' '
+        label += '%-3s' % leading_zeros(data.gs[i]/kts)[:3]
         if data.wtc[i].upper() == 'H' or data.wtc[i].upper() == 'J':
-            rawlabel += '%-1s' % str(data.wtc[i])[:1]
+            label += '%-1s' % str(data.wtc[i])[:1]
         else:
-            rawlabel += '%-1s' % ' '
+            label += '%-1s' % ' '
 
         # Line 4
         if data.uco[i] and data.selspd[i] != 0:
-            rawlabel += '%-1s' % 'I'
-            rawlabel += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
+            label += '%-1s' % 'I'
+            label += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
         else:
-            rawlabel += '%-4s' % '    '
-        rawlabel += '%-4s' % data.type[i][:4]
+            label += '%-4s' % '    '
+        label += '%-4s' % data.type[i][:4]
     else:
-        rawlabel += 8*4*' '
+        label += 8*4*' '
 
     # Micro label
     if data.mlbl[i]:
         if data.flighttype[i].upper() == 'INBOUND':
-            rawmlabel += '  '+chr(31)
+            mlabel += '  '+chr(31)
         else:
-            rawmlabel += 3*' '
+            mlabel += 3*' '
     else:
-        rawmlabel += 3*' '
+        mlabel += 3*' '
 
     # SSR label
     ssrlbl = data.ssrlbl[i].split(';')
     # ACID
     if 'ACID' in ssrlbl:
-        rawssrlabel += '%-7s' % data.id[i][:7]
+        ssrlabel += '%-7s' % data.id[i][:7]
     else:
-        rawssrlabel += 7*' '
+        ssrlabel += 7*' '
     # Mode A
     if 'A' in ssrlbl and data.ssr[i] != 0:
-        rawssrlabel += '%-7s' % str(data.ssr[i])[:7]
+        ssrlabel += '%-7s' % str(data.ssr[i])[:7]
     else:
-        rawssrlabel += 7*' '
+        ssrlabel += 7*' '
     # Mode C
     if 'C' in ssrlbl:
-        rawssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
+        ssrlabel += '%-3s' % leading_zeros(data.alt[i]/ft/100)[:3]
         if data.alt[i] < actdata.translvl:
-            rawssrlabel += '%-4s' % 'A   '
+            ssrlabel += '%-4s' % 'A   '
         else:
-            rawssrlabel += '%-4s' % '    '
+            ssrlabel += '%-4s' % '    '
     else:
-        rawssrlabel += 7*' '
+        ssrlabel += 7*' '
 
-    return rawlabel, rawmlabel, rawssrlabel
+    return label, mlabel, ssrlabel
 
 
-def twrlabel(rawlabel, actdata, data, i):
+def twrlabel(actdata, data, i):
     """
     Function: Create acc label
     Args:
-        rawlabel:       string to add label [str]
-        actdata:        node data [dict]
-        data:           aircraft data [dict]
-        i:              index for data [int]
+        actdata:    node data [dict]
+        data:       aircraft data [dict]
+        i:          index for data [int]
     Returns:
-        rawlabel:       track label string [str]
-        rawmlabel:      micro label string [str]
-        rawssrlabel:    ssr label string [str]
+        label:      track label string [str]
+        mlabel:     micro label string [str]
+        ssrlabel:   ssr label string [str]
 
     Created by: Bob van Dillen
     Date: 21-12-2021
     """
 
+    # Empty label
+    label    = ''
+    mlabel   = ''
+    ssrlabel = ''
+
     # Line 1
-    rawlabel += '%-8s' % data.id[i][:8]
+    label += '%-8s' % data.id[i][:8]
     if actdata.show_lbl == 2:
         # Line 2
         if data.flighttype[i] == "INBOUND":
-            rawlabel += 8*' '
+            label += 8*' '
         else:
-            rawlabel += '%-5s' % data.sid[i][:5]
-            rawlabel += ' '
-            rawlabel += '%-2s' % data.rwy[i][-2:]
+            label += '%-5s' % data.sid[i][:5]
+            label += ' '
+            label += '%-2s' % data.rwy[i][-2:]
         # Line 3
-        rawlabel += '%-8s' % data.type[i][:8]
+        label += '%-8s' % data.type[i][:8]
         # Line 4
-        rawlabel += 8*' '
+        label += 8*' '
     else:
-        rawlabel += 8*3*' '
+        label += 8*4*' '
 
-    return rawlabel
+    mlabel += 3*1*' '
+    ssrlabel += 7*3*' '
+
+    return label, mlabel, ssrlabel
 
 
 def leading_zeros(number):
@@ -892,43 +871,49 @@ def leading_zeros(number):
         return str(round(number))
 
 
-def leaderline_vertex(leaderlines, actdata, data, i):
+def leaderline_vertices(actdata, offsetx, offsety):
     """
-    Function: Get the vertex for the leader line
+    Function: Compute the vertices for the leader line
     Args:
-        leaderlines:    leader lines vertices [array]
-        data:           aircraft data [class]
-        i:              index for data [int]
-    Returns:
-        leaderlines:    leader lines vertices [array]
+        actdata:    node data [class]
+        offsetx:    label offset x pixel coordinates [int]
+        offsety:    label offset y pixel coordinates [int]
+    Returns: -
 
     Created by: Bob van Dillen
-    Date: 2-2-2022
+    Date: 23-2-2022
     """
 
+    # Sizes
     ac_size = settings.ac_size
     text_size = settings.text_size
     text_width = text_size
-    text_height = text_size*1.2307692307692308
-
-    # APP does not use the last character of the track label
-    if data.tracklbl[i] and actdata.atcmode == 'APP':
-        vertices = [[(-ac_size, ac_size), (-5*ac_size-text_width, 5*ac_size)], [(0, ac_size), (0, ac_size+3*text_height)], [(ac_size, ac_size), (5*ac_size, 5*ac_size)],
-                    [(-ac_size, 0,), (-7*ac_size-text_width, 0)], [(ac_size, 0), (7*ac_size, 0)],
-                    [(-ac_size, -ac_size), (-5*ac_size-text_width, -5*ac_size)], [(0, -ac_size), (0, -3*text_height-ac_size)], [(ac_size, -ac_size), (5*ac_size, -5*ac_size)]]
-    elif data.tracklbl[i] and actdata.atcmode == 'ACC':
-        vertices = [[(-ac_size, ac_size), (-5*ac_size, 5*ac_size)], [(0, ac_size), (0, ac_size+3*text_height)], [(ac_size, ac_size), (5*ac_size, 5*ac_size)],
-                    [(-ac_size, 0,), (-7*ac_size, 0)], [(ac_size, 0), (7*ac_size, 0)],
-                    [(-ac_size, -ac_size), (-5*ac_size, -5*ac_size)], [(0, -ac_size), (0, -3*text_height-ac_size)], [(ac_size, -ac_size), (5*ac_size, -5*ac_size)]]
+    text_height = text_size * 1.2307692307692308
+    if actdata.atcmode == 'APP':
+        block_size = (4*text_height, 7*text_width)
     else:
-        vertices = [[(0, 0), (0, 0)], [(0, 0), (0, 0)], [(0, 0), (0, 0)],
-                    [(0, 0), (0, 0)], [(0, 0), (0, 0)],
-                    [(0, 0), (0, 0)], [(0, 0), (0, 0)], [(0, 0), (0, 0)]]
+        block_size = (4*text_height, 8*text_width)
 
-    j = get_lblpos(data.lblpos[i])
+    # Compute the angle
+    angle = np.arctan2(offsety, offsetx)
 
-    leaderlines.append(vertices[j][0])
-    leaderlines.append(vertices[j][1])
+    # Label is on top of aircaft symbol
+    if -block_size[1] <= offsetx <= 0 and -text_height <= offsety <= 3*text_height:
+        vertices = [0, 0, 0, 0]
+    # Label is to the right of the aircraft symbol
+    elif offsetx >= 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx, offsety]
+    # Label is above the aircraft symbol
+    elif offsetx >= -block_size[1] and offsety >= 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx+0.5*block_size[1], offsety-3*text_height]
+    # Label is below the aircraft symbol
+    elif offsetx >= -block_size[1] and offsety <= 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx+0.5*block_size[1], offsety+text_height]
+    # Label is to the left of the aircraft sym
+    elif offsetx < 0:
+        vertices = [ac_size*np.cos(angle), ac_size*np.sin(angle), offsetx+block_size[1], offsety]
+    # For safety every other situation
+    else:
+        vertices = [0, 0, 0, 0]
 
-    return leaderlines
-
+    return vertices

@@ -98,6 +98,7 @@ class RadarWidget(glh.RenderWidget):
         self.initialized = False
 
         self.panzoomchanged = False
+        self.labelposchanged = False
         self.mousedragged = False
         self.mousepos = (0, 0)
         self.prevmousepos = (0, 0)
@@ -121,6 +122,8 @@ class RadarWidget(glh.RenderWidget):
         bs.net.actnodedata_changed.connect(self.actdata_changed)
         self.mouse_event = Signal('radarmouse')
         self.panzoom_event = Signal('panzoom')
+        self.labelpos_event = Signal('labelpos')
+
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Update buffers when a different node is selected, or when
@@ -132,10 +135,13 @@ class RadarWidget(glh.RenderWidget):
         if 'ATCMODE' in changed_elems:
             if nodedata.atcmode == 'APP':
                 self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=36.)
+                self.set_background()
             if nodedata.atcmode == 'ACC':
                 self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=120.)
+                self.set_background()
             if nodedata.atcmode == 'TWR':
                 self.panzoom(pan=[52.309, 4.764], absolute=True, screenrange=2.)
+                self.set_background()
 
     def initializeGL(self):
         """Initialize OpenGL, VBOs, upload data on the GPU, etc."""
@@ -153,6 +159,29 @@ class RadarWidget(glh.RenderWidget):
 
         self.initialized = True
 
+    def set_background(self, color=None):
+        """
+        Function: Change the background color
+        Args:
+            color:  red, blue, green, color [tuple]
+        Returns: -
+
+        Create by: Bob van Dillen
+        Date: 21-2-2022
+        """
+
+        self.makeCurrent()
+
+        # Define color
+        if color:
+            rgb_background = color
+        else:
+            rgb_background = palette.background
+
+        # Set the background color (r,b,g in range [0, 1]
+        glh.gl.glClearColor(rgb_background[0]/255, rgb_background[1]/255, rgb_background[2]/255, 0)
+        glh.gl.glEnable(glh.gl.GL_BLEND)
+        glh.gl.glBlendFunc(glh.gl.GL_SRC_ALPHA, glh.gl.GL_ONE_MINUS_SRC_ALPHA)
 
     def resizeGL(self, width, height):
         """Called upon window resizing: reinitialize the viewport."""
@@ -174,8 +203,8 @@ class RadarWidget(glh.RenderWidget):
         """Convert screen pixel coordinates to GL projection coordinates (x, y range -1 -- 1)
         """
         # GL coordinates (x, y range -1 -- 1)
-        glx = (float(2.0 * x) / self.prevwidth - 1.0)
-        gly = -(float(2.0 * y) / self.prevheight - 1.0)
+        glx = (2.0 * x / self.prevwidth - 1.0)
+        gly = -(2.0 * y / self.prevheight - 1.0)
         return glx, gly
 
     def pixelCoordsToLatLon(self, x, y):
@@ -188,6 +217,46 @@ class RadarWidget(glh.RenderWidget):
         lat = self.panlat + gly / (self.zoom * self.ar)
         lon = self.panlon + glx / (self.zoom * self.flat_earth)
         return lat, lon
+
+    def GLxyTopixelCoords(self, glx, gly):
+        """
+        Function: Convert GL projection coordinates to screen pixel coordinates
+        Args:
+            glx:    GL projection x coordinate [float]
+            gly:    GL projection y coordinate [float]
+        Returns:
+            x:      screen pixel x coordinate [float]
+            y:      screen pixel y coordinate [float]
+
+        Created by: Bob van Dillen
+        Date: 18-2-2022
+        """
+
+        x = ((glx + 1.0)*self.prevwidth)/2.0
+        y = ((-gly + 1.0)*self.prevheight)/2.0
+
+        return x, y
+
+    def LatLonTopixelCoords(self, lat, lon):
+        """
+        Function: Convert lat/lon coordinates to screen pixel coordinates
+        Args:
+            lat:    latitude [float]
+            lon:    longitude [float]
+        Returns:
+            x:      screen pixel x coordinate [float]
+            y:      screen pixel y coordinate [float]
+
+        Created by: Bob van Dillen
+        Date: 18-2-2022
+        """
+
+        gly = (lat - self.panlat)*(self.zoom * self.ar)
+        glx = (lon - self.panlon)*(self.zoom * self.flat_earth)
+
+        x, y = self.GLxyTopixelCoords(glx, gly)
+
+        return x, y
 
     def viewportlatlon(self):
         ''' Return the viewport bounds in lat/lon coordinates. '''
@@ -337,7 +406,7 @@ class RadarWidget(glh.RenderWidget):
                 self.panzoomchanged = True
                 return self.panzoom(pan, zoom, self.mousepos)
 
-        elif event.type() == QEvent.MouseButtonPress and event.button() & Qt.LeftButton:
+        elif event.type() == QEvent.MouseButtonPress and (event.button() & Qt.LeftButton or event.button() & Qt.RightButton):
             self.mousedragged = False
             # For mice we pan with control/command and mouse movement.
             # Mouse button press marks the beginning of a pan
@@ -354,7 +423,7 @@ class RadarWidget(glh.RenderWidget):
         elif event.type() == QEvent.MouseMove:
             self.mousedragged = True
             self.mousepos = (event.x(), event.y())
-            if event.buttons() & Qt.LeftButton:
+            if event.buttons() & Qt.RightButton:
                 dlat = 0.003 * \
                     (event.y() - self.prevmousepos[1]) / (self.zoom * self.ar)
                 dlon = 0.003 * \
@@ -363,6 +432,10 @@ class RadarWidget(glh.RenderWidget):
                 self.prevmousepos = (event.x(), event.y())
                 self.panzoomchanged = True
                 return self.panzoom(pan=(dlat, dlon))
+            elif event.buttons() & Qt.LeftButton:
+                self.labelpos_event.emit(event.x(), event.y())
+                self.prevmousepos = (event.x(), event.y())
+                self.labelposchanged = True
 
         elif event.type() == QEvent.TouchBegin:
             # Accept touch start to enable reception of follow-on touch update and touch end events
@@ -370,11 +443,15 @@ class RadarWidget(glh.RenderWidget):
 
         # Update pan/zoom to simulation thread only when the pan/zoom gesture is finished
         elif (event.type() == QEvent.MouseButtonRelease or
-              event.type() == QEvent.TouchEnd) and self.panzoomchanged:
-            self.panzoomchanged = False
-            bs.net.send_event(b'PANZOOM', dict(pan=(self.panlat, self.panlon),
-                                               zoom=self.zoom, ar=self.ar, absolute=True))
-            self.panzoom_event.emit(True)
+              event.type() == QEvent.TouchEnd) and (self.panzoomchanged or self.labelposchanged):
+            if self.panzoomchanged:
+                self.panzoomchanged = False
+                bs.net.send_event(b'PANZOOM', dict(pan=(self.panlat, self.panlon),
+                                                   zoom=self.zoom, ar=self.ar, absolute=True))
+                self.panzoom_event.emit(True)
+            if self.labelposchanged:
+                self.labelposchanged = False
+                self.labelpos_event.emit(event.x(), event.y())
         else:
             return super().event(event)
         

@@ -15,7 +15,7 @@ def hasArea(areaname):
     return areaname in basic_shapes
 
 
-def defineArea(areaname, areatype, coordinates, top=1e9, bottom=-1e9, miscargs=None):
+def defineArea(areaname, areatype, coordinates, top=1e9, bottom=-1e9):
     """Define a new area"""
     if areaname == 'LIST':
         if not basic_shapes:
@@ -37,13 +37,12 @@ def defineArea(areaname, areatype, coordinates, top=1e9, bottom=-1e9, miscargs=N
     elif areatype == 'LINE':
         basic_shapes[areaname] = Line(areaname, coordinates)
     elif areatype == 'POINT':
-        coordinates += (0.09,)
-        basic_shapes[areaname] = Circle(areaname, coordinates)
-    elif areatype == 'DASHEDLINE':
+        basic_shapes[areaname] = Point(areaname, coordinates)
+    elif areatype == 'DOTTEDLINE' or areatype == 'DASHEDLINE':
         basic_shapes[areaname] = Line(areaname, coordinates)
 
     # Pass the shape on to the screen object
-    bs.scr.objappend(areatype, areaname, coordinates, miscargs=miscargs)
+    bs.scr.objappend(areatype, areaname, coordinates)
 
 def checkInside(areaname, lat, lon, alt):
     """ Check if points with coordinates lat, lon, alt are inside area with name 'areaname'.
