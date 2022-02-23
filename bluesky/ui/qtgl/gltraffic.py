@@ -462,7 +462,7 @@ class Traffic(glh.RenderObject, layer=100):
                             i_prev = self.id_prev.index(acid)
                             labelpos[i] = self.labelpos[i_prev]
                             if data.tracklbl[i]:
-                                leaderlinepos[i] = self.leaderlinepos[i]
+                                leaderlinepos[i] = self.leaderlinepos[i_prev]
                             else:
                                 leaderlinepos[i] = [0, 0, 0, 0]
                     else:
