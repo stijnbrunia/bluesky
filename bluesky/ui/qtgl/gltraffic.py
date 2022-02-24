@@ -559,10 +559,6 @@ class Traffic(glh.RenderObject, layer=100):
         if len(idx) != 0 and actdata.acdata.tracklbl[idx]:
             idx = idx[0]
 
-            # Current offset
-            offsetx = self.labelpos[idx][0]
-            offsety = self.labelpos[idx][1]
-
             # Get cursor position change
             dx = x - self.glsurface.prevmousepos[0]
             dy = y - self.glsurface.prevmousepos[1]
