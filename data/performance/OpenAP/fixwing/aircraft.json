@@ -271,7 +271,7 @@
     "mlw": 28009,
     "oew": 17819,
     "mfc": 6525,
-    "engines": ["PW150A"]
+    "engines": ["CFM56-7B20", "CFM56-7B22", "CFM56-7B24", "CFM56-7B26", "CFM56-7B27", "PW150A"]
   },
   "F16": {
     "name": "F-16 Fighting Falcon",

@@ -351,3 +351,21 @@ class LVNLVariables(Entity):
 
         if isinstance(wtc, str):
             self.wtc[idx] = wtc.upper()
+
+    @stack.command(name='ILS', brief='ILS CALLSIGN RWY', aliases=('STACK',))
+    def setils(self, idx: 'acid', rwy: str):
+        """
+        Function: Set the ILS route
+        Args:
+            idx:        index for traffic arrays [int]
+            rwy:        runway [str]
+        Returns: -
+
+        Created by: Mitchell de Keijzer
+        Date: 16-02-2022
+        """
+
+
+        acid = bs.traf.id[idx]
+        cmd = 'PCALL LVNL/Routes/ARR/ILS_' + rwy + ' ' + acid
+        stack.stack(cmd)
