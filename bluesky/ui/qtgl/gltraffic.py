@@ -462,13 +462,13 @@ class Traffic(glh.RenderObject, layer=100):
                             i_prev = self.id_prev.index(acid)
                             labelpos[i] = self.labelpos[i_prev]
                             if data.tracklbl[i]:
-                                leaderlinepos[i] = self.leaderlinepos[i_prev]
+                                leaderlinepos[i] = leaderline_vertices(actdata, labelpos[i][0], labelpos[i][1])
                             else:
                                 leaderlinepos[i] = [0, 0, 0, 0]
                     else:
                         labelpos[i] = self.labelpos[i]
                         if data.tracklbl[i]:
-                            leaderlinepos[i] = self.leaderlinepos[i]
+                            leaderlinepos[i] = leaderline_vertices(actdata, labelpos[i][0], labelpos[i][1])
                         else:
                             leaderlinepos[i] = [0, 0, 0, 0]
 
@@ -575,7 +575,7 @@ class Traffic(glh.RenderObject, layer=100):
             self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
 
             # Leader lines
-            self.leaderlinepos[idx] = leaderline_vertices(actdata, offsetx, offsety)
+            self.leaderlinepos[idx] = leaderline_vertices(actdata, self.labelpos[idx][0], self.labelpos[idx][1])
 
             self.leaderlines.update(vertex=self.leaderlinepos)
 
