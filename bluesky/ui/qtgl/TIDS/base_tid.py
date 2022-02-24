@@ -141,7 +141,7 @@ class TIDCmds:
 
                 # Loop over commands
                 for cmd, args in zip(self.cmdslst, self.argslst):
-                    if cmd == 'EFL' or cmd == 'TFL':
+                    if cmd == 'EFL':
                         cmd = 'ALT'
                         addfl = True
                     else:
