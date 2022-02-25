@@ -94,6 +94,13 @@ class Traffic(glh.RenderObject, layer=100):
 
         self.leaderlines    = glh.Line()
 
+        # --------------- Plugin Variables ---------------
+        self.show_pluginlabel = False
+        self.pluginlabelpos   = None
+        self.pluginlbloffset  = None
+        self.pluginlbl        = None
+        self.pluginlabel      = None
+
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
     def create(self):
@@ -264,6 +271,8 @@ class Traffic(glh.RenderObject, layer=100):
             self.aclabels_lvnl.draw(n_instances=actdata.naircraft)
             self.ssrlabels.draw(n_instances=actdata.naircraft)
             self.microlabels.draw(n_instances=actdata.naircraft)
+            if self.pluginlabel is not None and self.show_pluginlabel:
+                self.pluginlabel.draw(n_instances=actdata.naircraft)
 
             self.leaderlines.draw()
 
@@ -521,6 +530,8 @@ class Traffic(glh.RenderObject, layer=100):
                 self.labelpos = labelpos
                 self.id_prev = data.id
                 self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
+                if self.pluginlbloffset is not None:
+                    self.pluginlbloffset.update(np.array(self.labelpos+self.pluginlabelpos, dtype=np.float32))
                 # Leader line update
                 self.leaderlinepos = leaderlinepos
                 self.leaderlines.update(vertex=self.leaderlinepos, lat=data.lat, lon=data.lon, color=color)
@@ -569,11 +580,53 @@ class Traffic(glh.RenderObject, layer=100):
 
             # Update label offset
             self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
+            if self.pluginlbloffset is not None:
+                self.pluginlbloffset.update(np.array(self.labelpos+self.pluginlabelpos, dtype=np.float32))
 
             # Leader lines
             self.leaderlinepos[idx] = leaderline_vertices(actdata, self.labelpos[idx][0], self.labelpos[idx][1])
 
             self.leaderlines.update(vertex=self.leaderlinepos)
+
+    def plugin_init(self, blocksize=None, position=None):
+        """
+        Function: Initialize and create plugin buffers and attributes
+        Args:
+            blocksize:  Label block size [tuple]
+            position:   Text position (line (y), character (x))  [tuple]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 25-2-2022
+        """
+
+        self.glsurface.makeCurrent()
+
+        # Sizes
+        ac_size = settings.ac_size
+        text_size = settings.text_size
+        text_width = text_size
+        text_height = text_size * 1.2307692307692308
+
+        # Process position
+        self.pluginlabelpos = np.array([position[1]*text_width, -position[0]*text_height], dtype=np.float32)
+
+        # Initialize
+        self.pluginlbl       = glh.GLBuffer()
+        self.pluginlbloffset = glh.GLBuffer()
+        self.pluginlabel     = glh.Text(settings.text_size, blocksize)
+
+        # Create
+        self.pluginlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+        self.pluginlbloffset.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+        self.pluginlabel.create(self.pluginlbl, self.lat, self.lon, self.color, self.pluginlbloffset, instanced=True)
+
+        # Update position
+        if len(self.labelpos) != 0:
+            self.pluginlbloffset.update(np.array(self.labelpos+self.pluginlabelpos, dtype=np.float32))
+
+        # Draw
+        self.show_pluginlabel = True
 
 
 """
