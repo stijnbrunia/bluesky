@@ -69,6 +69,7 @@ class Traffic(glh.RenderObject, layer=100):
         self.lbl_lvnl   = glh.GLBuffer()
         self.ssrlbl     = glh.GLBuffer()
         self.mlbl       = glh.GLBuffer()
+        self.pluginlbl  = None
 
         self.lbloffset  = glh.GLBuffer()
 
@@ -93,6 +94,12 @@ class Traffic(glh.RenderObject, layer=100):
         self.microlabels    = glh.Text(0.95*settings.text_size, (3, 1))
 
         self.leaderlines    = glh.Line()
+
+        # --------------- Plugin Variables ---------------
+        self.pluginlabelpos  = None
+        self.pluginlbloffset = None
+        self.pluginlbl       = None
+        self.pluginlabel     = None
 
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
@@ -264,6 +271,9 @@ class Traffic(glh.RenderObject, layer=100):
             self.aclabels_lvnl.draw(n_instances=actdata.naircraft)
             self.ssrlabels.draw(n_instances=actdata.naircraft)
             self.microlabels.draw(n_instances=actdata.naircraft)
+            if self.pluginlabel is not None:
+                print('draw plugin')
+                self.pluginlabel.draw(n_instances=actdata.naircraft)
 
             self.leaderlines.draw()
 
@@ -574,6 +584,32 @@ class Traffic(glh.RenderObject, layer=100):
             self.leaderlinepos[idx] = leaderline_vertices(actdata, self.labelpos[idx][0], self.labelpos[idx][1])
 
             self.leaderlines.update(vertex=self.leaderlinepos)
+
+    def plugin_init(self, blocksize=None, position=None):
+        """
+        Function: Initialize and create plugin buffers and attributes
+        Args:
+            blocksize:  Label block size [tuple]
+            position:   Label offset [tuple]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 25-2-2022
+        """
+
+        # Node data
+        actdata = bs.net.get_nodedata()
+
+        # Initialize
+        self.pluginlabelpos  = np.ones((actdata.naircraft, 2), dtype=np.float32)*offset
+        self.pluginlbl       = glh.GLBuffer()
+        self.pluginlbloffset = glh.GLBuffer()
+        self.pluginlabel     = glh.Text(settings.text_size, blocksize)
+
+        # Create
+        self.pluginlbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+        self.pluginlbloffset.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
+        self.pluginlabel.create(self.pluginlbl, self.lat, self.lon, self.color, self.pluginlbloffset, instanced=True)
 
 
 """

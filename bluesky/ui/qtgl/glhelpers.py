@@ -642,6 +642,7 @@ class Text(VertexArrayObject):
         self.font = font or Font.getdefault()
         self.blocksize = blocksize or (0, 0)
         self.charsize = charsize
+        self.instanced = False
 
     def create(self, text, lat=None, lon=None, color=None, vertex_offset=None, instanced=False):
         ''' Create the Text VAO. '''
@@ -658,6 +659,7 @@ class Text(VertexArrayObject):
 
         # Compute vertices
         if instanced:
+            self.instanced = True
             vertices, texcoords = self.font.char(x, y, w, h)
         else:
             vertices, texcoords = [], []
