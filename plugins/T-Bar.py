@@ -103,7 +103,7 @@ class TBar(core.Entity):
                     acid = nodedata.acdata.id[idx]
                     dtg = nodedata.acdata.dtg[idx]
                     tracklbl = nodedata.acdata.tracklbl[idx]
-                    if acid == console.Console._instance.id_select and dtg != 0. and tracklbl:
+                    if tracklbl and dtg != 0. and acid == console.Console._instance.id_select:
                         rawlabel += '%-3s' % leading_zeros(dtg)[:3]
                     else:
                         rawlabel += 3*' '
