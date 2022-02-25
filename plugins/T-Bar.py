@@ -38,6 +38,7 @@ class TBar(core.Entity):
         showdtg():      Initialize the DTG label
         update_tbar():  Update T-Bar graphics
     """
+
     def __init__(self):
         super().__init__()
         self.initialized = False
@@ -101,7 +102,8 @@ class TBar(core.Entity):
                 for idx in range(len(nodedata.acdata.id)):
                     acid = nodedata.acdata.id[idx]
                     dtg = nodedata.acdata.dtg[idx]
-                    if acid == console.Console._instance.id_select and dtg != 0.:
+                    tracklbl = nodedata.acdata.tracklbl[idx]
+                    if acid == console.Console._instance.id_select and dtg != 0. and tracklbl:
                         rawlabel += '%-3s' % leading_zeros(dtg)[:3]
                     else:
                         rawlabel += 3*' '
