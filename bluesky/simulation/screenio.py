@@ -9,7 +9,8 @@ from bluesky import stack
 from bluesky.tools import areafilter, geo, misc
 from bluesky.core.walltime import Timer
 
-bs.settings.set_variable_defaults(screendt=0.2)
+bs.settings.set_variable_defaults(screendt=0.2,
+                                  atc_mode='BLUESKY')
 
 class ScreenIO:
     """Class within sim task which sends/receives data to/from GUI task"""
@@ -35,6 +36,9 @@ class ScreenIO:
         self.client_zoom = dict()
         self.client_ar   = dict()
         self.route_acid  = dict()
+
+        # ATC Mode
+        self.atcmode = bs.settings.atc_mode
 
         # Dicts of custom aircraft and group colors
         self.custacclr = dict()
@@ -222,6 +226,7 @@ class ScreenIO:
         """
 
         if mode.upper() in ['APP', 'ACC', 'TWR', 'BLUESKY']:
+            self.atcmode = mode.upper()
             bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode.upper()))
         else:
             return False, 'SETATCMODE: ATC Mode not recognized'

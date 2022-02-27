@@ -160,6 +160,10 @@ class OpenSkySource:
             cmds = ["DATE "+data_datetime.strftime('%d %m %Y %H:%M:%S'), 'HISTORY 3']
             cmdst = [0.]*2
 
+            # Filter on altitude
+            data.drop(data[data['on_ground'] == True].index, inplace=True)
+            data.drop(data[(data['baro_altitude'] <= 50.) | (data['baro_altitude'] >= 7467.6)].index, inplace=True)
+
             # Get aircraft data
             acid           = data['callsign'].str.strip()
             data['actype'] = [self.actypes.get(str(icao24), 'B738') for icao24 in data['icao24']]
@@ -184,12 +188,6 @@ class OpenSkySource:
             ssrdata = data.dropna(subset=['squawk'])
             cmds   += list("SSRCODE "+ssrdata['callsign']+", "+ssrdata['squawk'])
             cmdst  += [0.01]*len(ssrdata)
-
-            # Labels
-            ssrlabel = data.loc[(data['baro_altitude']/aero.ft < 1500) | (data['baro_altitude']/aero.ft > 24500)]
-            cmds += list("SSRLABEL "+ssrlabel['callsign']+", ON")
-            cmds += list("TRACKLABEL "+ssrlabel['callsign']+", OFF")
-            cmdst += [0.01]*2*len(ssrlabel)
 
             # Sort
             cmds_df = pd.DataFrame({'COMMAND': cmds, 'TIME': cmdst})
@@ -242,16 +240,8 @@ class OpenSkySource:
             alt = np.array(data['baro_altitude'])
             gs = np.array(data['velocity'])
 
-            # Set labels
-            ssrlabel = data.loc[(data['baro_altitude']/aero.ft < 1500) | (data['baro_altitude']/aero.ft > 24500)]
-            tracklabel = data.loc[(1500 <= data['baro_altitude']/aero.ft) & (data['baro_altitude'] <= 24500)]
-            cmds += list('TRACKLABEL '+tracklabel['callsign']+', ON')
-            cmds += list('TRACKLABEL '+ssrlabel['callsign']+', OFF')
-            cmds += list('SSRLABEL '+tracklabel['callsign']+', OFF')
-            cmds += list('SSRLABEL '+ssrlabel['callsign']+', ON')
-
             # Delete inactive aircraft
-            self.delete_old(cmds)
+            cmds = self.delete_old(cmds)
 
             # Set new previous time
             self.t_prev = simtime
@@ -309,12 +299,16 @@ class OpenSkySource:
             acalt  = str(alt[i]/aero.ft)
             acspd  = str(aero.tas2cas(gs[i], alt[i])/aero.kts)  # Assume GS = TAS
 
+            # Filter on altitude
+            if 164.042 >= float(acalt) or float(acalt) >= 24500:
+                # Remove aircraft from track data
+                idrop = data.index[data['callsign'] == acid]
+                data.drop(idrop, inplace=True)
+                continue
+
             # Create commands
             cmds.append("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
             cmds.append("SETDATAFEED "+acid+" OPENSKY")
-            if float(acalt) < 1500 or float(acalt) > 24500:
-                cmds.append("SSRLABEL "+acid+", ON")
-                cmds.append("TRACKLABEL "+acid+", OFF")
 
             # Remove aircraft from track data
             idrop = data.index[data['callsign'] == acid]
