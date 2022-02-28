@@ -9,7 +9,8 @@ from bluesky import stack
 from bluesky.tools import areafilter, geo, misc
 from bluesky.core.walltime import Timer
 
-bs.settings.set_variable_defaults(screendt=0.2)
+bs.settings.set_variable_defaults(screendt=0.2,
+                                  atc_mode='BLUESKY')
 
 class ScreenIO:
     """Class within sim task which sends/receives data to/from GUI task"""
@@ -35,6 +36,9 @@ class ScreenIO:
         self.client_zoom = dict()
         self.client_ar   = dict()
         self.route_acid  = dict()
+
+        # ATC Mode
+        self.atcmode = bs.settings.atc_mode
 
         # Dicts of custom aircraft and group colors
         self.custacclr = dict()
@@ -222,6 +226,7 @@ class ScreenIO:
         """
 
         if mode.upper() in ['APP', 'ACC', 'TWR', 'BLUESKY']:
+            self.atcmode = mode.upper()
             bs.net.send_event(b'DISPLAYFLAG', dict(flag='ATCMODE', args=mode.upper()))
         else:
             return False, 'SETATCMODE: ATC Mode not recognized'
@@ -405,25 +410,3 @@ class ScreenIO:
                 data['wpname'] = route.wpname
 
             bs.net.send_stream(b'ROUTEDATA' + (sender or b'*'), data)  # Send route data to GUI
-
-
-def index_prevdata(data, indices):
-    """
-    Function: Apply indices for interval data
-    Args:
-        data:       interval data [dict]
-        indices:    indices for traffic arrays in interval data [list(int), array(int)]
-    Returns: -
-
-    Created by: Bob van Dillen
-    Date: 2-2-2022
-    """
-
-    for key in data.keys():
-        print(key)
-        if isinstance(data[key], list):
-            data[key] = np.array(data[key])[indices].tolist()
-        elif type(data[key]).__module__ == np.__name__:
-            data[key] = data[key][indices]
-
-    return data

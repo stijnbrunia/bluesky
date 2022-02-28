@@ -22,10 +22,20 @@ class LVNLVariables(Entity):
     """
     Definition: Class containing variables used by LVNL
     Methods:
+        create():           Create an aircraft
+        update():           Update LVNL variables
+        selucocmd():        Set UCO for aircraft
+        selrelcmd():        Set REL for aircraft
         setarr():           Set the arrival/stack
+        setautolabel():     Set automatic label selection
         setflighttype():    Set the flight type
+        setils():           Set the ILS route
+        setmlabel():        Set the micro label
         setrwy():           Set the runway
         setsid():           Set the SID
+        setssr():           Set the SSR code
+        setssrlabel():      Set the SSR label
+        settracklabel():    Set the track label
         setwtc():           Set the wtc
 
     Created by: Bob van Dillen
@@ -35,19 +45,22 @@ class LVNLVariables(Entity):
     def __init__(self):
         super().__init__()
 
+        self.swautolabel = False  # Auto label change
+
         with self.settrafarrays():
-            self.arr = []                                # Arrival/Stack
-            self.dtg_tbar = np.array([])                 # Distance to T-Bar point
-            self.flighttype = []                         # Flight type
-            self.mlbl = np.array([], dtype=np.bool)      # Show micro label
-            self.rel = np.array([], dtype=np.bool)       # Release
-            self.rwy = []                                # Runway
-            self.sid = []                                # SID
-            self.ssr = np.array([], dtype=np.int)        # SSR code
-            self.ssrlbl = []                             # Show SSR label
-            self.tracklbl = np.array([], dtype=np.bool)  # Show track label
-            self.uco = np.array([], dtype=np.bool)       # Under Control
-            self.wtc = []                                # Wake Turbulence Category
+            self.arr        = []                           # Arrival/Stack
+            self.autolabel  = np.array([], dtype=np.bool)  # Auto label change
+            self.dtg_tbar   = np.array([])                 # Distance to T-Bar point
+            self.flighttype = []                           # Flight type
+            self.mlbl       = np.array([], dtype=np.bool)  # Show micro label
+            self.rel        = np.array([], dtype=np.bool)  # Release
+            self.rwy        = []                           # Runway
+            self.sid        = []                           # SID
+            self.ssr        = np.array([], dtype=np.int)   # SSR code
+            self.ssrlbl     = []                           # Show SSR label
+            self.tracklbl   = np.array([], dtype=np.bool)  # Show track label
+            self.uco        = np.array([], dtype=np.bool)  # Under Control
+            self.wtc        = []                           # Wake Turbulence Category
 
     def create(self, n=1):
         """
@@ -62,9 +75,9 @@ class LVNLVariables(Entity):
 
         super().create(n)
 
-        #self.labelpos      = np.append(self.labelpos[:-n], [])
-        self.tracklbl[-n:] = True
-        self.mlbl[-n:]     = False
+        self.autolabel[-n:] = True
+        self.tracklbl[-n:]  = True
+        self.mlbl[-n:]      = False
 
     @timed_function(name='lvnlvars', dt=0.1)
     def update(self):
@@ -77,7 +90,46 @@ class LVNLVariables(Entity):
         Date: 1-2-2022
         """
 
-        # Distance to
+        # --------------- Automatic label selection ---------------
+
+        if self.swautolabel:
+
+            if bs.scr.atcmode == 'APP':
+                # Indices
+                itracklbl = np.nonzero(bs.traf.alt <= 7467.6)[0]
+                issrlbl = np.setdiff1d(np.arange(len(bs.traf.id)), itracklbl)
+                iautolabel = np.nonzero(self.autolabel)[0]
+                itracklbl = np.intersect1d(itracklbl, iautolabel)
+                issrlbl = np.intersect1d(issrlbl, iautolabel)
+
+                # Set labels
+                self.tracklbl[itracklbl] = True
+                self.tracklbl[issrlbl] = False
+
+                ssrlbl = np.array(self.ssrlbl)
+                ssrlbl[itracklbl] = ''
+                ssrlbl[issrlbl] = 'C'
+                self.ssrlbl = ssrlbl.tolist()
+
+            elif bs.scr.atcmode == 'ACC':
+                # Indices
+                itracklbl = np.nonzero(np.logical_and(bs.traf.alt <= 7467.6, bs.traf.alt >= 2438.4))[0]
+                issrlbl = np.setdiff1d(np.arange(len(bs.traf.id)), itracklbl)
+                iautolabel = np.nonzero(self.autolabel)[0]
+                itracklbl = np.intersect1d(itracklbl, iautolabel)
+                issrlbl = np.intersect1d(issrlbl, iautolabel)
+
+                # Set labels
+                self.tracklbl[itracklbl] = True
+                self.tracklbl[issrlbl] = False
+
+                ssrlbl = np.array(self.ssrlbl)
+                ssrlbl[itracklbl] = ''
+                ssrlbl[issrlbl] = 'C'
+                self.ssrlbl = ssrlbl.tolist()
+
+        # --------------- T-Bar DTG ---------------
+
         inirsi_gal1 = misc.get_indices(self.arr, "NIRSI_GAL01")
         inirsi_gal2 = misc.get_indices(self.arr, "NIRSI_GAL02")
         inirsi_603 = misc.get_indices(self.arr, "NIRSI_AM603")
@@ -173,6 +225,49 @@ class LVNLVariables(Entity):
             cmd = 'PCALL LVNL/Routes/ARR/'+arr.upper()+' '+acid
             stack.stack(cmd)
 
+    @stack.command(name='AUTOLABEL', brief='AUTOLABEL (ON/OFF or ACID or ACID ON/OFF)')
+    def setautolabel(self, *args):
+        """
+        Function: Set automatic label selection
+        Args:
+            *args:  arguments [tuple]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 27-2-2022
+        """
+
+        # No arguments
+        if len(args) == 0:
+            self.swautolabel = not self.swautolabel
+
+        # ON/OFF
+        if args[0].upper() == 'ON':
+            self.swautolabel = True
+        elif args[0].upper() == 'OFF':
+            self.swautolabel = False
+
+        # ACID
+        elif bs.traf.id2idx(args[0]) > 0:
+            idx = bs.traf.id2idx(args[0])
+
+            # Other arguments
+            if len(args) > 1:
+
+                # ON/OFF
+                if args[1].upper() == 'ON':
+                    self.autolabel[idx] = True
+                elif args[1].upper() == 'OFF':
+                    self.autolabel[idx] = False
+                else:
+                    return False, 'AUTOLABEL: Not a valid input'
+
+            else:
+                self.autolabel[idx] = not self.autolabel[idx]
+
+        else:
+            return False, 'AUTOLABEL: Not a valid input'
+
     @stack.command(name='FLIGHTTYPE', brief='FLIGHTTYPE CALLSIGN TYPE')
     def setflighttype(self, idx: 'acid', flighttype: str):
         """
@@ -188,6 +283,23 @@ class LVNLVariables(Entity):
 
         if isinstance(flighttype, str):
             self.flighttype[idx] = flighttype.upper()
+
+    @stack.command(name='ILS', brief='ILS CALLSIGN RWY', aliases=('STACK',))
+    def setils(self, idx: 'acid', rwy: str):
+        """
+        Function: Set the ILS route
+        Args:
+            idx:        index for traffic arrays [int]
+            rwy:        runway [str]
+        Returns: -
+
+        Created by: Mitchell de Keijzer
+        Date: 16-02-2022
+        """
+
+        acid = bs.traf.id[idx]
+        cmd = 'PCALL LVNL/Routes/ARR/ILS_' + rwy + ' ' + acid
+        stack.stack(cmd)
 
     @stack.command(name='MICROLABEL', brief='MICROLABEL CALLSIGN')
     def setmlabel(self, idx: 'acid'):
@@ -276,12 +388,15 @@ class LVNLVariables(Entity):
                 self.ssrlbl[idx] = ''
             else:
                 self.ssrlbl[idx] = 'C'
+            self.autolabel[idx] = False
 
         # Switch on/off
         elif args[0].upper() == 'ON' or args[0].upper() == 'TRUE':
             self.ssrlbl[idx] = 'C'
+            self.autolabel[idx] = False
         elif args[0].upper() == 'OFF' or args[0].upper() == 'FALSE':
             self.ssrlbl[idx] = ''
+            self.autolabel[idx] = False
 
         # Switch modes on/off
         else:
@@ -309,6 +424,7 @@ class LVNLVariables(Entity):
                     ssrlbl = ssrlbl[:-1]  # Leave out last ';'
 
                     self.ssrlbl[idx] = ssrlbl
+                    self.autolabel[idx] = False
 
             else:
                 return False, 'SSRLABEL: Not a valid SSR label item'
@@ -329,12 +445,15 @@ class LVNLVariables(Entity):
         # No arguments passed
         if len(args) == 0:
             self.tracklbl[idx] = not self.tracklbl[idx]
+            self.autolabel[idx] = False
 
         # Switch on/off
         elif args[0].upper() == 'ON' or args[0].upper() == 'TRUE':
             self.tracklbl[idx] = True
+            self.autolabel[idx] = False
         elif args[0].upper() == 'OFF' or args[0].upper() == 'FALSE':
             self.tracklbl[idx] = False
+            self.autolabel[idx] = False
 
         else:
             return False, 'TRACKLABEL: Not a valid argument'
@@ -354,21 +473,3 @@ class LVNLVariables(Entity):
 
         if isinstance(wtc, str):
             self.wtc[idx] = wtc.upper()
-
-    @stack.command(name='ILS', brief='ILS CALLSIGN RWY', aliases=('STACK',))
-    def setils(self, idx: 'acid', rwy: str):
-        """
-        Function: Set the ILS route
-        Args:
-            idx:        index for traffic arrays [int]
-            rwy:        runway [str]
-        Returns: -
-
-        Created by: Mitchell de Keijzer
-        Date: 16-02-2022
-        """
-
-
-        acid = bs.traf.id[idx]
-        cmd = 'PCALL LVNL/Routes/ARR/ILS_' + rwy + ' ' + acid
-        stack.stack(cmd)

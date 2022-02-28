@@ -603,11 +603,11 @@ class VEMMISRead:
         cmdst += list(other['SIM_START'] + 0.01)
 
         # Track label
-        cmds  += list("TRACKLABEL "+other['CALLSIGN'])
+        cmds  += list("TRACKLABEL "+other['CALLSIGN']+", OFF")
         cmdst += list(other['SIM_START'] + 0.01)
 
         # SSR label
-        cmds  += list("SSRLABEL "+other['CALLSIGN']+", 3")
+        cmds  += list("SSRLABEL "+other['CALLSIGN']+", ON")
         cmdst += list(other['SIM_START'] + 0.01)
 
         # Delete route
