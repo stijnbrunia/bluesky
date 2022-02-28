@@ -410,25 +410,3 @@ class ScreenIO:
                 data['wpname'] = route.wpname
 
             bs.net.send_stream(b'ROUTEDATA' + (sender or b'*'), data)  # Send route data to GUI
-
-
-def index_prevdata(data, indices):
-    """
-    Function: Apply indices for interval data
-    Args:
-        data:       interval data [dict]
-        indices:    indices for traffic arrays in interval data [list(int), array(int)]
-    Returns: -
-
-    Created by: Bob van Dillen
-    Date: 2-2-2022
-    """
-
-    for key in data.keys():
-        print(key)
-        if isinstance(data[key], list):
-            data[key] = np.array(data[key])[indices].tolist()
-        elif type(data[key]).__module__ == np.__name__:
-            data[key] = data[key][indices]
-
-    return data
