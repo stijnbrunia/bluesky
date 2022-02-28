@@ -157,8 +157,8 @@ class OpenSkySource:
 
         if len(data) > 0:
             # Initial commands
-            cmds = ["DATE "+data_datetime.strftime('%d %m %Y %H:%M:%S'), 'HISTORY 3']
-            cmdst = [0.]*2
+            cmds = ["DATE "+data_datetime.strftime('%d %m %Y %H:%M:%S'), 'HISTORY 3', 'AUTOLABEL ON']
+            cmdst = [0.]*3
 
             # Filter on altitude
             data.drop(data[data['on_ground'] == True].index, inplace=True)
@@ -225,6 +225,10 @@ class OpenSkySource:
         # Get new data every 12.5 seconds
         if simtime-self.t_prev >= 12.5:
             data_datetime, data = self.request_data()
+
+            # Filter on altitude
+            data.drop(data[data['on_ground'] == True].index, inplace=True)
+            data.drop(data[(data['baro_altitude'] <= 50.) | (data['baro_altitude'] >= 7467.6)].index, inplace=True)
 
             # Commands
             cmds = []
@@ -298,13 +302,6 @@ class OpenSkySource:
             achdg  = str(hdg[i])
             acalt  = str(alt[i]/aero.ft)
             acspd  = str(aero.tas2cas(gs[i], alt[i])/aero.kts)  # Assume GS = TAS
-
-            # Filter on altitude
-            if 164.042 >= float(acalt) or float(acalt) >= 24500:
-                # Remove aircraft from track data
-                idrop = data.index[data['callsign'] == acid]
-                data.drop(idrop, inplace=True)
-                continue
 
             # Create commands
             cmds.append("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)

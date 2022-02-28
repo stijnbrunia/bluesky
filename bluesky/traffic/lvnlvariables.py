@@ -23,10 +23,19 @@ class LVNLVariables(Entity):
     Definition: Class containing variables used by LVNL
     Methods:
         create():           Create an aircraft
+        update():           Update LVNL variables
+        selucocmd():        Set UCO for aircraft
+        selrelcmd():        Set REL for aircraft
         setarr():           Set the arrival/stack
+        setautolabel():     Set automatic label selection
         setflighttype():    Set the flight type
+        setils():           Set the ILS route
+        setmlabel():        Set the micro label
         setrwy():           Set the runway
         setsid():           Set the SID
+        setssr():           Set the SSR code
+        setssrlabel():      Set the SSR label
+        settracklabel():    Set the track label
         setwtc():           Set the wtc
 
     Created by: Bob van Dillen
@@ -81,7 +90,7 @@ class LVNLVariables(Entity):
         Date: 1-2-2022
         """
 
-        # --------------- Label ---------------
+        # --------------- Automatic label selection ---------------
 
         if self.swautolabel:
 
@@ -106,6 +115,9 @@ class LVNLVariables(Entity):
                 # Indices
                 itracklbl = np.nonzero(np.logical_and(bs.traf.alt <= 7467.6, bs.traf.alt >= 2438.4))[0]
                 issrlbl = np.setdiff1d(np.arange(len(bs.traf.id)), itracklbl)
+                iautolabel = np.nonzero(self.autolabel)[0]
+                itracklbl = np.intersect1d(itracklbl, iautolabel)
+                issrlbl = np.intersect1d(issrlbl, iautolabel)
 
                 # Set labels
                 self.tracklbl[itracklbl] = True
@@ -192,10 +204,31 @@ class LVNLVariables(Entity):
         self.uco[idx] = False
         self.rel[idx] = True
 
+    @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
+    def setarr(self, idx: 'acid', arr: str = '', addwpts: 'onoff' = True):
+        """
+        Function: Set the arrival/stack
+        Args:
+            idx:        index for traffic arrays [int]
+            arr:        arrival/stack [str]
+            addwpts:    add waypoints [bool]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 21-12-2021
+        """
+
+        self.arr[idx] = arr.upper()
+
+        if addwpts:
+            acid = bs.traf.id[idx]
+            cmd = 'PCALL LVNL/Routes/ARR/'+arr.upper()+' '+acid
+            stack.stack(cmd)
+
     @stack.command(name='AUTOLABEL', brief='AUTOLABEL (ON/OFF or ACID or ACID ON/OFF)')
     def setautolabel(self, *args):
         """
-        Function: Set automatic label change
+        Function: Set automatic label selection
         Args:
             *args:  arguments [tuple]
         Returns: -
@@ -235,27 +268,6 @@ class LVNLVariables(Entity):
         else:
             return False, 'AUTOLABEL: Not a valid input'
 
-    @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
-    def setarr(self, idx: 'acid', arr: str = '', addwpts: 'onoff' = True):
-        """
-        Function: Set the arrival/stack
-        Args:
-            idx:        index for traffic arrays [int]
-            arr:        arrival/stack [str]
-            addwpts:    add waypoints [bool]
-        Returns: -
-
-        Created by: Bob van Dillen
-        Date: 21-12-2021
-        """
-
-        self.arr[idx] = arr.upper()
-
-        if addwpts:
-            acid = bs.traf.id[idx]
-            cmd = 'PCALL LVNL/Routes/ARR/'+arr.upper()+' '+acid
-            stack.stack(cmd)
-
     @stack.command(name='FLIGHTTYPE', brief='FLIGHTTYPE CALLSIGN TYPE')
     def setflighttype(self, idx: 'acid', flighttype: str):
         """
@@ -271,6 +283,23 @@ class LVNLVariables(Entity):
 
         if isinstance(flighttype, str):
             self.flighttype[idx] = flighttype.upper()
+
+    @stack.command(name='ILS', brief='ILS CALLSIGN RWY', aliases=('STACK',))
+    def setils(self, idx: 'acid', rwy: str):
+        """
+        Function: Set the ILS route
+        Args:
+            idx:        index for traffic arrays [int]
+            rwy:        runway [str]
+        Returns: -
+
+        Created by: Mitchell de Keijzer
+        Date: 16-02-2022
+        """
+
+        acid = bs.traf.id[idx]
+        cmd = 'PCALL LVNL/Routes/ARR/ILS_' + rwy + ' ' + acid
+        stack.stack(cmd)
 
     @stack.command(name='MICROLABEL', brief='MICROLABEL CALLSIGN')
     def setmlabel(self, idx: 'acid'):
@@ -444,20 +473,3 @@ class LVNLVariables(Entity):
 
         if isinstance(wtc, str):
             self.wtc[idx] = wtc.upper()
-
-    @stack.command(name='ILS', brief='ILS CALLSIGN RWY', aliases=('STACK',))
-    def setils(self, idx: 'acid', rwy: str):
-        """
-        Function: Set the ILS route
-        Args:
-            idx:        index for traffic arrays [int]
-            rwy:        runway [str]
-        Returns: -
-
-        Created by: Mitchell de Keijzer
-        Date: 16-02-2022
-        """
-
-        acid = bs.traf.id[idx]
-        cmd = 'PCALL LVNL/Routes/ARR/ILS_' + rwy + ' ' + acid
-        stack.stack(cmd)
