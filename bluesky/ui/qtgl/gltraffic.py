@@ -938,10 +938,16 @@ def leaderline_vertices(actdata, offsetx, offsety):
     text_size = settings.text_size
     text_width = text_size
     text_height = text_size * 1.2307692307692308
+
+    # APP
     if actdata.atcmode == 'APP':
         block_size = (4*text_height, 7*text_width)
-    else:
+    # ACC
+    elif actdata.atcmode == 'ACC':
         block_size = (4*text_height, 8*text_width)
+    # TWR
+    else:
+        block_size = (3*text_height, 8*text_width)
 
     # Compute the angle
     angle = np.arctan2(offsety, offsetx)
