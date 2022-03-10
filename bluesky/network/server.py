@@ -19,7 +19,7 @@ childargs = [a for a in sys.argv[1:] if 'headless' not in a]
 bs.settings.set_variable_defaults(max_nnodes=cpu_count(),
                                   event_port=9000, stream_port=9001,
                                   simevent_port=10000, simstream_port=10001,
-                                  enable_discovery=False)
+                                  enable_discovery=True)
 
 def split_scenarios(scentime, scencmd):
     ''' Split the contents of a batch file into individual scenarios. '''

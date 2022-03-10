@@ -27,7 +27,7 @@ scr = None
 server = None
 
 
-def init(mode='sim', pygame=False, discovery=False, cfgfile='', scnfile=''):
+def init(mode='sim', pygame=False, discovery=True, cfgfile='', scnfile=''):
     ''' Initialize bluesky modules.
 
         Arguments:
@@ -61,6 +61,7 @@ def init(mode='sim', pygame=False, discovery=False, cfgfile='', scnfile=''):
     if mode[:6] == 'server':
         global server
         from bluesky.network.server import Server
+        print('SERVERTEST', discovery)
         server = Server(discovery)
 
     # The remaining objects are only instantiated in the sim nodes

@@ -57,8 +57,10 @@ def main():
         mode = 'server-headless'
     else:
         mode = 'server-gui'
+    print('mode is', mode)
 
-    discovery = ('--discoverable' in sys.argv or mode[-8:] == 'headless')
+    # discovery = ('--discoverable' in sys.argv or mode[-8:] == 'headless')
+    discovery = True
 
     # Check if alternate config file is passed or a default scenfile
     cfgfile = ''
