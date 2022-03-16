@@ -108,3 +108,4 @@ class TBar(core.Entity):
                     else:
                         rawlabel += 3*' '
                 self.tbarlbl.pluginlbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
+

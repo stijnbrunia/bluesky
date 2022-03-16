@@ -732,8 +732,11 @@ class VEMMISSource:
         vemmisdata = VEMMISRead(datapath, date0, time0, deltat=0.5)
         # Load flight data
         bs.scr.echo('Loading flight data ...')
-        commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
-        # commands, commandstime = vemmisdata.get_initial_tbar()
+
+        # initialize t-bar by uncommenting the second line below
+        # commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
+        commands, commandstime = vemmisdata.get_initial_tbar()
+
         # Load track data
         bs.scr.echo('Loading track data ...')
         trackdata = vemmisdata.get_trackdata()
