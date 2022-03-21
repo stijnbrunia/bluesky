@@ -103,8 +103,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Plugin Variables ---------------
         self.show_tbar_ac = False
-        self.tbar_labelpos = None
-        self.tbar_lbloffset = None
+        # self.tbar_labelpos = np.array([], dtype=np.float32)
+        # self.tbar_lbloffset = glh.GLBuffer()
         self.tbar_lbl = None
         self.tbar_label = None
 
@@ -264,6 +264,8 @@ class Traffic(glh.RenderObject, layer=100):
             self.ac_symbol.draw(n_instances=actdata.naircraft)
         else:
             self.ac_symbollvnl.draw(n_instances=actdata.naircraft)
+            if self.tbar_ac is not None and self.show_tbar_ac:
+                self.tbar_ac.draw(n_instances=actdata.naircraft)
 
         # Draw history symbols
         if actdata.show_histsymb and len(actdata.acdata.histsymblat) != 0:
@@ -440,7 +442,7 @@ class Traffic(glh.RenderObject, layer=100):
             labelpos      = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
             leaderlinepos = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.float32)
 
-            tbar_labelpos = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
+            # tbar_labelpos = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
 
             # Colors
             color       = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
@@ -481,13 +483,12 @@ class Traffic(glh.RenderObject, layer=100):
                             labelpos[i] = [50, 0]
                             leaderlinepos[i] = leaderline_vertices(actdata, 50, 0)
 
-                            tbar_labelpos[i] = [50, 0]
+                            # tbar_labelpos[i] = [50, 0]
                         else:
                             i_prev = self.id_prev.index(acid)
                             labelpos[i] = self.labelpos[i_prev]
 
-                            if self.tbar_labelpos is not None:
-                                tbar_labelpos[i] = self.tbar_labelpos[i_prev]
+                            # tbar_labelpos[i] = self.tbar_labelpos[i_prev]
 
                             if data.tracklbl[i]:
                                 leaderlinepos[i] = leaderline_vertices(actdata, labelpos[i][0], labelpos[i][1])
@@ -495,8 +496,7 @@ class Traffic(glh.RenderObject, layer=100):
                                 leaderlinepos[i] = [0, 0, 0, 0]
                     else:
                         labelpos[i] = self.labelpos[i]
-                        if self.tbar_labelpos is not None:
-                            tbar_labelpos[i] = self.tbar_labelpos[i]
+                        # tbar_labelpos[i] = self.tbar_labelpos[i]
 
                         if data.tracklbl[i]:
                             leaderlinepos[i] = leaderline_vertices(actdata, labelpos[i][0], labelpos[i][1])
@@ -550,11 +550,12 @@ class Traffic(glh.RenderObject, layer=100):
                 self.mlbl.update(np.array(rawmlabel.encode('utf8'), dtype=np.string_))
                 # Label position
                 self.labelpos = labelpos
-                if self.tbar_labelpos is not None:
-                    self.tbar_labelpos = tbar_labelpos
-                    self.tbar_lbloffset.update(np.array(self.tbar_labelpos, dtype=np.float32))
                 self.id_prev = data.id
                 self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
+
+                # self.tbar_labelpos = tbar_labelpos
+                # self.tbar_lbloffset.update(np.array(self.tbar_labelpos, dtype=np.float32))
+
                 if self.pluginlbloffset is not None:
                     self.pluginlbloffset.update(np.array(self.labelpos+self.pluginlabelpos, dtype=np.float32))
                 # Leader line update
@@ -653,7 +654,7 @@ class Traffic(glh.RenderObject, layer=100):
         # Draw
         self.show_pluginlabel = True
 
-    def tbarrange(self, lat=None, lon=None, blocksize=None, position=None):
+    def tbarrange(self, blocksize=None, position=None):
 
         self.glsurface.makeCurrent()
 
@@ -674,10 +675,11 @@ class Traffic(glh.RenderObject, layer=100):
                                   dtype=np.float32)  # a square
 
         self.tbar_labelpos = np.array([position[1]*text_width, -position[0]*text_height], dtype=np.float32)
+        # bs.Signal('tbar_labelpos').connect(self.update_tbar_labelpos)
 
         # Initialize t-bar ac
         self.tbar_ac = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
-        self.tbar_lat = 51.57070200000000
+        self.tbar_lat = glh.GLBuffer()
         self.tbar_lon = glh.GLBuffer()
 
         # Initialize t-bar label
@@ -685,11 +687,11 @@ class Traffic(glh.RenderObject, layer=100):
         self.tbar_lbloffset = glh.GLBuffer()
         self.tbar_label = glh.Text(settings.text_size, blocksize)
 
-
         # Create t-bar aircraft
+        self.tbar_lon.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
+        self.tbar_lat.create(MAX_NAIRCRAFT * 4, glh.GLBuffer.StreamDraw)
         self.tbar_ac.create(vertex=acverticeslvnl)
         self.tbar_ac.set_attribs(lat=self.tbar_lat, lon=self.tbar_lon, color=self.color, instance_divisor=1)
-        print('tot hier')
 
         # Create t-bar label
         self.tbar_lbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)

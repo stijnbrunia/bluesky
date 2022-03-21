@@ -397,7 +397,7 @@ Classes
 
 
 class tbar_ac(core.Entity):
-    print('Plugin geladen')
+
     def __init__(self):
         super().__init__()
         self.initialized = False
@@ -407,45 +407,48 @@ class tbar_ac(core.Entity):
 
     @stack.command(name='RANGEBAR')
     def show_rangebar(self):
-        print('Command werkt')
         if not self.initialized:
-            print('komt in initialized')
             # Get current node data
             actdata = bs.net.get_nodedata()
-            print('actdata', actdata)
+            # print('actdata', actdata)
             # Class to access Traffic graphics
             self.tbar_ac = Traffic()
-            print('traffic loaded')
             # Initialize plugin t-bar aircraft and label
-            self.tbar_ac.tbarrange(lat=51.57070200000000, lon=2.25580600000000, blocksize=(8, 1), position=(0, 0))
+            self.tbar_ac.tbarrange(blocksize=(8, 1), position=(0, 0))
             print('Komt hier wel langs')
             rawlabel = ''
             for idx in range(len(actdata.acdata.id)):
                 rawlabel += 8*' '
-            print('rawlabel', rawlabel)
+            # print('rawlabel', rawlabel)
             self.tbar_ac.tbar_lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
 
             self.initialized = True
-            print('Initialized:', self.initialized)
+            # print('Initialized:', self.initialized)
         else:
             self.tbar_ac.show_tbar_ac = not self.tbar_ac.show_tbar_ac
 
     def update_tbar_ac(self, nodeid, nodedata, changed_elems):
-        # print('Komt in de update', self.initialized)
         if self.initialized:
-            print('update initialized True')
             if 'ACDATA' in changed_elems:
-                print('acdata in changed_elems')
                 rawlabel = ''
                 lon = []
+                lat = []
 
                 for idx in range(len(nodedata.acdata.id)):
                     acid = nodedata.acdata.id[idx]
                     dtg = nodedata.acdata.dtg[idx]
-                    print(dtg)
-                    rawlabel += '%-8s' % acid[:8]
-                    latd, lond = geo.kwikpos(51.57070200000000, 2.25580600000000, 90, dtg)
+
+                    if dtg > 60:
+                        latd = None
+                        lond = None
+                        rawlabel += 8*' '
+                    else:
+                        latd, lond = geo.kwikpos(51.57070200000000, 2.25580600000000, 90, dtg)
+                        rawlabel += '%-8s' % acid[:8]
                     lon.append(lond)
-                print(lon)
+                    lat.append(latd)
+                print('rawlabel', rawlabel)
+
                 self.tbar_ac.tbar_lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
                 self.tbar_ac.tbar_lon.update(np.array(lon, dtype=np.float32))
+                self.tbar_ac.tbar_lat.update(np.array(lat, dtype=np.float32))

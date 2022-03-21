@@ -383,7 +383,8 @@ favareas = [['a1',    'FAVA\n18R',     'lambda: console.Console._instance.stack(
 tbar = [['a1',    'NIRSI',         'lambda: console.Console._instance.stack("MAP NIRSI")'],
         ['a2',    'SOKS2',         'lambda: console.Console._instance.stack("MAP SOKS2")'],
         ['a3',    'GALIS',         'lambda: console.Console._instance.stack("MAP GALIS")'],
-        ['a4',    'BAR',           'lambda: console.Console._instance.stack("MAP DTG_BAR")'],
+        ['a4',    'BAR',           'lambda: console.Console._instance.stack("MAP DTG_BAR")',
+                                   'lambda: console.Console._instance.stack("RANGEBAR")'],
 
         ['b1',    '',              None],
         ['b2',    '',              None],
