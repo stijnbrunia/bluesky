@@ -103,8 +103,8 @@ class Traffic(glh.RenderObject, layer=100):
 
         # --------------- Plugin Variables ---------------
         self.show_tbar_ac = False
-        # self.tbar_labelpos = np.array([], dtype=np.float32)
-        # self.tbar_lbloffset = glh.GLBuffer()
+        self.tbar_labelpos = None
+        self.tbar_lbloffset = None
         self.tbar_lbl = None
         self.tbar_label = None
 
@@ -286,6 +286,8 @@ class Traffic(glh.RenderObject, layer=100):
             self.microlabels.draw(n_instances=actdata.naircraft)
             if self.pluginlabel is not None and self.show_pluginlabel:
                 self.pluginlabel.draw(n_instances=actdata.naircraft)
+            if self.tbar_label is not None and self.show_tbar_ac:
+                self.tbar_label.draw(n_instances=actdata.naircraft)
 
             self.leaderlines.draw()
 
@@ -657,6 +659,9 @@ class Traffic(glh.RenderObject, layer=100):
     def tbarrange(self, blocksize=None, position=None):
 
         self.glsurface.makeCurrent()
+        actdata = bs.net.get_nodedata()
+        naircraft = len(actdata.acdata.id)
+        tbar_labelpos = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
 
         # Sizes
         ac_size = settings.ac_size
@@ -674,15 +679,13 @@ class Traffic(glh.RenderObject, layer=100):
                                    (-0.5 * ac_size, 0.5 * ac_size)],
                                   dtype=np.float32)  # a square
 
-        self.tbar_labelpos = np.array([position[1]*text_width, -position[0]*text_height], dtype=np.float32)
-        # bs.Signal('tbar_labelpos').connect(self.update_tbar_labelpos)
-
         # Initialize t-bar ac
         self.tbar_ac = glh.VertexArrayObject(glh.gl.GL_LINE_LOOP)
         self.tbar_lat = glh.GLBuffer()
         self.tbar_lon = glh.GLBuffer()
 
         # Initialize t-bar label
+        self.tbar_labelpos = np.array([], dtype=np.float32)
         self.tbar_lbl = glh.GLBuffer()
         self.tbar_lbloffset = glh.GLBuffer()
         self.tbar_label = glh.Text(settings.text_size, blocksize)
@@ -699,8 +702,10 @@ class Traffic(glh.RenderObject, layer=100):
         self.tbar_label.create(self.tbar_lbl, self.tbar_lat, self.tbar_lon, self.color, self.tbar_lbloffset, instanced=True)
 
         # Update
-        if len(self.tbar_labelpos) != 0:
-            self.tbar_lbloffset.update(np.array(self.tbar_labelpos, dtype=np.float32))
+        for i in range(len(actdata.acdata.id)):
+            tbar_labelpos[i] = [-position[1]*text_width, position[0]*text_height]
+        self.tbar_labelpos = tbar_labelpos
+        self.tbar_lbloffset.update(np.array(self.tbar_labelpos, dtype=np.float32))
 
         # Draw
         self.show_tbar_ac = True

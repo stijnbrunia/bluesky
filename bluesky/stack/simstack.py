@@ -20,7 +20,7 @@ tmxlist = ("BGPASAS", "DFFLEVEL", "FFLEVEL", "FILTCONF", "FILTTRED", "FILTTAMB",
            "GRAB", "HDGREF", "MOVIE", "NAVDB", "PREDASAS", "RENAME", "RETYPE",
            "SWNLRPASAS", "TRAFRECDT", "TRAFLOGDT", "TREACT", "WINDGRID")
 
-tbar_lst = ['NIRSI', 'SOKS2', 'GALIS', 'DTG_BAR']
+tbar_lst = ['NIRSI', 'SOKS2', 'GALIS', 'RANGEBAR']
 maps_loaded = []
 
 def init():
