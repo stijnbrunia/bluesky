@@ -9,25 +9,6 @@ from bluesky.ui.qtgl import glhelpers as glh
 from bluesky.ui.qtgl import console
 from bluesky.ui.qtgl.gltraffic import Traffic, leading_zeros
 
-settings.set_variable_defaults(
-    text_size=13,
-    ac_size=16,
-    asas_vmin=200.0,
-    asas_vmax=500.0
-)
-
-palette.set_default_colours(
-    aircraft=(0, 255, 0),
-    conflict=(255, 160, 0),
-    route=(255, 0, 255),
-    trails=(0, 255, 255)
-)
-
-MAX_NAIRCRAFT       = 10000
-MAX_NCONFLICTS      = 25000
-MAX_ROUTE_LENGTH    = 500
-ROUTE_SIZE          = 500
-TRAILS_SIZE         = 1000000
 
 ### Initialization function of the plugin
 def init_plugin():
@@ -51,6 +32,7 @@ def init_plugin():
 '''
 Classes
 '''
+
 
 class tbar_ac(core.Entity):
     """
@@ -85,7 +67,7 @@ class tbar_ac(core.Entity):
             self.tbar_ac = Traffic()
 
             # Initialize plugin t-bar aircraft and label
-            self.tbar_ac.tbarrange(blocksize=(8, 1), position=(0.5, 3))
+            self.tbar_ac.plugin_rangebar(blocksize=(8, 1), position=(0.5, 3))
 
             # Update label with current data
             rawlabel = ''

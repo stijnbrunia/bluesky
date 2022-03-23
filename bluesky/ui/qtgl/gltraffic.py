@@ -656,8 +656,17 @@ class Traffic(glh.RenderObject, layer=100):
         # Draw
         self.show_pluginlabel = True
 
-    def tbarrange(self, blocksize=None, position=None):
+    def plugin_rangebar(self, blocksize=None, position=None):
+        """
+        Function: Initialize and create t-bar rangebar plugin buffers and attributes
+        Args:
+            blocksize:  Label block size [tuple]
+            position:   Text position (line (y), character (x))  [tuple]
+        Returns: -
 
+        Created by: Mitchell de Keijzer
+        Date: 22-3-2022
+        """
         self.glsurface.makeCurrent()
         actdata = bs.net.get_nodedata()
         naircraft = len(actdata.acdata.id)
@@ -699,7 +708,8 @@ class Traffic(glh.RenderObject, layer=100):
         # Create t-bar label
         self.tbar_lbl.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
         self.tbar_lbloffset.create(MAX_NAIRCRAFT * 24, glh.GLBuffer.StreamDraw)
-        self.tbar_label.create(self.tbar_lbl, self.tbar_lat, self.tbar_lon, self.color, self.tbar_lbloffset, instanced=True)
+        self.tbar_label.create(self.tbar_lbl, self.tbar_lat, self.tbar_lon, self.color, self.tbar_lbloffset,
+                               instanced=True)
 
         # Update
         for i in range(len(actdata.acdata.id)):
