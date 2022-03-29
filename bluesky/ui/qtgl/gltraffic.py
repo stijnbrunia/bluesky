@@ -444,8 +444,6 @@ class Traffic(glh.RenderObject, layer=100):
             labelpos      = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
             leaderlinepos = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.float32)
 
-            # tbar_labelpos = np.empty((min(naircraft, MAX_NAIRCRAFT), 2), dtype=np.float32)
-
             # Colors
             color       = np.empty((min(naircraft, MAX_NAIRCRAFT), 4), dtype=np.uint8)
 
@@ -485,12 +483,9 @@ class Traffic(glh.RenderObject, layer=100):
                             labelpos[i] = [50, 0]
                             leaderlinepos[i] = leaderline_vertices(actdata, 50, 0)
 
-                            # tbar_labelpos[i] = [50, 0]
                         else:
                             i_prev = self.id_prev.index(acid)
                             labelpos[i] = self.labelpos[i_prev]
-
-                            # tbar_labelpos[i] = self.tbar_labelpos[i_prev]
 
                             if data.tracklbl[i]:
                                 leaderlinepos[i] = leaderline_vertices(actdata, labelpos[i][0], labelpos[i][1])
@@ -498,7 +493,6 @@ class Traffic(glh.RenderObject, layer=100):
                                 leaderlinepos[i] = [0, 0, 0, 0]
                     else:
                         labelpos[i] = self.labelpos[i]
-                        # tbar_labelpos[i] = self.tbar_labelpos[i]
 
                         if data.tracklbl[i]:
                             leaderlinepos[i] = leaderline_vertices(actdata, labelpos[i][0], labelpos[i][1])
@@ -554,9 +548,6 @@ class Traffic(glh.RenderObject, layer=100):
                 self.labelpos = labelpos
                 self.id_prev = data.id
                 self.lbloffset.update(np.array(self.labelpos, dtype=np.float32))
-
-                # self.tbar_labelpos = tbar_labelpos
-                # self.tbar_lbloffset.update(np.array(self.tbar_labelpos, dtype=np.float32))
 
                 if self.pluginlbloffset is not None:
                     self.pluginlbloffset.update(np.array(self.labelpos+self.pluginlabelpos, dtype=np.float32))
