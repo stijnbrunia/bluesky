@@ -123,10 +123,15 @@ class Windfield():
         return idx # return index of added point
 
     def getdata(self,userlat,userlon,useralt=0.0): # in case no altitude specified and field is 3D, use sea level wind
-        if bs.traf.HighRes == True and len(userlat) == len(bs.traf.lat):
+        if bs.traf.HighRes == True:
             " Use prerecorded data "
-            uwind = bs.traf.windnorth
-            vwind = bs.traf.windeast
+            if len(userlat) == len(bs.traf.lat):
+                uwind = bs.traf.windnorth
+                vwind = bs.traf.windeast
+                return uwind, vwind
+
+            uwind = 0
+            vwind = 0
             return uwind, vwind
 
         else:
