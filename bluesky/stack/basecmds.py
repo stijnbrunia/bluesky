@@ -316,6 +316,12 @@ def initbasecmds():
             bs.traf.mnual,
             "Manuel Switch per aircraft (using ADSB data)",
         ],
+        "MAPTEST": [
+            "MAPTEST MAPNUMBER",
+            "txt",
+            bs.scr.feature,
+            "Switch on/off elements and background of map/radar view",
+        ],
         "MCRE": [
             "MCRE n, [type/*, alt/*, spd/*, dest/*]",
             "int,[txt,alt,spd,txt]",

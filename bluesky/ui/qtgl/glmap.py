@@ -5,7 +5,7 @@ import numpy as np
 import bluesky as bs
 from bluesky.ui import palette
 from bluesky.ui.qtgl import glhelpers as glh
-from bluesky.ui.loadvisuals import load_coastlines
+from bluesky.ui.loadvisuals import load_coastlines, load_maplines
 from bluesky import settings
 
 
@@ -26,6 +26,11 @@ class Map(glh.RenderObject, layer=-100):
         self.vcount_coast = 0
         self.wraplon_loc = 0
 
+        self.mapslines = glh.VertexArrayObject(glh.gl.GL_LINES)
+        self.mapsindices = []
+        self.vcount_maps = 0
+        self.wrapmaplon_loc = 0
+
         bs.net.actnodedata_changed.connect(self.actdata_changed)
 
     def create(self):
@@ -40,6 +45,13 @@ class Map(glh.RenderObject, layer=-100):
         texcoords = np.array(
             [1, 3, 1, 0, 0, 0, 0, 3], dtype=np.float32)
         self.wraplon_loc = glh.ShaderSet.get_shader(self.coastlines.shader_type).attribs['lon'].loc
+
+        # ------- Mapslines -----------------------------
+        mapsvertices, self.mapsindices = load_maplines()
+        self.mapslines.create(vertex=mapsvertices, color=palette.coastlines)  # !!!!!!!
+        self.vcount_maps = len(mapsvertices)
+        self.wrapmaplon_loc = glh.ShaderSet.get_shader(self.mapslines.shader_type).attribs['lon'].loc
+
 
         # Load and bind world texture
         max_texture_size = glh.gl.glGetIntegerv(glh.gl.GL_MAX_TEXTURE_SIZE)
@@ -97,6 +109,31 @@ class Map(glh.RenderObject, layer=-100):
                         first_vertex=wrapindex, vertex_count=self.vcount_coast - wrapindex)
                     shader.setAttributeValue(self.wraplon_loc, 0.0)
                     self.coastlines.draw(
+                        first_vertex=0, vertex_count=wrapindex)
+
+        if actdata.show_map252:
+            if shaderset.data.wrapdir == 0:
+                # Normal case, no wrap around
+                self.mapslines.draw(
+                    first_vertex=0, vertex_count=self.vcount_maps)
+            else:
+                self.mapslines.bind()
+                shader = glh.ShaderProgram.bound_shader
+                wrapindex = np.uint32(
+                    self.mapsindices[int(shaderset.data.wraplon) + 180])
+                if shaderset.data.wrapdir == 1:
+                    shader.setAttributeValue(self.wrapmaplon_loc, 360.0)
+                    self.mapslines.draw(
+                        first_vertex=0, vertex_count=wrapindex)
+                    shader.setAttributeValue(self.wrapmaplon_loc, 0.0)
+                    self.mapslines.draw(
+                        first_vertex=wrapindex, vertex_count=self.vcount_maps - wrapindex)
+                else:
+                    shader.setAttributeValue(self.wrapmaplon_loc, -360.0)
+                    self.mapslines.draw(
+                        first_vertex=wrapindex, vertex_count=self.vcount_maps - wrapindex)
+                    shader.setAttributeValue(self.wrapmaplon_loc, 0.0)
+                    self.mapslines.draw(
                         first_vertex=0, vertex_count=wrapindex)
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):

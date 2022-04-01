@@ -3,7 +3,7 @@ import pickle
 
 from bluesky import settings
 from bluesky.tools import cachefile
-from bluesky.ui.loadvisuals_txt import load_coastline_txt, load_aptsurface_txt
+from bluesky.ui.loadvisuals_txt import load_coastline_txt, load_aptsurface_txt, load_mapsline_txt
 
 
 # Cache versions: increment these to the current date if the source data is updated
@@ -59,3 +59,16 @@ def load_aptsurface():
     return vbuf_asphalt, vbuf_concrete, vbuf_runways, vbuf_rwythr, \
         apt_ctr_lat, apt_ctr_lon, apt_indices
 
+def load_maplines():
+    ''' Load mapline data for gui. '''
+    with cachefile.openfile('mapslines.p', coast_version) as cache:
+        try:
+            mapsvertices = cache.load()
+            mapsindices = cache.load()
+        except (pickle.PickleError, cachefile.CacheError) as e:
+            print(e.args[0])
+            mapsvertices, mapsindices = load_mapsline_txt()
+            cache.dump(mapsvertices)
+            cache.dump(mapsindices)
+
+    return mapsvertices, mapsindices

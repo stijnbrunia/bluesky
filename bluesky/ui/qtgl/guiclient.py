@@ -202,6 +202,7 @@ class nodeData:
         self.ssd_conflicts = False
         self.ssd_ownship   = set()
         self.atcmode       = settings.atc_mode
+        self.show_map252   = False
         # Display flags based on ATC mode
         self.set_atcmode(settings.atc_mode.upper())
 
@@ -415,6 +416,9 @@ class nodeData:
             palette.init()
             # Display flags
             self.set_atcmode(args)
+
+        elif flag == 'MAP252':
+            self.show_map252 = not self.show_map252
 
     def echo(self, text='', flags=0):
         if text:

@@ -80,6 +80,31 @@ def load_coastline_txt():
     return coastvertices, coastindices
 
 
+def load_mapsline_txt():
+    # -------------------------COASTLINE DATA----------------------------------
+    # Init geo (coastline)  data and convert pen up/pen down format of
+    # coastlines to numpy arrays with lat/lon
+    maps = []
+    with open(os.path.join(settings.navdata_path, 'map252.dat'), 'r') as f:
+        print("Reading map252.dat")
+        for line in f:
+            line = line.strip()
+            if not (line == "" or line[0] == '#'):
+                arg = line.split()
+                if len(arg) == 5:
+                    maps.append([float(arg[0]), float(arg[1]), float(arg[2]), float(arg[3])])
+    # Sort the line segments by longitude of the first vertex
+    mapsvertices = np.array(
+        sorted(maps, key=lambda a_entry: a_entry[1]), dtype=np.float32)
+    mapsindices = np.zeros(361)
+    mapslon = mapsvertices[:, 1]
+    for i in range(0, 360):
+        mapsindices[i] = np.searchsorted(mapslon, i - 180) * 2
+    mapsvertices.resize((int(mapsvertices.size / 2), 2))
+    del maps
+    return mapsvertices, mapsindices
+
+
 # Only try this if BlueSky is started in qtgl gui mode
 if bs.gui_type == 'qtgl':
     from PyQt5.QtCore import Qt
