@@ -316,9 +316,9 @@ def initbasecmds():
             bs.traf.mnual,
             "Manuel Switch per aircraft (using ADSB data)",
         ],
-        "MAPTEST": [
-            "MAPTEST MAPNUMBER",
-            "txt",
+        "MAPTOGGLE": [
+            "MAPTOGGLE MAP [NUMBER]",
+            "txt, [float]",
             bs.scr.feature,
             "Switch on/off elements and background of map/radar view",
         ],
@@ -428,7 +428,7 @@ def initbasecmds():
             "Show state-space diagram (=conflict prevention display/predictive ASAS)",
         ],
         "SWRAD": [
-            "SWRAD GEO/GRID/APT/APTDETAILS/VOR/WPT/LABEL/ADSBCOVERAGE/TRAIL/POLY/HISTORY [dt]/[value]",
+            "SWRAD GEO/MAPALL/GRID/APT/APTDETAILS/VOR/WPT/LABEL/ADSBCOVERAGE/TRAIL/POLY/HISTORY [dt]/[value]",
             "txt,[float]",
             bs.scr.feature,
             "Switch on/off elements and background of map/radar view",

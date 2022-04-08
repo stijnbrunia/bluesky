@@ -80,29 +80,49 @@ def load_coastline_txt():
     return coastvertices, coastindices
 
 
-def load_mapsline_txt():
-    # -------------------------COASTLINE DATA----------------------------------
-    # Init geo (coastline)  data and convert pen up/pen down format of
-    # coastlines to numpy arrays with lat/lon
-    maps = []
-    with open(os.path.join(settings.navdata_path, 'map252.dat'), 'r') as f:
-        print("Reading map252.dat")
+def load_mapsline_txt(args):
+    """
+    Function: Loads init map lines/points data and convert format to arrays with name, shape, coordinates and color
+
+    Args: name of the map file
+    Returns: name, shape, coordinates, color
+
+    Created by: Mitchell de Keijzer
+    Date: 01-04-2022
+
+    """
+    names = []
+    shapes = []
+    coords = []
+    colors = []
+    # Load scenario map file
+    with open(os.path.join('scenario/LVNL/Maps/mapid', '' + str(int(args)) + '.scn'), 'r') as f:
         for line in f:
+            # Edit scenario file to simple strings
+            line = line.replace('>', ' ')
+            line = line.replace(',', ' ')
             line = line.strip()
-            if not (line == "" or line[0] == '#'):
-                arg = line.split()
-                if len(arg) == 5:
-                    maps.append([float(arg[0]), float(arg[1]), float(arg[2]), float(arg[3])])
-    # Sort the line segments by longitude of the first vertex
-    mapsvertices = np.array(
-        sorted(maps, key=lambda a_entry: a_entry[1]), dtype=np.float32)
-    mapsindices = np.zeros(361)
-    mapslon = mapsvertices[:, 1]
-    for i in range(0, 360):
-        mapsindices[i] = np.searchsorted(mapslon, i - 180) * 2
-    mapsvertices.resize((int(mapsvertices.size / 2), 2))
-    del maps
-    return mapsvertices, mapsindices
+            arg = line.split()
+            del arg[0]  # delete command time stamp
+            if not (line == "" or line[0] == '#' or arg[0] == 'COLOR'):
+                names.append(arg[1])
+                shapes.append(arg[0])
+                if arg[0] == 'POINT':
+                    coords.append([float(arg[2]), float(arg[3])])
+                else:
+                    coords.append([float(arg[2]), float(arg[3]), float(arg[4]), float(arg[5])])
+                colors.append(None)
+            # If a specific color is given, replace None with the correct color code
+            if arg[0] == 'COLOR':
+                index = names.index(arg[1])
+                colors[index] = (int(arg[2]), int(arg[3]), int(arg[4]))
+
+    name = names
+    shape = shapes
+    coordinates = coords
+    color = colors
+    del names, shapes, coords, colors
+    return name, shape, coordinates, color
 
 
 # Only try this if BlueSky is started in qtgl gui mode

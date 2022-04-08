@@ -2,6 +2,7 @@
 from PyQt5.QtCore import QTimer
 import numpy as np
 
+from bluesky.ui.loadvisuals import load_maplines
 from bluesky import settings
 from bluesky.ui import palette
 from bluesky.ui.polytools import PolygonSet
@@ -16,7 +17,7 @@ settings.set_variable_defaults(atc_mode='BLUESKY')
 # Globals
 UPDATE_ALL = ['SHAPE', 'TRAILS', 'CUSTWPT', 'PANZOOM', 'ECHOTEXT']
 ACTNODE_TOPICS = [b'ACDATA', b'PLOT*', b'ROUTEDATA*']
-
+loaded_maps = []
 
 class GuiClient(Client):
     def __init__(self):
@@ -94,6 +95,19 @@ class GuiClient(Client):
             sender_data.setflag(**data)
             if data['flag'] == 'ATCMODE':
                 data_changed.append('ATCMODE')
+            if data['flag'] == 'MAP':
+                data_changed.append('MAP')
+                if data['args'] in loaded_maps:
+                    loaded_maps.remove(data['args'])
+                    name, shape, coordinate, color = load_maplines(data['args'])
+                    for d in range(len(name)):
+                        sender_data.update_map_data(name[d], shape[d], None, None)
+                else:
+                    loaded_maps.append(data['args'])
+                    if sender_data.show_maplines:
+                        name, shape, coordinate, color = load_maplines(data['args'])
+                        for i in range(len(name)):
+                            sender_data.update_map_data(name[i], shape[i], coordinate[i], color[i])
         elif name == b'ECHO':
             data_changed.append('ECHOTEXT')
         elif name == b'PANZOOM':
@@ -179,6 +193,11 @@ class nodeData:
         self.custwplat = np.array([], dtype=np.float32)
         self.custwplon = np.array([], dtype=np.float32)
 
+        self.linemap = dict()
+        self.dashmap = dict()
+        self.dotmap = dict()
+        self.pointmap = dict()
+
         # Filteralt settings
         self.filteralt = False
 
@@ -202,7 +221,7 @@ class nodeData:
         self.ssd_conflicts = False
         self.ssd_ownship   = set()
         self.atcmode       = settings.atc_mode
-        self.show_map252   = False
+        self.show_maplines   = True
         # Display flags based on ATC mode
         self.set_atcmode(settings.atc_mode.upper())
 
@@ -342,6 +361,79 @@ class nodeData:
             else:
                 self.polys[name] = (contourbuf, fillbuf, colorbuf)
 
+    def update_map_data(self, name, shape, coordinate, color):
+        """
+        Function: Update the data for map lines/points
+        Args:
+            name        :   name of the line [str]
+            shape       :   shape of the line (normal/dotted/dashed/point) [str]
+            coordinate  :   lat/lon coordinates [list]
+            color       :   color code [tuple]
+        Returns: -
+
+        Created by: Mitchell de Keijzer
+        Date: 7-4-2022
+        """
+        if coordinate is not None:
+            self.linemap.pop(name, None)
+            self.dotmap.pop(name, None)
+            self.dashmap.pop(name, None)
+            self.pointmap.pop(name, None)
+            if shape == 'LINE':
+                # Input data is list or array: [lat0,lon0,lat1,lon1,lat2,lon2,lat3,lon3,..]
+                newdata = np.array(coordinate, dtype=np.float32)
+
+            elif shape == 'DOTTEDLINE' or shape == 'DASHEDLINE':
+                newdata = np.array(coordinate, dtype=np.float32)
+
+            elif shape == 'POINT':
+                newdata = np.array(coordinate, dtype=np.float32)  # [lat, lon]
+
+            # Create polygon contour buffer
+            # Distinguish between an open and a closed contour.
+            # If this is a closed contour, add the first vertex again at the end
+            # and add a fill shape
+            if shape == 'DOTTEDLINE' or shape == 'DASHEDLINE':
+                contourbuf = np.array(newdata, dtype=np.float32)
+                fillbuf = np.array([], dtype=np.float32)
+
+            elif shape == 'LINE':
+                contourbuf = np.empty(2 * len(newdata) - 4, dtype=np.float32)
+                contourbuf[0::4]   = newdata[0:-2:2]  # lat
+                contourbuf[1::4]   = newdata[1:-2:2]  # lon
+                contourbuf[2::4] = newdata[2::2]  # lat
+                contourbuf[3::4] = newdata[3::2]  # lon
+                fillbuf = np.array([], dtype=np.float32)
+
+            elif shape == 'POINT':
+                contourbuf = np.array(newdata, dtype=np.float32)
+                fillbuf = np.array([], dtype=np.float32)
+
+            # Define color buffer for outline
+            defclr = tuple(color or palette.polys) + (255,)
+            colorbuf = np.array(len(contourbuf) // 2 * defclr, dtype=np.uint8)
+
+            # Store new or updated polygon by name, and concatenated with the
+            # other polys
+            if shape == 'POINT':
+                self.pointmap[name] = (contourbuf, fillbuf, colorbuf)
+            elif shape == 'DOTTEDLINE':
+                self.dotmap[name] = (contourbuf, fillbuf, colorbuf)
+            elif shape == 'DASHEDLINE':
+                self.dashmap[name] = (contourbuf, fillbuf, colorbuf)
+            else:
+                self.linemap[name] = (contourbuf, fillbuf, colorbuf)
+
+        else:
+            if shape == 'POINT':
+                del self.pointmap[name]
+            elif shape == 'DOTTEDLINE':
+                del self.dotmap[name]
+            elif shape == 'DASHEDLINE':
+                del self.dashmap[name]
+            else:
+                del self.linemap[name]
+
     def defwpt(self, name, lat, lon):
         self.custwplbl += name[:10].ljust(10)
         self.custwplat = np.append(self.custwplat, np.float32(lat))
@@ -417,8 +509,8 @@ class nodeData:
             # Display flags
             self.set_atcmode(args)
 
-        elif flag == 'MAP252':
-            self.show_map252 = not self.show_map252
+        elif flag == 'MAPALL':
+            self.show_maplines = not self.show_maplines
 
     def echo(self, text='', flags=0):
         if text:
