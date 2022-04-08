@@ -33,7 +33,7 @@ appmaps = [['a1',    'ALS\n10NM',     ['lambda: appmaps.close()',
            ['d2',    'TWEC\nTOC',     ['lambda: appmaps.close()',
                                        'lambda: show_basetid("twectoc", "twectoc")']],
            ['d3',    'OCA',           'lambda: None'],
-           ['d4',    'CTR\nKD',       'lambda: console.Console._instance.stack("map 205")'],
+           ['d4',    'CTR\nKD',       'lambda: console.Console._instance.stack("MAPTOGGLE MAP 205")'],
 
            ['e1',    'VNR\nMAPS',     'lambda: None'],
            ['e2',    'POINTS\nFINAL', 'lambda: None'],
@@ -383,7 +383,7 @@ favareas = [['a1',    'FAVA\n18R',     'lambda: console.Console._instance.stack(
 tbar = [['a1',    'NIRSI',         'lambda: console.Console._instance.stack("MAPTOGGLE MAP NIRSI")'],
         ['a2',    'SOKS2',         'lambda: console.Console._instance.stack("MAPTOGGLE MAP SOKS2")'],
         ['a3',    'GALIS',         'lambda: console.Console._instance.stack("MAPTOGGLE MAP GALIS")'],
-        ['a4',    'BAR',           'lambda: console.Console._instance.stack("MAPTOGGLE MAP RANGEBAR")'],
+        ['a4',    'BAR',           'lambda: console.Console._instance.stack("MAPTOGGLE MAP RANGEBAR; RANGEBAR")'],
 
         ['b1',    '',              None],
         ['b2',    '',              None],

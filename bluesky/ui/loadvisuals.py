@@ -72,7 +72,7 @@ def load_maplines(args):
 
     """
 
-    with cachefile.openfile('mapslines_'+ str(int(args)) +'.p', maps_version) as cache:
+    with cachefile.openfile('mapslines_'+ args +'.p', maps_version) as cache:
         try:
             name = cache.load()
             shape = cache.load()

@@ -8,9 +8,9 @@ from bluesky import settings
 
 REARTH_INV = 1.56961231e-7
 
+
 # used for calculating the vertices of the runways as well as the threshold boxes
 def dlatlon(lat0, lon0, lat1, lon1, width):
-
     # calculate distance between ends of runways / threshold boxes
     flat_earth = np.cos(0.5 * np.radians(lat0 + lat1))
     lx = lat1 - lat0
@@ -31,6 +31,7 @@ def dlatlon(lat0, lon0, lat1, lon1, width):
 
     return vertices
 
+
 def threshold_vertices(lat, lon, bearing):
     ''' Generate threshold vectices for given runway threshold data. '''
     d_box = 20.0 * REARTH_INV  # m
@@ -46,7 +47,7 @@ def threshold_vertices(lat, lon, bearing):
 
     # calculate vertices of threshold box
     vertices = dlatlon(np.degrees(latbox0), np.degrees(lonbox0), np.degrees(latbox1),
-                        np.degrees(lonbox1), width_box)
+                       np.degrees(lonbox1), width_box)
 
     return vertices
 
@@ -95,8 +96,13 @@ def load_mapsline_txt(args):
     shapes = []
     coords = []
     colors = []
+    tbar_maps = ['NIRSI', 'GALIS', 'RANGEBAR', 'SOKS2']
+    if args in tbar_maps:
+        path = 'T-bar'
+    else:
+        path = 'mapid'
     # Load scenario map file
-    with open(os.path.join('scenario/LVNL/Maps/mapid', '' + str(int(args)) + '.scn'), 'r') as f:
+    with open(os.path.join('scenario/LVNL/Maps', '' + path + '', '' + args + '.scn'), 'r') as f:
         for line in f:
             # Edit scenario file to simple strings
             line = line.replace('>', ' ')
@@ -116,7 +122,6 @@ def load_mapsline_txt(args):
             if arg[0] == 'COLOR':
                 index = names.index(arg[1])
                 colors[index] = (int(arg[2]), int(arg[3]), int(arg[4]))
-
     name = names
     shape = shapes
     coordinates = coords
@@ -156,9 +161,11 @@ if bs.gui_type == 'qtgl':
 
     """ Load static data for GUI from files such as airport, shapes, etc."""
 
+
     def load_aptsurface_txt():
         """ Read airport data from navigation database files"""
-        pb = ProgressBar('Binary buffer file not found, or file out of date: Constructing vertex buffers from geo data.')
+        pb = ProgressBar(
+            'Binary buffer file not found, or file out of date: Constructing vertex buffers from geo data.')
 
         runways = []
         rwythr = []
@@ -187,7 +194,7 @@ if bs.gui_type == 'qtgl':
                     continue
 
                 # 1: AIRPORT
-                if elems[0] in ['1', '16', '17']: # 1=airport, 16=seaplane base, 17=heliport
+                if elems[0] in ['1', '16', '17']:  # 1=airport, 16=seaplane base, 17=heliport
                     cur_poly.end()
                     # Store the starting vertices for this apt, [0, 0] if this is the first apt
                     if apt_indices:
@@ -197,12 +204,12 @@ if bs.gui_type == 'qtgl':
                         start_indices = [0, 0]
 
                     if asphalt.bufsize() // 2 > start_indices[0] or concrete.bufsize() // 2 > start_indices[1]:
-                        apt_indices.append( [
-                                                start_indices[0],
-                                                asphalt.bufsize() // 2 - start_indices[0],
-                                                start_indices[1],
-                                                concrete.bufsize() // 2 - start_indices[1]
-                                            ])
+                        apt_indices.append([
+                            start_indices[0],
+                            asphalt.bufsize() // 2 - start_indices[0],
+                            start_indices[1],
+                            concrete.bufsize() // 2 - start_indices[1]
+                        ])
 
                         center = apt_bb.center()
                         apt_ctr_lat.append(center[0])
@@ -300,12 +307,12 @@ if bs.gui_type == 'qtgl':
                          apt_indices[-1][2] + apt_indices[-1][3]]
 
         if asphalt.bufsize() > start_indices[0] or concrete.bufsize() > start_indices[1]:
-            apt_indices.append( [
-                                    start_indices[0],
-                                    int(asphalt.bufsize() / 2) - start_indices[0],
-                                    start_indices[1],
-                                    int(concrete.bufsize() / 2) - start_indices[1]
-                                ])
+            apt_indices.append([
+                start_indices[0],
+                int(asphalt.bufsize() / 2) - start_indices[0],
+                start_indices[1],
+                int(concrete.bufsize() / 2) - start_indices[1]
+            ])
 
             center = apt_bb.center()
             apt_ctr_lat.append(center[0])

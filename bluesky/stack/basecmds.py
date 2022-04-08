@@ -318,7 +318,7 @@ def initbasecmds():
         ],
         "MAPTOGGLE": [
             "MAPTOGGLE MAP [NUMBER]",
-            "txt, [float]",
+            "txt, [txt]",
             bs.scr.feature,
             "Switch on/off elements and background of map/radar view",
         ],
