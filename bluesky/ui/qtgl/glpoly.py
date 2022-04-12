@@ -53,14 +53,14 @@ class Poly(glh.RenderObject, layer=-20):
         self.pointslat = glh.GLBuffer()
         self.pointslon = glh.GLBuffer()
 
-        # Fixed Map Lines
-        self.maplines = glh.VertexArrayObject(glh.gl.GL_LINES)
-        self.dottedlines = glh.VertexArrayObject(glh.gl.GL_LINES)
-        self.dashedlines = glh.VertexArrayObject(glh.gl.GL_LINES)
-        # Fixed Map Points
-        self.mappoints = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
-        self.mappointslat = glh.GLBuffer()
-        self.mappointslon = glh.GLBuffer()
+        # # Fixed Map Lines
+        # self.maplines = glh.VertexArrayObject(glh.gl.GL_LINES)
+        # self.dottedlines = glh.VertexArrayObject(glh.gl.GL_LINES)
+        # self.dashedlines = glh.VertexArrayObject(glh.gl.GL_LINES)
+        # # Fixed Map Points
+        # self.mappoints = glh.VertexArrayObject(glh.gl.GL_TRIANGLE_FAN)
+        # self.mappointslat = glh.GLBuffer()
+        # self.mappointslon = glh.GLBuffer()
 
         self.prevmousepos = (0, 0)
 
@@ -76,15 +76,15 @@ class Poly(glh.RenderObject, layer=-20):
 
         # --------------- Polys ---------------
         self.allpolys.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
-        self.maplines.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
+        # self.maplines.create(vertex=POLY_SIZE * 16, color=POLY_SIZE * 8)
 
         # --------------- Dotted lines ---------------
         self.alldotted.create(vertex=POLY_SIZE * 16, color=palette.polys)
-        self.dottedlines.create(vertex=POLY_SIZE * 16, color=palette.polys)
+        # self.dottedlines.create(vertex=POLY_SIZE * 16, color=palette.polys)
 
         # --------------- Dashed lines ---------------
         self.alldashed.create(vertex=POLY_SIZE * 16, color=palette.polys)
-        self.dashedlines.create(vertex=POLY_SIZE * 16, color=palette.polys)
+        # self.dashedlines.create(vertex=POLY_SIZE * 16, color=palette.polys)
 
         # --------------- Fills ---------------
         self.allpfill.create(vertex=POLY_SIZE * 24,
@@ -94,8 +94,8 @@ class Poly(glh.RenderObject, layer=-20):
         # OpenGL Buffers
         self.pointslat.create(POLY_SIZE * 16)
         self.pointslon.create(POLY_SIZE * 16)
-        self.mappointslat.create(POLY_SIZE * 16)
-        self.mappointslon.create(POLY_SIZE * 16)
+        # self.mappointslat.create(POLY_SIZE * 16)
+        # self.mappointslon.create(POLY_SIZE * 16)
 
         # Define vertices
         point_size = settings.point_size
@@ -111,9 +111,9 @@ class Poly(glh.RenderObject, layer=-20):
         self.allpoints.create(vertex=point_vert)
         self.allpoints.set_attribs(lat=self.pointslat, lon=self.pointslon, color=POLY_SIZE * 8,
                                    instance_divisor=1)
-        self.mappoints.create(vertex=point_vert)
-        self.mappoints.set_attribs(lat=self.mappointslat, lon=self.mappointslon, color=POLY_SIZE * 8,
-                                   instance_divisor=1)
+        # self.mappoints.create(vertex=point_vert)
+        # self.mappoints.set_attribs(lat=self.mappointslat, lon=self.mappointslon, color=POLY_SIZE * 8,
+        #                            instance_divisor=1)
 
     def draw(self):
         actdata = bs.net.get_nodedata()
@@ -128,7 +128,7 @@ class Poly(glh.RenderObject, layer=-20):
         self.polyprev.draw()
 
         # --- DRAW CUSTOM SHAPES (WHEN AVAILABLE) -----------------------------
-        if actdata.show_poly > 0:
+        if actdata.show_poly > 0 and actdata.show_maplines:
             # Polys
             self.allpolys.draw()
             self.alldotted.draw()
@@ -137,24 +137,24 @@ class Poly(glh.RenderObject, layer=-20):
             # Points (set vertex is screen size)
             self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_SCREEN)
             self.allpoints.draw(n_instances=len(actdata.points))
-            self.mappoints.draw(n_instances=len(actdata.pointmap))
+            # self.mappoints.draw(n_instances=len(actdata.pointmap))
 
             # Draw fills
             if actdata.show_poly > 1:
                 self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_LATLON)
                 self.allpfill.draw()
 
-        if actdata.show_maplines:
-            self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_LATLON)
-            self.maplines.draw()
-            self.dashedlines.draw()
-            self.dottedlines.draw()
+        # if actdata.show_maplines:
+        #     self.shaderset.set_vertex_scale_type(self.shaderset.VERTEX_IS_LATLON)
+        #     self.maplines.draw()
+        #     self.dashedlines.draw()
+        #     self.dottedlines.draw()
 
     def actdata_changed(self, nodeid, nodedata, changed_elems):
         ''' Update buffers when a different node is selected, or when
             the data of the current node is updated. '''
         # Shape data change
-        if 'SHAPE' in changed_elems:
+        if 'SHAPE' in changed_elems or 'MAP' in changed_elems:
             # Make Current
             if nodedata.polys or nodedata.points or nodedata.dotted or nodedata.dashed:
                 self.glsurface.makeCurrent()
@@ -211,55 +211,55 @@ class Poly(glh.RenderObject, layer=-20):
             self.allpfill.set_attribs(color=np.append(palette.polys, 50))
             self.polyprev.set_attribs(color=palette.previewpoly)
 
-        if 'MAP' in changed_elems and nodedata.show_maplines:
-            if nodedata.linemap or nodedata.dotmap or nodedata.dashmap:
-                self.glsurface.makeCurrent()
-
-            # Lines
-            if nodedata.linemap:
-                contours, fills, colors = zip(*nodedata.linemap.values())
-                # Create contour buffer with color
-                self.maplines.update(vertex=np.concatenate(contours),
-                                     color=np.concatenate(colors))
-                # Create fill buffer
-                self.allpfill.update(vertex=np.concatenate(fills))
-            else:
-                self.maplines.set_vertex_count(0)
-                self.allpfill.set_vertex_count(0)
-
-            # Points
-            if nodedata.pointmap:
-                # Retrieve data
-                contours, fills, colors = zip(*nodedata.pointmap.values())
-                contours = np.concatenate(contours)
-                # Update buffers
-                self.mappointslat.update(np.array(contours[::2], dtype=np.float32))
-                self.mappointslon.update(np.array(contours[1::2], dtype=np.float32))
-                self.mappoints.update(color=np.concatenate(colors))
-
-            # Dotted lines
-            if nodedata.dotmap:
-                # Retrieve data
-                contours, fills, colors = zip(*nodedata.dotmap.values())
-                contours = np.concatenate(contours)
-                # Divide into segments
-                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dotted)
-                # Update buffer
-                self.dottedlines.update(vertex=np.array(contours, dtype=np.float32))
-            else:
-                self.dottedlines.set_vertex_count(0)
-
-            # Dashed lines
-            if nodedata.dashmap:
-                # Retrieve data
-                contours, fills, colors = zip(*nodedata.dashmap.values())
-                contours = np.concatenate(contours)
-                # Divide into segments
-                contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dashed)
-                # Update buffer
-                self.dashedlines.update(vertex=np.array(contours, dtype=np.float32))
-            else:
-                self.dashedlines.set_vertex_count(0)
+        # if 'MAP' in changed_elems and nodedata.show_maplines:
+        #     if nodedata.linemap or nodedata.dotmap or nodedata.dashmap:
+        #         self.glsurface.makeCurrent()
+        #
+        #     # Lines
+        #     if nodedata.linemap:
+        #         contours, fills, colors = zip(*nodedata.linemap.values())
+        #         # Create contour buffer with color
+        #         self.maplines.update(vertex=np.concatenate(contours),
+        #                              color=np.concatenate(colors))
+        #         # Create fill buffer
+        #         self.allpfill.update(vertex=np.concatenate(fills))
+        #     else:
+        #         self.maplines.set_vertex_count(0)
+        #         self.allpfill.set_vertex_count(0)
+        #
+        #     # Points
+        #     if nodedata.pointmap:
+        #         # Retrieve data
+        #         contours, fills, colors = zip(*nodedata.pointmap.values())
+        #         contours = np.concatenate(contours)
+        #         # Update buffers
+        #         self.mappointslat.update(np.array(contours[::2], dtype=np.float32))
+        #         self.mappointslon.update(np.array(contours[1::2], dtype=np.float32))
+        #         self.mappoints.update(color=np.concatenate(colors))
+        #
+        #     # Dotted lines
+        #     if nodedata.dotmap:
+        #         # Retrieve data
+        #         contours, fills, colors = zip(*nodedata.dotmap.values())
+        #         contours = np.concatenate(contours)
+        #         # Divide into segments
+        #         contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dotted)
+        #         # Update buffer
+        #         self.dottedlines.update(vertex=np.array(contours, dtype=np.float32))
+        #     else:
+        #         self.dottedlines.set_vertex_count(0)
+        #
+        #     # Dashed lines
+        #     if nodedata.dashmap:
+        #         # Retrieve data
+        #         contours, fills, colors = zip(*nodedata.dashmap.values())
+        #         contours = np.concatenate(contours)
+        #         # Divide into segments
+        #         contours = self.line_interval(contours[::2], contours[1::2], settings.interval_dashed)
+        #         # Update buffer
+        #         self.dashedlines.update(vertex=np.array(contours, dtype=np.float32))
+        #     else:
+        #         self.dashedlines.set_vertex_count(0)
 
 
     def cmdline_stacked(self, cmd, args):
@@ -354,32 +354,32 @@ class Poly(glh.RenderObject, layer=-20):
         else:
             self.alldashed.set_vertex_count(0)
 
-        # Update dotted lines
-        if actdata.dotmap:
-            # Get coordinates of dotted/dashed line segments
-            contours, fills, colors = zip(*actdata.dotmap.values())
-            dotted_coords = np.concatenate(contours)
-
-            # Compute line segments contours
-            contours_dotted = self.line_interval(dotted_coords[::2], dotted_coords[1::2], settings.interval_dotted)
-            # Update buffer
-            self.dottedlines.update(vertex=np.array(contours_dotted, dtype=np.float32))
-        else:
-            self.dottedlines.set_vertex_count(0)
-
-        # Update dashed lines
-        if actdata.dashmap:
-            # Get coordinates of dotted/dashed line segments
-            contours, fills, colors = zip(*actdata.dashmap.values())
-            dashed_coords = np.concatenate(contours)
-
-            # Compute line segments contours
-            contours_dashed = self.line_interval(dashed_coords[::2], dashed_coords[1::2], settings.interval_dashed)
-
-            # Update buffer
-            self.dashedlines.update(vertex=np.array(contours_dashed, dtype=np.float32))
-        else:
-            self.dashedlines.set_vertex_count(0)
+        # # Update dotted lines
+        # if actdata.dotmap:
+        #     # Get coordinates of dotted/dashed line segments
+        #     contours, fills, colors = zip(*actdata.dotmap.values())
+        #     dotted_coords = np.concatenate(contours)
+        #
+        #     # Compute line segments contours
+        #     contours_dotted = self.line_interval(dotted_coords[::2], dotted_coords[1::2], settings.interval_dotted)
+        #     # Update buffer
+        #     self.dottedlines.update(vertex=np.array(contours_dotted, dtype=np.float32))
+        # else:
+        #     self.dottedlines.set_vertex_count(0)
+        #
+        # # Update dashed lines
+        # if actdata.dashmap:
+        #     # Get coordinates of dotted/dashed line segments
+        #     contours, fills, colors = zip(*actdata.dashmap.values())
+        #     dashed_coords = np.concatenate(contours)
+        #
+        #     # Compute line segments contours
+        #     contours_dashed = self.line_interval(dashed_coords[::2], dashed_coords[1::2], settings.interval_dashed)
+        #
+        #     # Update buffer
+        #     self.dashedlines.update(vertex=np.array(contours_dashed, dtype=np.float32))
+        # else:
+        #     self.dashedlines.set_vertex_count(0)
 
     def line_interval(self, lat, lon, interval):
         """
