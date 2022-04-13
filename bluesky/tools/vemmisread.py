@@ -734,8 +734,8 @@ class VEMMISSource:
         bs.scr.echo('Loading flight data ...')
 
         # initialize t-bar by uncommenting the second line below
-        # commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
-        commands, commandstime = vemmisdata.get_initial_tbar()
+        commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
+        # commands, commandstime = vemmisdata.get_initial_tbar()
 
         # Load track data
         bs.scr.echo('Loading track data ...')
