@@ -3,7 +3,7 @@ import pickle
 
 from bluesky import settings
 from bluesky.tools import cachefile
-from bluesky.ui.loadvisuals_txt import load_coastline_txt, load_aptsurface_txt
+from bluesky.ui.loadvisuals_txt import load_coastline_txt, load_aptsurface_txt, load_mapsline_txt
 
 
 # Cache versions: increment these to the current date if the source data is updated
@@ -11,6 +11,7 @@ from bluesky.ui.loadvisuals_txt import load_coastline_txt, load_aptsurface_txt
 coast_version = 'v20170101'
 navdb_version = 'v20170101'
 aptsurf_version = 'v20171116'
+maps_version = 'v20220804'
 
 ## Default settings
 settings.set_variable_defaults(navdata_path='data/navdata')
@@ -59,3 +60,30 @@ def load_aptsurface():
     return vbuf_asphalt, vbuf_concrete, vbuf_runways, vbuf_rwythr, \
         apt_ctr_lat, apt_ctr_lon, apt_indices
 
+def load_maplines(args):
+    """
+    Function: Load map lines data for gui
+
+    Args: name of the map file
+    Returns: name, shape, coordinates, color
+
+    Created by: Mitchell de Keijzer
+    Date: 01-04-2022
+
+    """
+
+    with cachefile.openfile('mapslines_'+ args +'.p', maps_version) as cache:
+        try:
+            name = cache.load()
+            shape = cache.load()
+            coordinates = cache.load()
+            color = cache.load()
+        except (pickle.PickleError, cachefile.CacheError) as e:
+            print(e.args[0])
+            name, shape, coordinates, color = load_mapsline_txt(args)
+            cache.dump(name)
+            cache.dump(shape)
+            cache.dump(coordinates)
+            cache.dump(color)
+
+    return name, shape, coordinates, color

@@ -145,10 +145,10 @@ class VEMMISRead:
 
         # Track data
         self.tracks['TIME'] = pd.to_timedelta(self.tracks['TIME']/100, unit='seconds')
-        self.tracks['X'] = self.tracks['X'].str.replace(',', '.').astype('float')
-        self.tracks['Y'] = self.tracks['Y'].str.replace(',', '.').astype('float')
-        self.tracks['MODE_C'] = self.tracks['MODE_C'].str.replace(',', '.').astype('float')
-        self.tracks['TRK_ROCD'] = self.tracks['TRK_ROCD'].str.replace(',', '.').astype('float')
+        self.tracks['X'] = self.tracks['X'].astype('str').str.replace(',', '.').astype('float')
+        self.tracks['Y'] = self.tracks['Y'].astype('str').str.replace(',', '.').astype('float')
+        self.tracks['MODE_C'] = self.tracks['MODE_C'].astype('str').str.replace(',', '.').astype('float')
+        self.tracks['TRK_ROCD'] = self.tracks['TRK_ROCD'].astype('str').str.replace(',', '.').astype('float')
         self.tracks['T_UPDATE'] = pd.to_datetime(self.tracks['T_UPDATE'], format="%d-%m-%Y %H:%M:%S")
         self.tracks['T_START'] = pd.to_datetime(self.tracks['T_START'], format="%d-%m-%Y %H:%M:%S")
         self.tracks['T_END'] = pd.to_datetime(self.tracks['T_END'], format="%d-%m-%Y %H:%M:%S")
@@ -734,8 +734,8 @@ class VEMMISSource:
         bs.scr.echo('Loading flight data ...')
 
         # initialize t-bar by uncommenting the second line below
-        # commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
-        commands, commandstime = vemmisdata.get_initial_tbar()
+        commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
+        # commands, commandstime = vemmisdata.get_initial_tbar()
 
         # Load track data
         bs.scr.echo('Loading track data ...')
