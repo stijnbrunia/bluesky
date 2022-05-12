@@ -125,7 +125,7 @@ class Server(Thread):
                 # Receive the message
                 msg = sock.recv_multipart()
                 if not msg:
-                    # In the rare case that a message is empty, skip remaning processing
+                    # In the rare case that a message is empty, skip remaining processing
                     continue
 
                 # Check if this is a stream message: these should be forwarded unprocessed.

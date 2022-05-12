@@ -4,6 +4,7 @@ import copy
 import numpy as np
 
 # Local imports
+import socket
 import bluesky as bs
 from bluesky import stack
 from bluesky.tools import areafilter, geo, misc
@@ -210,6 +211,12 @@ class ScreenIO:
 
     def feature(self, switch, argument=None):
         bs.net.send_event(b'DISPLAYFLAG', dict(flag=switch, args=argument))
+
+    # def execute(self, switch, argument=None):
+    #     bs.net.send_event(b'DISPLAYFLAG', dict(flag=switch, args=argument))
+
+    def execute(self, switch, argument=None):
+        bs.net.send_event(b'TIDCOMMANDS', dict(flag=switch, args=argument))
 
     def trails(self,sw):
         bs.net.send_event(b'DISPLAYFLAG', dict(flag='TRAIL', args=sw))

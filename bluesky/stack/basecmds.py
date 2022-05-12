@@ -227,6 +227,12 @@ def initbasecmds():
             bs.scr.echo,
             "Show a text in command window for user to read",
         ],
+        "EXQ": [
+            "EXQ COMMAND, [arg]",
+            "txt, [txt]",
+            bs.scr.execute,
+            "Get sender_id",
+        ],
         "FF": [
             "FF [timeinsec]",
             "[time]",

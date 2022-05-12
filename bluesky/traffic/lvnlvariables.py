@@ -59,7 +59,7 @@ class LVNLVariables(Entity):
             self.ssr        = np.array([], dtype=np.int)   # SSR code
             self.ssrlbl     = []                           # Show SSR label
             self.tracklbl   = np.array([], dtype=np.bool)  # Show track label
-            self.uco        = np.array([], dtype=np.bool)  # Under Control
+            self.uco        = np.array([], dtype=np.str)   # Under Control
             self.wtc        = []                           # Wake Turbulence Category
 
     def create(self, n=1):
@@ -147,7 +147,7 @@ class LVNLVariables(Entity):
         return
 
     @stack.command(name='UCO')
-    def selucocmd(self, idx: 'acid'):
+    def selucocmd(self, idx: 'acid', IP):
         """
         Function: Set UCO for aircraft
         Args:
@@ -177,11 +177,13 @@ class LVNLVariables(Entity):
 
         # Set UCO/REL
         bs.traf.trafdatafeed.uco(idx)
-        self.uco[idx] = True
+        self.uco[idx] = IP
         self.rel[idx] = False
+        print('UCO list', self.uco)
+        print('')
 
     @stack.command(name='REL',)
-    def setrelcmd(self, idx: 'acid'):
+    def setrelcmd(self, idx: 'acid'): #, IP):
         """
         Function: Set REL for aircraft
         Args:
@@ -203,6 +205,7 @@ class LVNLVariables(Entity):
         # Set UCO/REL
         self.uco[idx] = False
         self.rel[idx] = True
+        print('REL list', self.rel)
 
     @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
     def setarr(self, idx: 'acid', arr: str = '', addwpts: 'onoff' = True):
@@ -473,3 +476,10 @@ class LVNLVariables(Entity):
 
         if isinstance(wtc, str):
             self.wtc[idx] = wtc.upper()
+
+    # @stack.command(name='EXQ')
+    # def exq(self, idx: 'acid'):
+    #     sender = stack.sender()
+    #     print('in command', sender)
+    #     # self.exq[idx] = sender
+    #     return sender

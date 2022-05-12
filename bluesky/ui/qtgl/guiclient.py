@@ -1,4 +1,6 @@
 ''' I/O Client implementation for the QtGL gui. '''
+import socket
+
 from PyQt5.QtCore import QTimer
 import numpy as np
 
@@ -11,6 +13,14 @@ from bluesky.network.client import Client
 from bluesky.core import Signal
 from bluesky.tools.aero import ft
 from bluesky.tools import geo
+from bluesky import stack
+from bluesky.ui.qtgl.TIDS.base_tid import *
+
+
+# TID test
+import bluesky as bs
+from bluesky.ui.qtgl import console
+from bluesky.tools import misc
 
 settings.set_variable_defaults(atc_mode='BLUESKY')
 
@@ -35,6 +45,312 @@ class GuiClient(Client):
 
         # Signals
         self.actnodedata_changed = Signal('actnodedata_changed')
+
+
+        # TID Test
+        self.cmdslst = []
+        self.argslst = []
+
+        self.iact = 0
+
+        self.port = settings.discovery_port
+        self.handle = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        if hasattr(socket, 'SO_REUSEPORT'):
+            self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        else:
+            self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        # Bind UDP socket to local port so we can receive pings
+        self.handle.bind(('', self.port))
+
+    def clear(self):
+        """
+        Function: Clear variables
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        self.cmdslst = []
+        self.argslst = []
+
+        self.iact = 0
+
+    def update_cmdline(self):
+        """
+        Function: Update the command line
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        actdata = self.get_nodedata()
+        id_select = console.Console._instance.id_select
+        print('update cmdline id selected:', id_select)
+
+        cmdline = id_select.strip() + ' ; '
+
+        # Loop over commands
+        for cmd, args in zip(self.cmdslst, self.argslst):
+            cmdline += cmd
+            # Loop over arguments for this command
+            for arg in args:
+                cmdline += ' ' + arg
+
+            cmdline += ' ; '
+
+        cmdline = cmdline[:-3]  # Remove last ' ; '
+
+        # Set the command line
+        console.Console._instance.set_cmdline(cmdline, 1)
+
+    def exq(self):
+
+        """
+        Function: Execute commandline
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        print(' ')
+        print('GUICLIENT NIEUWE COMMAND ')
+        print(' ')
+
+        actdata = bs.net.get_nodedata()
+        id_select = console.Console._instance.id_select
+        IPaddr = socket.gethostbyname(socket.gethostname())
+
+        # Check if an aircraft is selected
+        if id_select:
+            idx = misc.get_indices(actdata.acdata.id, id_select)[0]
+            print('actdata', actdata.acdata.uco[idx], actdata.acdata.uco)
+            print('command list', self.cmdslst)
+            # Check if selected aircraft is UCO
+            if actdata.acdata.uco[idx] == IPaddr or 'UCO' in self.cmdslst:  # or actdata.acdata.uco[idx]:
+
+                cmdline = ''
+
+                # Loop over commands
+                for cmd, args in zip(self.cmdslst, self.argslst):
+                    if cmd == 'EFL':
+                        cmd = 'ALT'
+                        addfl = True
+                    else:
+                        addfl = False
+
+                    if 'UCO' in self.cmdslst and len(self.cmdslst) == 1:
+                        print(self.cmdslst, len(self.cmdslst))
+                        cmdline += id_select + ' ' + cmd + ' ' + IPaddr
+                    else:
+                        cmdline += id_select + ' ' + cmd
+                    print('arg list', self.argslst)
+                    # Loop over arguments for this command
+                    for arg in args:
+                        if addfl:
+                            cmdline += ' FL' + arg
+                        else:
+                            cmdline += ' ' + arg
+
+                    cmdline += ' ; '
+
+                cmdline = cmdline[:-3]  # Remove last ' ; '
+
+                # Stack the command line
+                console.Console._instance.stack(cmdline)
+            else:
+                bs.scr.echo(id_select+' not UCO')
+        else:
+            bs.scr.echo('No aircraft selected')
+
+        # Clear
+        self.clear()
+
+        # Empty command line
+        console.Console._instance.set_cmdline('')
+    #
+    # @staticmethod
+    # def exqcmd(cmd, arg=''):
+    #     """
+    #     Function: Execute a command
+    #     Args:
+    #         cmd:    command [str]
+    #         arg:    argument [str]
+    #     Returns: -
+    #
+    #     Created by: Bob van Dillen
+    #     Date: 28-1-2022
+    #     """
+    #
+    #     cmd = cmd.strip().upper()
+    #     arg = arg.strip()
+    #
+    #     # Selected aircraft
+    #     actdata = bs.net.get_nodedata()
+    #     id_select = console.Console._instance.id_select
+    #
+    #     # Check if an aircraft is selected
+    #     if id_select:
+    #         # Command line
+    #         cmdline = id_select + ' ' + cmd + ' ' + arg
+    #         cmdline = cmdline.strip()
+    #
+    #         # Stack the command
+    #         console.Console._instance.stack(cmdline)
+    #     else:
+    #         bs.scr.echo('No aircraft selected')
+    #
+    # def clr(self):
+    #     """
+    #     Function: Clear command
+    #     Args: -
+    #     Returns: -
+    #
+    #     Created by: Bob van Dillen
+    #     Date: 28-1-2022
+    #     """
+    #
+    #     self.argslst[self.iact] = ['']
+    #
+    #     # Set the command line
+    #     self.update_cmdline()
+    #
+    def cor(self):
+        """
+        Function: Correct command
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Clear
+        self.clear()
+
+        # Update the command line
+        console.Console._instance.set_cmdline('')
+    #
+    def setcmd(self, cmd):
+        """
+        Function: Set a command
+        Args:
+            cmd:    command [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        cmd = cmd.strip().upper()
+        print('set command:', cmd)
+
+        if cmd in self.cmdslst:
+            # Get index
+            self.iact = self.cmdslst.index(cmd)
+        else:
+            # Unfinished previous command
+            if len(self.cmdslst) != 0 and self.cmdslst[self.iact] not in ['UCO', 'REL'] and self.argslst[self.iact] == [
+                '']:
+                self.cmdslst[self.iact] = cmd
+                self.argslst[self.iact] = ['']
+            # Finished previous command
+            else:
+                # Append new command
+                self.cmdslst.append(cmd)
+                self.argslst.append([''])
+
+                # Index
+                self.iact = len(self.cmdslst) - 1
+
+        # Update command line
+        self.update_cmdline()
+
+    def changecmd(self, cmd):
+        """
+        Function: Change the current command
+        Args:
+            cmd:    command [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        cmd = cmd.strip().upper()
+
+        # Change command
+        self.cmdslst[self.iact] = cmd
+        # Clear arguments
+        self.argslst[self.iact] = ['']
+
+        # Update command line
+        self.update_cmdline()
+
+    def setarg(self, arg, argn):
+        """
+        Function: Set an argument
+        Args:
+            arg:    argument [str]
+            argn:   argument number (1, 2, ..., n) [int]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Set the argument
+        print('eerst', self.argslst)
+        self.argslst[self.iact][argn - 1] = arg.strip()
+        print('daarna', self.argslst)
+
+        # Update command line
+        self.update_cmdline()
+
+    def addarg(self, arg):
+        """
+        Function: Add an argument
+        Args:
+            arg:    argument [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        # Append argument
+        self.argslst[self.iact].append(arg.strip())
+
+        # Update command line
+        self.update_cmdline()
+
+    def addchar(self, char):
+        """
+        Function: Add a character
+        Args:
+            char:   character [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+        print(self.argslst)
+        print(self.iact)
+        print(self.argslst[self.iact][-1])
+        # Append character
+        self.argslst[self.iact][-1] += char.strip()
+
+        # Update command line
+        self.update_cmdline()
+
+    # --------------------------- NORMAL ------------------------
 
     def start_discovery(self):
         super().start_discovery()
@@ -116,6 +432,26 @@ class GuiClient(Client):
         elif name == b'SIMSTATE':
             sender_data.siminit(**data)
             data_changed = list(UPDATE_ALL)
+        elif name == b'TIDCOMMANDS':
+            sender_data.setflag(**data)
+
+            # --- TID commands ---
+            if data['flag'] == 'EXQ':
+                self.exq()
+            if data['flag'] == 'CMD':
+                self.setcmd(data['args'])
+            if data['flag'] == 'CHCMD':
+                self.changecmd(data['args'])
+            if data['flag'] == 'ARG':
+                self.addarg(data['args'])
+            if data['flag'] == 'SETARG':
+                self.setarg(data['args'], 1)
+            if data['flag'] == 'CHAR':
+                self.addchar(data['args'])
+            if data['flag'] == 'COR':
+                self.cor()
+            if data['flag'] == 'CLR':
+                self.clear()
         else:
             super().event(name, data, sender_id)
 
@@ -597,3 +933,59 @@ class nodeData:
             self.show_wptlbl = True
             self.show_apt = 1
             self.show_aptlbl = True
+
+def getIPAddresses():
+    from ctypes import Structure, windll, sizeof
+    from ctypes import POINTER, byref
+    from ctypes import c_ulong, c_uint, c_ubyte, c_char
+    MAX_ADAPTER_DESCRIPTION_LENGTH = 128
+    MAX_ADAPTER_NAME_LENGTH = 256
+    MAX_ADAPTER_ADDRESS_LENGTH = 8
+    class IP_ADDR_STRING(Structure):
+        pass
+    LP_IP_ADDR_STRING = POINTER(IP_ADDR_STRING)
+    IP_ADDR_STRING._fields_ = [
+        ("next", LP_IP_ADDR_STRING),
+        ("ipAddress", c_char * 16),
+        ("ipMask", c_char * 16),
+        ("context", c_ulong)]
+    class IP_ADAPTER_INFO (Structure):
+        pass
+    LP_IP_ADAPTER_INFO = POINTER(IP_ADAPTER_INFO)
+    IP_ADAPTER_INFO._fields_ = [
+        ("next", LP_IP_ADAPTER_INFO),
+        ("comboIndex", c_ulong),
+        ("adapterName", c_char * (MAX_ADAPTER_NAME_LENGTH + 4)),
+        ("description", c_char * (MAX_ADAPTER_DESCRIPTION_LENGTH + 4)),
+        ("addressLength", c_uint),
+        ("address", c_ubyte * MAX_ADAPTER_ADDRESS_LENGTH),
+        ("index", c_ulong),
+        ("type", c_uint),
+        ("dhcpEnabled", c_uint),
+        ("currentIpAddress", LP_IP_ADDR_STRING),
+        ("ipAddressList", IP_ADDR_STRING),
+        ("gatewayList", IP_ADDR_STRING),
+        ("dhcpServer", IP_ADDR_STRING),
+        ("haveWins", c_uint),
+        ("primaryWinsServer", IP_ADDR_STRING),
+        ("secondaryWinsServer", IP_ADDR_STRING),
+        ("leaseObtained", c_ulong),
+        ("leaseExpires", c_ulong)]
+    GetAdaptersInfo = windll.iphlpapi.GetAdaptersInfo
+    GetAdaptersInfo.restype = c_ulong
+    GetAdaptersInfo.argtypes = [LP_IP_ADAPTER_INFO, POINTER(c_ulong)]
+    adapterList = (IP_ADAPTER_INFO * 10)()
+    buflen = c_ulong(sizeof(adapterList))
+    rc = GetAdaptersInfo(byref(adapterList[0]), byref(buflen))
+    if rc == 0:
+        for a in adapterList:
+            adNode = a.ipAddressList
+            while True:
+                ipAddr = adNode.ipAddress
+                if ipAddr:
+                    yield ipAddr
+                adNode = adNode.contents
+                # adNode = adNode.next
+                if not adNode:
+                    break
+
