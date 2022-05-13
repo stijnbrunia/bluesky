@@ -48,7 +48,7 @@ appmain = [['a1', 'UCO',            ['lambda: console.Console._instance.stack("E
            ['f1', 'COR',            ['lambda: console.Console._instance.stack("EXQ COR")']],  # tidcmds.cor()
            ['f2', 'MAIN 2',         ['lambda: appmain.close()',
                                      'lambda: show_basetid("appdisp", "appdisp")']],
-           ['f3', 'RES',             'lambda: console.Console._instance.stack("OP")'],
+           ['f3', '',             None],
            ['f4', 'EXQ',            ['lambda: console.Console._instance.stack("EXQ EXQ")']]  #lambda: tidcmds.exq()']]
            ]
 
