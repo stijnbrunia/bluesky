@@ -30,7 +30,7 @@ class GuiClient(Client):
     """
     Edited by: Mitchell de Keijzer
     Date: 04-05-2022
-    Changed: Added following methods (origin base_tid.py) for multiposition
+    Changed: Added following methods (origin base_tid.py) for multiposition purposes
         clear():            Clear variables
         update_cmdline():   Update the command line
         exq():              Execute commandline
@@ -73,9 +73,6 @@ class GuiClient(Client):
         Function: Clear variables
         Args: -
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         self.cmdslst = []
@@ -88,9 +85,6 @@ class GuiClient(Client):
         Function: Update the command line
         Args: -
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         actdata = self.get_nodedata()
@@ -117,11 +111,7 @@ class GuiClient(Client):
 
         """
         Function: Execute commandline
-        Args: -
-        Returns: -
 
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         Edited by: Mitchell de Keijzer
         Date: 13-05-2022
         Changed: UCO connected to IP Address
@@ -184,9 +174,6 @@ class GuiClient(Client):
             cmd:    command [str]
             arg:    argument [str]
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         cmd = cmd.strip().upper()
@@ -212,9 +199,6 @@ class GuiClient(Client):
         Function: Clear command
         Args: -
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         self.argslst[self.iact] = ['']
@@ -227,9 +211,6 @@ class GuiClient(Client):
         Function: Correct command
         Args: -
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         # Clear
@@ -244,9 +225,6 @@ class GuiClient(Client):
         Args:
             cmd:    command [str]
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         cmd = cmd.strip().upper()
@@ -279,9 +257,6 @@ class GuiClient(Client):
         Args:
             cmd:    command [str]
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         cmd = cmd.strip().upper()
@@ -301,9 +276,6 @@ class GuiClient(Client):
             arg:    argument [str]
             argn:   argument number (1, 2, ..., n) [int]
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         # Set the argument
@@ -320,9 +292,6 @@ class GuiClient(Client):
         Args:
             arg:    argument [str]
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
 
         # Append argument
@@ -337,9 +306,6 @@ class GuiClient(Client):
         Args:
             char:   character [str]
         Returns: -
-
-        Created by: Bob van Dillen
-        Date: 28-1-2022
         """
         print(self.argslst)
         print(self.iact)
@@ -394,8 +360,10 @@ class GuiClient(Client):
     def event(self, name, data, sender_id):
         """
         Edited by: Mitchell de Keijzer
-        Date: 04-05-2022
-        Changed: eventname b'TIDCOMMANDS' added
+        Date: 07-04-2022, 04-05-2022
+        Changed:
+            1) added the MAP flag to b'DISPLAYFLAG
+            2) eventname b'TIDCOMMANDS' added
         """
         sender_data = self.get_nodedata(sender_id)
         data_changed = []

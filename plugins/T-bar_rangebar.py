@@ -40,6 +40,9 @@ class tbar_ac(core.Entity):
     Methods:
         show_rangebar():    Initialize ac symbols on rangebar + label (acid)
         update_rangebar():  Update the position of the ac symbols + label
+
+    Created by: Mitchell de Keijzer
+    Date: 17-03-2022
     """
     def __init__(self):
         super().__init__()
@@ -127,3 +130,4 @@ class tbar_ac(core.Entity):
                 self.tbar_ac.tbar_lbl.update(np.array(rawlabel.encode('utf8'), dtype=np.string_))
                 self.tbar_ac.tbar_lon.update(np.array(lon, dtype=np.float32))
                 self.tbar_ac.tbar_lat.update(np.array(lat, dtype=np.float32))
+                # TODO: fix rangebar to the screen instead of latlon

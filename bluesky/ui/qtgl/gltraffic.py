@@ -256,7 +256,7 @@ class Traffic(glh.RenderObject, layer=100):
         #                           (-0.5 * ac_size, 0.5 * ac_size),
         #                           (0.25 * ac_size, 0.5 * ac_size),
         #                           (-0.5 * ac_size, 0.5 * ac_size),],
-        #                          dtype=np.float32)  # a E
+        #                          dtype=np.float32)  # an E
 
         # acverticeslvnl = np.array([(-0.375 * ac_size, 0 * ac_size),
         #                            (-0.375 * ac_size, -0.5 * ac_size),
@@ -268,7 +268,7 @@ class Traffic(glh.RenderObject, layer=100):
         #                            (-0.125 * ac_size, 0.5 * ac_size),
         #                            (-0.375 * ac_size, 0 * ac_size),
         #                            (0.375 * ac_size, 0 * ac_size),],
-        #                           dtype=np.float32)  # a A
+        #                           dtype=np.float32)  # an A
 
         self.ac_symbollvnl.create(vertex=acverticeslvnl)
         self.ac_symbollvnl.set_attribs(lat=self.lat, lon=self.lon, color=self.color, instance_divisor=1)

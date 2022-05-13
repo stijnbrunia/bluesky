@@ -153,6 +153,10 @@ class LVNLVariables(Entity):
         Args:
             idx:    index for traffic arrays
         Returns: -
+
+        Edited by: Mitchell de Keijzer
+        Date: 10-5-2022
+        Changed: IP address in UCO array to check for UCO with multiposition
         """
 
         # Autopilot modes (check if there is a route)
@@ -183,7 +187,7 @@ class LVNLVariables(Entity):
         print('')
 
     @stack.command(name='REL',)
-    def setrelcmd(self, idx: 'acid'): #, IP):
+    def setrelcmd(self, idx: 'acid'):
         """
         Function: Set REL for aircraft
         Args:

@@ -1,6 +1,14 @@
 import socket
 
 def Main():
+    """
+    Function: Set up server for client to connect, receive letter and send back capital letter to client
+    Args: -
+    Returns: -
+
+    Created by: Mitchell de Keijzer
+    Date: 28-3-2022
+    """
     host = '192.168.0.3'
     port = 4000
 
