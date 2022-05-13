@@ -59,7 +59,7 @@ class LVNLVariables(Entity):
             self.ssr        = np.array([], dtype=np.int)   # SSR code
             self.ssrlbl     = []                           # Show SSR label
             self.tracklbl   = np.array([], dtype=np.bool)  # Show track label
-            self.uco        = np.array([], dtype=np.bool)  # Under Control
+            self.uco        = np.array([], dtype=np.str)   # Under Control
             self.wtc        = []                           # Wake Turbulence Category
 
     def create(self, n=1):
@@ -147,12 +147,16 @@ class LVNLVariables(Entity):
         return
 
     @stack.command(name='UCO')
-    def selucocmd(self, idx: 'acid'):
+    def selucocmd(self, idx: 'acid', IP):
         """
         Function: Set UCO for aircraft
         Args:
             idx:    index for traffic arrays
         Returns: -
+
+        Edited by: Mitchell de Keijzer
+        Date: 10-5-2022
+        Changed: IP address in UCO array to check for UCO with multiposition
         """
 
         # Autopilot modes (check if there is a route)
@@ -177,8 +181,10 @@ class LVNLVariables(Entity):
 
         # Set UCO/REL
         bs.traf.trafdatafeed.uco(idx)
-        self.uco[idx] = True
+        self.uco[idx] = IP
         self.rel[idx] = False
+        print('UCO list', self.uco)
+        print('')
 
     @stack.command(name='REL',)
     def setrelcmd(self, idx: 'acid'):
@@ -203,6 +209,7 @@ class LVNLVariables(Entity):
         # Set UCO/REL
         self.uco[idx] = False
         self.rel[idx] = True
+        print('REL list', self.rel)
 
     @stack.command(name='ARR', brief='ARR CALLSIGN ARRIVAL/STACK (ADDWPTS [ON/OFF])', aliases=('STACK',))
     def setarr(self, idx: 'acid', arr: str = '', addwpts: 'onoff' = True):
@@ -224,6 +231,24 @@ class LVNLVariables(Entity):
             acid = bs.traf.id[idx]
             cmd = 'PCALL LVNL/Routes/ARR/'+arr.upper()+' '+acid
             stack.stack(cmd)
+
+    @stack.command(name='SETROUTE', brief='SETROUTE CALLSIGN ARRIVAL/STACK')
+    def setroute(self, idx: 'acid', route: str = ''):
+        """
+        Function: Set the route for the wanted simulation
+        Args:
+            idx:        index for traffic arrays [int]
+            route:      arrival/stack [str]
+        Returns: -
+
+        Created by: Mitchell de Keijzer
+        Date: 12-5-2022
+        """
+
+
+        acid = bs.traf.id[idx]
+        cmd = 'PCALL LVNL/Routes/' + route.upper() + ' ' + acid
+        stack.stack(cmd)
 
     @stack.command(name='AUTOLABEL', brief='AUTOLABEL (ON/OFF or ACID or ACID ON/OFF)')
     def setautolabel(self, *args):
@@ -473,3 +498,10 @@ class LVNLVariables(Entity):
 
         if isinstance(wtc, str):
             self.wtc[idx] = wtc.upper()
+
+    # @stack.command(name='EXQ')
+    # def exq(self, idx: 'acid'):
+    #     sender = stack.sender()
+    #     print('in command', sender)
+    #     # self.exq[idx] = sender
+    #     return sender

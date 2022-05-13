@@ -33,7 +33,7 @@ accdisp = [['a1',    'VIEW',            ['lambda: accdisp.close()',
            ['e3',    'SEQ',             ['lambda: None']],
            ['e4',    'BACK\nUP',        ['lambda: None']],
 
-           ['f1',    'COR',             ['lambda: tidcmds.cor()',
+           ['f1',    'COR',             ['lambda: console.Console._instance.stack("EXQ COR")',
                                          'lambda: accdisp.close()',
                                          'lambda: show_basetid("accmain", "accmain")']],
            ['f2',    'ACM',             None],

@@ -3,6 +3,9 @@ This python file contains the button definitions for the Approach maps
 
 Created by: Bob van Dillen
 Date: 9-12-2021
+Edited by: Mitchell de Keijzer
+Date: 09-04-2022
+Changed: new maptoggle function from 'MAP #' to 'MAPTOGGLE MAP #'
 """
 
 appmaps = [['a1',    'ALS\n10NM',     ['lambda: appmaps.close()',

@@ -316,6 +316,27 @@ class TrafficDataFeed(Entity):
         else:
             return False, acid+' state already taken from data source'
 
+    @stack.command(name='SETSIM', brief='SETSIM CALLSIGN')
+    def setsimulation(self, idx: 'acid'):
+        """
+        Function: Add aircraft to simulation mode
+        Args:
+            idx:    index for traffic arrays [int]
+        Returns: -
+
+        Created by: Mitchell de Keijzer
+        Date: 12-5-2022
+        """
+        acid = bs.traf.id[idx]
+
+        if acid in self.datafeedids:
+            self.datafeedids.remove(acid)
+            self.datafeed[idx] = False
+            self.source[idx] = ''
+        else:
+            return False, acid+' already in simulation'
+
+
     def uco(self, idx):
         """
         Function: Stop taking the aircraft state from data sources (simulate the aircraft)

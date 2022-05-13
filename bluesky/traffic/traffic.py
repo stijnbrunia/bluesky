@@ -526,7 +526,9 @@ class Traffic(Entity):
         else:
             applywind = self.alt>50.*ft # Only apply wind when airborne
 
+            # Meteo data is loaded in here :)
             vnwnd,vewnd = self.wind.getdata(self.lat, self.lon, self.alt)
+            # print(vnwnd)
             self.windnorth[:], self.windeast[:] = vnwnd,vewnd
             self.gsnorth  = self.tas * np.cos(np.radians(self.hdg)) + self.windnorth*applywind
             self.gseast   = self.tas * np.sin(np.radians(self.hdg)) + self.windeast*applywind

@@ -1,6 +1,14 @@
 import socket
 
 def Main():
+    """
+    Function: Send letter to other computer and receive capital letter back from server
+    Args: -
+    Returns: -
+
+    Created by: Mitchell de Keijzer
+    Date: 28-3-2022
+    """
     host = '192.168.0.3'
     port = 4003
 

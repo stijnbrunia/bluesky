@@ -3,6 +3,8 @@ This python file contains the button definitions for the Approach display tid
 
 Created by: Bob van Dillen
 Date: 9-12-2021
+Edited by: Mitchell de Keijzer
+Changed: changed all commands for client position
 """
 
 appdisp = [['a1',    'RANGE\nRADAR',    ['lambda: appdisp.close()',
@@ -33,7 +35,7 @@ appdisp = [['a1',    'RANGE\nRADAR',    ['lambda: appdisp.close()',
            ['e3',    'BRIGHT\nNESS',    ['lambda: None']],
            ['e4',    'CRM',             ['lambda: None']],
 
-           ['f1',    'COR',             ['lambda: tidcmds.cor()',
+           ['f1',    'COR',             ['lambda: console.Console._instance.stack("EXQ COR")',
                                          'lambda: appdisp.close()',
                                          'lambda: show_basetid("appmain", "appmain")']],
            ['f2',    '',                None],
