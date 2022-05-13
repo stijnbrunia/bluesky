@@ -231,7 +231,7 @@ def initbasecmds():
             "EXQ COMMAND, [arg]",
             "txt, [txt]",
             bs.scr.execute,
-            "Get sender_id",
+            "Set or execute a command via the TID",
         ],
         "FF": [
             "FF [timeinsec]",

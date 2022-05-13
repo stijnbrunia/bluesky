@@ -4,7 +4,6 @@ import copy
 import numpy as np
 
 # Local imports
-import socket
 import bluesky as bs
 from bluesky import stack
 from bluesky.tools import areafilter, geo, misc
