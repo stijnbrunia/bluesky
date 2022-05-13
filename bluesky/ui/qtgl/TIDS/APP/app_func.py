@@ -5,7 +5,7 @@ Created by: Bob van Dillen
 Date: 9-12-2021
 Edited by: Mitchell de Keijzer
 Date: 17-02-2022
-Changes: Added ILS, TFL menu
+Changes: Added ILS, TFL menu, changed all commands for client position
 """
 
 
@@ -20,7 +20,7 @@ appmain = [['a1', 'UCO',            ['lambda: console.Console._instance.stack("E
            ['b2', 'POS',            ['lambda: appmain.close()',
                                      'lambda: show_basetid("apppos", "apppos")']],
            ['b3', 'PBP',            ['lambda: console.Console._instance.stack("HOLD")']],
-           ['b4', 'ACM',            ['lambda: None']],
+           ['b4', 'FFW',            ['lambda: console.Console._instance.stack("FF")']],  # ACM
 
            ['c1', 'EFL',            ['lambda: console.Console._instance.stack("EXQ CMD EFL")',  # tidcmds.setcmd("EFL")
                                      'lambda: appmain.close()',
@@ -48,7 +48,7 @@ appmain = [['a1', 'UCO',            ['lambda: console.Console._instance.stack("E
            ['f1', 'COR',            ['lambda: console.Console._instance.stack("EXQ COR")']],  # tidcmds.cor()
            ['f2', 'MAIN 2',         ['lambda: appmain.close()',
                                      'lambda: show_basetid("appdisp", "appdisp")']],
-           ['f3', '',               None],
+           ['f3', 'RES',             'lambda: console.Console._instance.stack("OP")'],
            ['f4', 'EXQ',            ['lambda: console.Console._instance.stack("EXQ EXQ")']]  #lambda: tidcmds.exq()']]
            ]
 

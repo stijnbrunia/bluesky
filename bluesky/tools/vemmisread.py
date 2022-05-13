@@ -866,7 +866,7 @@ class VEMMISSource:
         # commands, commandstime = vemmisdata.get_initial_tbar()
 
         # SCENARIO (current case arrival 18R and 18C):
-        runway = 'C'
+        runway = 'R'
         commands, commandstime = vemmisdata.get_initial_scenario(runway)
 
         # --------------------------------------------------
