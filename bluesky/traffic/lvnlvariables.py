@@ -228,6 +228,24 @@ class LVNLVariables(Entity):
             cmd = 'PCALL LVNL/Routes/ARR/'+arr.upper()+' '+acid
             stack.stack(cmd)
 
+    @stack.command(name='SETROUTE', brief='SETROUTE CALLSIGN ARRIVAL/STACK')
+    def setroute(self, idx: 'acid', route: str = ''):
+        """
+        Function: Set the route for the wanted simulation
+        Args:
+            idx:        index for traffic arrays [int]
+            route:      arrival/stack [str]
+        Returns: -
+
+        Created by: Mitchell de Keijzer
+        Date: 12-5-2022
+        """
+
+
+        acid = bs.traf.id[idx]
+        cmd = 'PCALL LVNL/Routes/' + route.upper() + ' ' + acid
+        stack.stack(cmd)
+
     @stack.command(name='AUTOLABEL', brief='AUTOLABEL (ON/OFF or ACID or ACID ON/OFF)')
     def setautolabel(self, *args):
         """

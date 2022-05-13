@@ -155,6 +155,9 @@ class VEMMISRead:
         # Compute actual time
         self.tracks['ACTUAL_TIME'] = self.tracks['T_START'] + self.tracks['TIME']
 
+        # Route data
+        self.flighttimes['TIME'] = pd.to_datetime(self.flighttimes['TIME'], format="%d-%m-%Y %H:%M")
+
     def get_credeltime(self):
         """
         Function: Get the create and delete time (first and last data point)
@@ -196,8 +199,8 @@ class VEMMISRead:
         self.flights.drop_duplicates(subset='FLIGHT_ID', keep='first', inplace=True)
 
         # Waypoints
-        self.flighttimes = self.flighttimes.loc[self.flighttimes['TIME_TYPE'] == 'ACTUAL']
-        self.flighttimes = self.flighttimes.loc[self.flighttimes['LOCATION_TYPE'] == 'RP']
+        # self.flighttimes = self.flighttimes.loc[self.flighttimes['TIME_TYPE'] == 'ACTUAL']
+        # self.flighttimes = self.flighttimes.loc[self.flighttimes['LOCATION_TYPE'] == 'RP']
 
         # Start time
         if self.date0 and self.time0:
@@ -279,8 +282,9 @@ class VEMMISRead:
                                    on='FLIGHT_ID', how='left')
         self.flightdata.rename(columns={'RUNWAY': 'RUNWAY_OUT'}, inplace=True)
         # Add ARR to flight data
-        self.flightdata = pd.merge(self.flightdata, self.landings[['FLIGHT_ID', 'STACK']],
+        self.flightdata = pd.merge(self.flightdata, self.landings[['FLIGHT_ID', 'RUNWAY', 'STACK']],
                                    on='FLIGHT_ID', how='left')
+        self.flightdata.rename(columns={'RUNWAY': 'RUNWAY_IN'}, inplace=True)
 
         # Add callsign to route data
         self.routedata = pd.merge(self.flighttimes, self.flights[['FLIGHT_ID', 'CALLSIGN']], on='FLIGHT_ID')
@@ -626,6 +630,124 @@ class VEMMISRead:
 
         return cmds, cmdst
 
+    def get_initial_scenario(self, runway):
+        """
+        Function: Get the initial commands for a specific scenario (current case landing on 18R or 18C)
+        Args:
+            runway: specific runway selected for simulated arrival (current case 'R' or 'C')
+        Returns:
+            cmds:   initial commands [list]
+            cmdst:  simulation time of the initial commands [list]
+
+        Created by: Mitchell de Keijzer
+        Date: 12-5-2022
+        """
+
+        simday, simmonth, simyear, simtime = self.get_datetime()
+
+        # Initial commands
+        cmds = ["DATE "+str(simday)+", "+str(simmonth)+", "+str(simyear)+", "+simtime]
+        cmdst = [0.]
+
+        # Flight data
+        self.flightdata = self.flightdata.loc[self.flightdata['DEST'] == 'EHAM']  # Only inbound EHAM
+        self.flightdata = self.flightdata.loc[(self.flightdata['RUNWAY_IN'] == '18R') | (self.flightdata['RUNWAY_IN'] == '18C')]
+
+        tma_entry = self.routedata.loc[self.routedata['EVENT'] == 'ENTRY']
+        tma_entry = tma_entry.loc[tma_entry['LOCATION_TYPE'] == 'TMA']
+        tma_entry = tma_entry.loc[tma_entry['TIME_TYPE'] == 'ACTUAL']
+        tma_entry.rename(columns={'TIME': 'TMA_ENTRY_TIME'}, inplace=True)
+        tma_entry['TMA_ENTRY_SIMTIME'] = (tma_entry['TMA_ENTRY_TIME'] - self.datetime0).dt.total_seconds()
+
+        self.flightdata = pd.merge(self.flightdata, tma_entry[['FLIGHT_ID', 'TMA_ENTRY_SIMTIME']], on='FLIGHT_ID')
+        self.flightdata.drop(self.flightdata[self.flightdata['TMA_ENTRY_SIMTIME'] < 0.].index, inplace=True)
+
+        acid         = self.flightdata['CALLSIGN']
+        actype       = self.flightdata['ICAO_ACTYPE']
+        aclat        = self.flightdata['LATITUDE'].astype(str)
+        aclon        = self.flightdata['LONGITUDE'].astype(str)
+        achdg        = self.flightdata['HEADING'].astype(str)
+        acalt        = self.flightdata['ALTITUDE'].astype(str)
+        acspd        = self.flightdata['CAS'].astype(str)
+        acorig       = self.flightdata['ADEP']
+        acdest       = self.flightdata['DEST']
+        acflighttype = self.flightdata['FLIGHT_TYPE']
+        acwtc        = self.flightdata['WTC']
+        acssr        = self.flightdata['SSR'].astype(str)
+
+        # Commands
+        # Create
+        cmds  += list("CRE "+acid+", "+actype+", "+aclat+", "+aclon+", "+achdg+", "+acalt+", "+acspd)
+        cmdst += list(self.flightdata['SIM_START'])
+
+        # Origin
+        cmds  += list("ORIG "+acid+", "+acorig)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # Destination
+        cmds  += list("DEST "+acid+", "+acdest)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # Flight type
+        cmds  += list("FLIGHTTYPE "+acid+", "+acflighttype)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # WTC
+        cmds  += list("WTC "+acid+", "+acwtc)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # SSR Code
+        cmds  += list("SSRCODE "+acid+", "+acssr)
+        cmdst += list(self.flightdata['SIM_START'] + 0.01)
+
+        # STACK
+        cmds    += list("ARR "+acid+", "+self.flightdata['STACK']+", OFF")
+        cmdst   += list(self.flightdata['SIM_START'] + 0.01)
+
+        cmds    += list("SETDATAFEED " + acid + ", VEMMIS")
+        cmdst   += list(self.flightdata['SIM_START'] + 0.01)
+
+        # Simulation TMA
+        if runway == 'R':
+            setsim = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18R']
+        if runway == 'C':
+            setsim = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18C']
+        cmds += list("SETSIM "+setsim['CALLSIGN'])
+        cmdst += list(setsim['TMA_ENTRY_SIMTIME'] + 0.01)
+
+        # Routes
+        artip = setsim.loc[setsim['STACK'] == 'ARTIP']
+        sugol = setsim.loc[setsim['STACK'] == 'SUGOL']
+        river = setsim.loc[setsim['STACK'] == 'RIVER']
+
+        cmds += list("SETROUTE " + artip['CALLSIGN'] + ' ATP18C')
+        cmdst += list(artip['TMA_ENTRY_SIMTIME'] + 0.01)
+
+        cmds += list("SETROUTE " + sugol['CALLSIGN'] + ' SUG18R')
+        cmdst += list(sugol['TMA_ENTRY_SIMTIME'] + 0.01)
+
+        if runway == 'R':
+            cmds += list("SETROUTE " + river['CALLSIGN'] + ' RIV18R')
+        if runway == 'C':
+            cmds += list("SETROUTE " + river['CALLSIGN'] + ' RIV18C')
+        cmdst += list(river['TMA_ENTRY_SIMTIME'] + 0.01)
+
+        # Delete
+        if runway == 'R':
+            delete = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18C']
+        if runway == 'C':
+            delete = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18R']
+        cmds += list("DEL "+delete['CALLSIGN'])
+        cmdst += list(delete['SIM_END'])
+
+        # Sort
+        command_df = pd.DataFrame({'COMMAND': cmds, 'TIME': cmdst})
+        command_df = command_df.sort_values(by=['TIME'])
+        cmds = list(command_df['COMMAND'])
+        cmdst = list(command_df['TIME'])
+
+        return cmds, cmdst
+
     def get_trackdata(self):
         """
         Function: Get the track data for the simulation
@@ -725,6 +847,9 @@ class VEMMISSource:
 
         Created by: Bob van Dillen
         Date: 14-1-2022
+        Edited by: Mitchell de Keijzer
+        Date: 12-5-2022
+        Changed: clear overview of types of replay/playback + scenario type added
         """
 
         # Prepare the data
@@ -733,9 +858,18 @@ class VEMMISSource:
         # Load flight data
         bs.scr.echo('Loading flight data ...')
 
-        # initialize t-bar by uncommenting the second line below
-        commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
+        # ----------- Type of replay/playback ---------------
+        # NORMAL:
+        # commands, commandstime = vemmisdata.get_initial(swdatafeed=True)
+
+        # T-BAR:
         # commands, commandstime = vemmisdata.get_initial_tbar()
+
+        # SCENARIO (current case arrival 18R and 18C):
+        runway = 'C'
+        commands, commandstime = vemmisdata.get_initial_scenario(runway)
+
+        # --------------------------------------------------
 
         # Load track data
         bs.scr.echo('Loading track data ...')

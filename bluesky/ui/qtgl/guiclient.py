@@ -12,9 +12,6 @@ from bluesky.ui.qtgl.customevents import ACDataEvent, RouteDataEvent
 from bluesky.network.client import Client
 from bluesky.core import Signal
 from bluesky.tools.aero import ft
-from bluesky.tools import geo
-from bluesky import stack
-from bluesky.ui.qtgl.TIDS.base_tid import *
 
 
 # TID test
@@ -30,6 +27,24 @@ ACTNODE_TOPICS = [b'ACDATA', b'PLOT*', b'ROUTEDATA*']
 loaded_maps = []
 
 class GuiClient(Client):
+    """
+    Edited by: Mitchell de Keijzer
+    Date: 04-05-2022
+    Changed: Added following methods (origin base_tid.py) for multiposition
+        clear():            Clear variables
+        update_cmdline():   Update the command line
+        exq():              Execute commandline
+        exqcmd():           Execute a command
+        clr():              Clear command
+        cor():              Correct command
+        setcmd():           Set a command
+        changecmd():        Change the current command
+        setarg():           Set an argument
+        addarg():           Add an argument
+        addchar():          Add a character
+    """
+
+
     def __init__(self):
         super().__init__(ACTNODE_TOPICS)
         self.nodedata = dict()
@@ -47,22 +62,11 @@ class GuiClient(Client):
         self.actnodedata_changed = Signal('actnodedata_changed')
 
 
-        # TID Test
+        # TID
         self.cmdslst = []
         self.argslst = []
 
         self.iact = 0
-
-        self.port = settings.discovery_port
-        self.handle = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        if hasattr(socket, 'SO_REUSEPORT'):
-            self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        else:
-            self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        # Bind UDP socket to local port so we can receive pings
-        self.handle.bind(('', self.port))
 
     def clear(self):
         """
@@ -118,11 +122,10 @@ class GuiClient(Client):
 
         Created by: Bob van Dillen
         Date: 28-1-2022
+        Edited by: Mitchell de Keijzer
+        Date: 13-05-2022
+        Changed: UCO connected to IP Address
         """
-
-        print(' ')
-        print('GUICLIENT NIEUWE COMMAND ')
-        print(' ')
 
         actdata = bs.net.get_nodedata()
         id_select = console.Console._instance.id_select
@@ -131,8 +134,6 @@ class GuiClient(Client):
         # Check if an aircraft is selected
         if id_select:
             idx = misc.get_indices(actdata.acdata.id, id_select)[0]
-            print('actdata', actdata.acdata.uco[idx], actdata.acdata.uco)
-            print('command list', self.cmdslst)
             # Check if selected aircraft is UCO
             if actdata.acdata.uco[idx] == IPaddr or 'UCO' in self.cmdslst:  # or actdata.acdata.uco[idx]:
 
@@ -146,12 +147,11 @@ class GuiClient(Client):
                     else:
                         addfl = False
 
-                    if 'UCO' in self.cmdslst and len(self.cmdslst) == 1:
-                        print(self.cmdslst, len(self.cmdslst))
+                    if cmd == 'UCO':
                         cmdline += id_select + ' ' + cmd + ' ' + IPaddr
                     else:
                         cmdline += id_select + ' ' + cmd
-                    print('arg list', self.argslst)
+
                     # Loop over arguments for this command
                     for arg in args:
                         if addfl:
@@ -175,53 +175,53 @@ class GuiClient(Client):
 
         # Empty command line
         console.Console._instance.set_cmdline('')
-    #
-    # @staticmethod
-    # def exqcmd(cmd, arg=''):
-    #     """
-    #     Function: Execute a command
-    #     Args:
-    #         cmd:    command [str]
-    #         arg:    argument [str]
-    #     Returns: -
-    #
-    #     Created by: Bob van Dillen
-    #     Date: 28-1-2022
-    #     """
-    #
-    #     cmd = cmd.strip().upper()
-    #     arg = arg.strip()
-    #
-    #     # Selected aircraft
-    #     actdata = bs.net.get_nodedata()
-    #     id_select = console.Console._instance.id_select
-    #
-    #     # Check if an aircraft is selected
-    #     if id_select:
-    #         # Command line
-    #         cmdline = id_select + ' ' + cmd + ' ' + arg
-    #         cmdline = cmdline.strip()
-    #
-    #         # Stack the command
-    #         console.Console._instance.stack(cmdline)
-    #     else:
-    #         bs.scr.echo('No aircraft selected')
-    #
-    # def clr(self):
-    #     """
-    #     Function: Clear command
-    #     Args: -
-    #     Returns: -
-    #
-    #     Created by: Bob van Dillen
-    #     Date: 28-1-2022
-    #     """
-    #
-    #     self.argslst[self.iact] = ['']
-    #
-    #     # Set the command line
-    #     self.update_cmdline()
-    #
+
+    @staticmethod
+    def exqcmd(cmd, arg=''):
+        """
+        Function: Execute a command
+        Args:
+            cmd:    command [str]
+            arg:    argument [str]
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        cmd = cmd.strip().upper()
+        arg = arg.strip()
+
+        # Selected aircraft
+        actdata = bs.net.get_nodedata()
+        id_select = console.Console._instance.id_select
+
+        # Check if an aircraft is selected
+        if id_select:
+            # Command line
+            cmdline = id_select + ' ' + cmd + ' ' + arg
+            cmdline = cmdline.strip()
+
+            # Stack the command
+            console.Console._instance.stack(cmdline)
+        else:
+            bs.scr.echo('No aircraft selected')
+
+    def clr(self):
+        """
+        Function: Clear command
+        Args: -
+        Returns: -
+
+        Created by: Bob van Dillen
+        Date: 28-1-2022
+        """
+
+        self.argslst[self.iact] = ['']
+
+        # Set the command line
+        self.update_cmdline()
+
     def cor(self):
         """
         Function: Correct command
@@ -392,6 +392,11 @@ class GuiClient(Client):
             self.actnodedata_changed.emit(sender_id, sender_data, ('ECHOTEXT',))
 
     def event(self, name, data, sender_id):
+        """
+        Edited by: Mitchell de Keijzer
+        Date: 04-05-2022
+        Changed: eventname b'TIDCOMMANDS' added
+        """
         sender_data = self.get_nodedata(sender_id)
         data_changed = []
         if name == b'RESET':
@@ -434,7 +439,6 @@ class GuiClient(Client):
             data_changed = list(UPDATE_ALL)
         elif name == b'TIDCOMMANDS':
             sender_data.setflag(**data)
-
             # --- TID commands ---
             if data['flag'] == 'EXQ':
                 self.exq()
@@ -451,7 +455,7 @@ class GuiClient(Client):
             if data['flag'] == 'COR':
                 self.cor()
             if data['flag'] == 'CLR':
-                self.clear()
+                self.clr()
         else:
             super().event(name, data, sender_id)
 
