@@ -498,10 +498,3 @@ class LVNLVariables(Entity):
 
         if isinstance(wtc, str):
             self.wtc[idx] = wtc.upper()
-
-    # @stack.command(name='EXQ')
-    # def exq(self, idx: 'acid'):
-    #     sender = stack.sender()
-    #     print('in command', sender)
-    #     # self.exq[idx] = sender
-    #     return sender
