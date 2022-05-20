@@ -9,7 +9,8 @@ Changes: Added ILS, TFL menu, changed all commands for client position
 """
 
 
-appmain = [['a1', 'UCO',            ['lambda: console.Console._instance.stack("EXQ CMD UCO")']],  # tidcmds.setcmd("UCO")
+appmain = [['a1', 'UCO',            ['lambda: console.Console._instance.stack("EXQ CMD UCO")',
+                                     'lambda: console.Console._instance.stack("EXQ EXQ")']],  # tidcmds.setcmd("UCO")
            ['a2', '36',             ['lambda: console.Console._instance.stack("SCREENRANGE 36")']],
            ['a3', '48',             ['lambda: console.Console._instance.stack("SCREENRANGE 48")']],
            ['a4', 'REL',            ['lambda: console.Console._instance.stack("EXQ CMD REL")']],
@@ -56,15 +57,28 @@ appmain = [['a1', 'UCO',            ['lambda: console.Console._instance.stack("E
 apphdg = [['a1', 'ARTIP',       ['lambda: console.Console._instance.stack("EXQ SETARG ARTIP")']],
           ['a2', 'SUGOL',       ['lambda: console.Console._instance.stack("EXQ SETARG SUGOL")']],
           ['a3', 'RIVER',       ['lambda: console.Console._instance.stack("EXQ SETARG RIVER")']],
-          ['a4', '',         None],
+          ['a4', 'RON',         ['lambda: console.Console._instance.stack("LNAV " + console.Console._instance.id_select + " ON")',
+                                'lambda: console.Console._instance.stack("VNAV " + console.Console._instance.id_select + " ON")',
+                                'lambda: apphdg.close()',
+                                'lambda: show_basetid("appmain", "appmain")']],
 
-          ['b1', 'NIRSI',       ['lambda: apphdg.close()',
-                                 'lambda: show_basetid("nirsi", "nirsi")']],
-          ['b2', 'SOKS2',       ['lambda: apphdg.close()',
-                                 'lambda: show_basetid("soks2", "soks2")']],
-          ['b3', 'GALIS',       ['lambda: apphdg.close()',
-                                 'lambda: show_basetid("galis", "galis")']],
-          ['b4', '',            None],
+          # ['b1', 'YARMA',       ['lambda: console.Console._instance.stack("EXQ SETARG YARMA")']],
+          # ['b2', 'HASMI',       ['lambda: console.Console._instance.stack("EXQ SETARG HASMI")']],
+          # ['b3', 'WERAF',       ['lambda: console.Console._instance.stack("EXQ SETARG WERAF")']],
+          # ['b4', '',            None],
+
+          ['b1', 'ROTIM', ['lambda: console.Console._instance.stack("EXQ SETARG ROTIM")']],
+          ['b2', 'OMEBU', ['lambda: console.Console._instance.stack("EXQ SETARG OMEBU")']],
+          ['b3', 'MITJA', ['lambda: console.Console._instance.stack("EXQ SETARG MITJA")']],
+          ['b4', 'ADEVI', ['lambda: console.Console._instance.stack("EXQ SETARG ADEVI")']],
+
+          # ['b1', 'NIRSI', ['lambda: apphdg.close()',
+          #                  'lambda: show_basetid("nirsi", "nirsi")']],
+          # ['b2', 'SOKS2', ['lambda: apphdg.close()',
+          #                  'lambda: show_basetid("soks2", "soks2")']],
+          # ['b3', 'GALIS', ['lambda: apphdg.close()',
+          #                  'lambda: show_basetid("galis", "galis")']],
+          # ['b4', '', None],
 
           ['c1', '7',           ['lambda: console.Console._instance.stack("EXQ CHAR 7")']],  # tidcmds.addchar("7")
           ['c2', '4',           ['lambda: console.Console._instance.stack("EXQ CHAR 4")']],  # tidcmds.addchar("4")

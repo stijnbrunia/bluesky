@@ -11,7 +11,7 @@ from bluesky.ui.loadvisuals_txt import load_coastline_txt, load_aptsurface_txt, 
 coast_version = 'v20170101'
 navdb_version = 'v20170101'
 aptsurf_version = 'v20171116'
-maps_version = 'v20220804'
+maps_version = 'v20222005'
 
 ## Default settings
 settings.set_variable_defaults(navdata_path='data/navdata')

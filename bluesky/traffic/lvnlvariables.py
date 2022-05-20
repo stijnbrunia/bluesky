@@ -4,7 +4,7 @@ This python file is used to create traffic variables used by the LVNL
 Created by: Bob van Dillen
 Date: 24-12-2021
 """
-
+import socket
 
 import numpy as np
 import bluesky as bs
@@ -154,6 +154,9 @@ class LVNLVariables(Entity):
             idx:    index for traffic arrays
         Returns: -
 
+        Created by: Bob van Dillen
+        Date: 1-2-2022
+
         Edited by: Mitchell de Keijzer
         Date: 10-5-2022
         Changed: IP address in UCO array to check for UCO with multiposition
@@ -181,7 +184,7 @@ class LVNLVariables(Entity):
 
         # Set UCO/REL
         bs.traf.trafdatafeed.uco(idx)
-        self.uco[idx] = IP
+        self.uco[idx] = IP[-11:]
         self.rel[idx] = False
         print('UCO list', self.uco)
         print('')

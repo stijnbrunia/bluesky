@@ -125,7 +125,7 @@ class GuiClient(Client):
         if id_select:
             idx = misc.get_indices(actdata.acdata.id, id_select)[0]
             # Check if selected aircraft is UCO
-            if actdata.acdata.uco[idx] == IPaddr or 'UCO' in self.cmdslst:  # or actdata.acdata.uco[idx]:
+            if actdata.acdata.uco[idx] == IPaddr[-11:] or 'UCO' in self.cmdslst:  # or actdata.acdata.uco[idx]:
 
                 cmdline = ''
 
@@ -138,7 +138,7 @@ class GuiClient(Client):
                         addfl = False
 
                     if cmd == 'UCO':
-                        cmdline += id_select + ' ' + cmd + ' ' + IPaddr
+                        cmdline += id_select + ' ' + cmd + ' ' + IPaddr[-11:]
                     else:
                         cmdline += id_select + ' ' + cmd
 
@@ -912,7 +912,7 @@ def getIPAddresses():
     from ctypes import c_ulong, c_uint, c_ubyte, c_char
     MAX_ADAPTER_DESCRIPTION_LENGTH = 128
     MAX_ADAPTER_NAME_LENGTH = 256
-    MAX_ADAPTER_ADDRESS_LENGTH = 8
+    MAX_ADAPTER_ADDRESS_LENGTH = 11
     class IP_ADDR_STRING(Structure):
         pass
     LP_IP_ADDR_STRING = POINTER(IP_ADDR_STRING)
