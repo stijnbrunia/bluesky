@@ -1,4 +1,6 @@
 ''' Traffic OpenGL visualisation. '''
+import socket
+
 import numpy as np
 import itertools
 from bluesky.ui.qtgl import glhelpers as glh
@@ -858,6 +860,8 @@ def applabel(actdata, data, i):
     Date: 21-12-2021
     """
 
+    IP = socket.gethostbyname(socket.gethostname())
+
     # Empty labels
     label    = ''
     mlabel   = ''
@@ -874,7 +878,7 @@ def applabel(actdata, data, i):
             label += '%-1s' % 'A'
         else:
             label += '%-1s' % ' '
-        if data.uco[i] and data.selalt[i] != 0:
+        if data.uco[i] == IP[-11:] and data.selalt[i] != 0:
             label += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
         else:
             label += '%-3s' % '   '
@@ -882,7 +886,7 @@ def applabel(actdata, data, i):
 
         # Line 3
         label += '%-4s' % str(data.type[i])[:4]
-        if data.uco[i] and data.selhdg[i] != 0:
+        if data.uco[i] == IP[-11:] and data.selhdg[i] != 0:
             label += '%-3s' % leading_zeros(data.selhdg[i])[:3]
         elif data.flighttype[i] == 'INBOUND':
             label += '%-3s' % data.arr[i].replace('ARTIP', 'ATP')[:3]
@@ -898,7 +902,7 @@ def applabel(actdata, data, i):
             label += '%-1s' % str(data.wtc[i])[:1]
         else:
             label += '%-1s' % ' '
-        if data.uco[i] and data.selspd[i] != 0:
+        if data.uco[i] == IP[-11:] and data.selspd[i] != 0:
             label += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
         else:
             label += '%-3s' % 'SPD'
@@ -956,6 +960,8 @@ def acclabel(actdata, data, i):
     Date: 21-12-2021
     """
 
+    IP = socket.gethostbyname(socket.gethostname())
+
     # Empty labels
     label    = ''
     ssrlabel = ''
@@ -972,7 +978,7 @@ def acclabel(actdata, data, i):
             label += '%-1s' % 'A'
         else:
             label += '%-1s' % ' '
-        if data.uco[i] and data.selalt[i] != 0:
+        if data.uco[i] == IP[-11:] and data.selalt[i] != 0:
             label += '%-3s' % leading_zeros(data.selalt[i]/ft/100)[-3:]
         else:
             label += '%-3s' % '   '
@@ -988,7 +994,7 @@ def acclabel(actdata, data, i):
             label += '%-1s' % ' '
 
         # Line 4
-        if data.uco[i] and data.selspd[i] != 0:
+        if data.uco[i] == IP[-11:] and data.selspd[i] != 0:
             label += '%-1s' % 'I'
             label += '%-3s' % leading_zeros(data.selspd[i]/kts)[:3]
         else:

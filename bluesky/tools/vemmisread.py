@@ -712,6 +712,8 @@ class VEMMISRead:
             setsim = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18R']
         if runway == 'C':
             setsim = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18C']
+        if runway == 'both':
+            setsim = self.flightdata
         cmds += list("SETSIM "+setsim['CALLSIGN'])
         cmdst += list(setsim['TMA_ENTRY_SIMTIME'] + 0.01)
 
@@ -719,6 +721,16 @@ class VEMMISRead:
         artip = setsim.loc[setsim['STACK'] == 'ARTIP']
         sugol = setsim.loc[setsim['STACK'] == 'SUGOL']
         river = setsim.loc[setsim['STACK'] == 'RIVER']
+
+        # if runway == 'both':
+        #
+        #     cmds += list("SETSIM " + self.flightdata['CALLSIGN'])
+        #     cmdst += list(self.flightdata['TMA_ENTRY_SIMTIME'] + 0.01)
+        #
+        #     # Routes
+        #     artip = self.flightdata.loc[self.flightdata['STACK'] == 'ARTIP']
+        #     sugol = self.flightdata.loc[self.flightdata['STACK'] == 'SUGOL']
+        #     river = self.flightdata.loc[self.flightdata['STACK'] == 'RIVER']
 
         cmds += list("SETROUTE " + artip['CALLSIGN'] + ' ATP18C')
         cmdst += list(artip['TMA_ENTRY_SIMTIME'] + 0.01)
@@ -730,15 +742,19 @@ class VEMMISRead:
             cmds += list("SETROUTE " + river['CALLSIGN'] + ' RIV18R')
         if runway == 'C':
             cmds += list("SETROUTE " + river['CALLSIGN'] + ' RIV18C')
+        if runway == 'both':
+            cmds += list("SETROUTE " + river['CALLSIGN'] + ' RIV18R')
         cmdst += list(river['TMA_ENTRY_SIMTIME'] + 0.01)
 
         # Delete
         if runway == 'R':
             delete = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18C']
+            cmds += list("DEL " + delete['CALLSIGN'])
+            cmdst += list(delete['SIM_END'])
         if runway == 'C':
             delete = self.flightdata.loc[self.flightdata['RUNWAY_IN'] == '18R']
-        cmds += list("DEL "+delete['CALLSIGN'])
-        cmdst += list(delete['SIM_END'])
+            cmds += list("DEL " + delete['CALLSIGN'])
+            cmdst += list(delete['SIM_END'])
 
         # Sort
         command_df = pd.DataFrame({'COMMAND': cmds, 'TIME': cmdst})
@@ -866,7 +882,7 @@ class VEMMISSource:
         # commands, commandstime = vemmisdata.get_initial_tbar()
 
         # SCENARIO (current case arrival 18R and 18C):
-        runway = 'R'
+        runway = 'C'  # 'R', 'C', or 'both'
         commands, commandstime = vemmisdata.get_initial_scenario(runway)
 
         # --------------------------------------------------

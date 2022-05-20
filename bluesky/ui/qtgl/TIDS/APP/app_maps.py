@@ -47,7 +47,7 @@ appmaps = [['a1',    'ALS\n10NM',     ['lambda: appmaps.close()',
            ['f1',    'COR',           'lambda: None'],
            ['f2',    'MAIN',          ['lambda: appmaps.close()',
                                        'lambda: show_basetid("appdisp", "appdisp")']],
-           ['f3',    '',              None],
+           ['f3', 'TOGGLE\nVNR MAP',         ['lambda: console.Console._instance.stack("MAPTOGGLE map GMP")']],
            ['f4',    'FIC\nMAPS',     'lambda: None']]
 
 

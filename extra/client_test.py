@@ -12,7 +12,7 @@ def Main():
     host = '192.168.0.3'
     port = 4003
 
-    server = ('192.168.0.5', 4000)
+    server = ('192.168.0.6', 4000)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((host, port))
