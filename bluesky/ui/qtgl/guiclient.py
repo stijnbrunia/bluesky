@@ -893,7 +893,7 @@ class nodeData:
             self.show_map = False
             self.show_histsymb = False
             self.show_aptdetails = True
-            self.show_wpt = 1
+            self.show_wpt = 0
             self.show_wptlbl = False
             self.show_apt = 0
             self.show_aptlbl = False

@@ -34,7 +34,7 @@ start = [['a1',    '',        None],
 
          ['e1',    '',        None],
          ['e2',    '',        None],
-         ['e3',    '',        None],
+         ['e3',    'TWR',     ['lambda: console.Console._instance.stack("ATCMODE TWR")']],
          ['e4',    '',        None],
 
          ['f1',    '',        None],
