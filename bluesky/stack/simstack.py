@@ -2,6 +2,7 @@
 import math
 import os
 import traceback
+from pathlib import Path
 import bluesky as bs
 from bluesky.stack.stackbase import Stack, stack, checkscen, forward
 from bluesky.stack.cmdparser import Command, command
@@ -281,8 +282,6 @@ def stack_commands(cmdstime, cmds):
 
     # stack any commands that are already due
     checkscen()
-
-
 
 def maptoggle_func(fname):
     t_offset = bs.sim.simt

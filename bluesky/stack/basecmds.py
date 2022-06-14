@@ -420,7 +420,8 @@ def initbasecmds():
             "[bool]",
             bs.sim.realtime,
             "En-/disable realtime running allowing a variable timestep."],
-        "RESET": ["RESET", "", bs.sim.reset, "Reset simulation"],
+        "RESET": ["RESET", "", bs.sim.reset, "Reset simulation"
+                  ],
         "SEED": [
             "SEED value",
             "int",

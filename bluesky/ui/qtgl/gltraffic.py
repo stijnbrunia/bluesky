@@ -170,15 +170,25 @@ class Traffic(glh.RenderObject, layer=100):
         self.ac_symbol.set_attribs(lat=self.lat, lon=self.lon, color=self.color, orientation=self.hdg,
                                    instance_divisor=1)
 
-        acverticeslvnl = np.array([(-0.5 * ac_size, -0.5 * ac_size),
-                                   (0.5 * ac_size, 0.5 * ac_size),
-                                   (0.5 * ac_size, -0.5 * ac_size),
-                                   (-0.5 * ac_size, 0.5 * ac_size),
-                                   (-0.5 * ac_size, -0.5 * ac_size),
-                                   (0.5 * ac_size, -0.5 * ac_size),
-                                   (0.5 * ac_size, 0.5 * ac_size),
-                                   (-0.5 * ac_size, 0.5 * ac_size)],
-                                  dtype=np.float32)  # a square
+        acverticeslvnl = np.array([(-0.3 * ac_size, -0.3 * ac_size),
+                                   (0.3 * ac_size, 0.3 * ac_size),
+                                   (0.3 * ac_size, -0.3 * ac_size),
+                                   (-0.3 * ac_size, 0.3 * ac_size),
+                                   (-0.3 * ac_size, -0.3 * ac_size),
+                                   (0.3 * ac_size, -0.3 * ac_size),
+                                   (0.3 * ac_size, 0.3 * ac_size),
+                                   (-0.3 * ac_size, 0.3 * ac_size)],
+                                  dtype=np.float32)  # a small square
+
+        # acverticeslvnl = np.array([(-0.5 * ac_size, -0.5 * ac_size),
+        #                            (0.5 * ac_size, 0.5 * ac_size),
+        #                            (0.5 * ac_size, -0.5 * ac_size),
+        #                            (-0.5 * ac_size, 0.5 * ac_size),
+        #                            (-0.5 * ac_size, -0.5 * ac_size),
+        #                            (0.5 * ac_size, -0.5 * ac_size),
+        #                            (0.5 * ac_size, 0.5 * ac_size),
+        #                            (-0.5 * ac_size, 0.5 * ac_size)],
+        #                           dtype=np.float32)  # a square
 
         # acverticeslvnl = np.array([(0 * ac_size, 0.5 * ac_size),
         #                           (-0.5 * ac_size, 0 * ac_size),
@@ -383,8 +393,10 @@ class Traffic(glh.RenderObject, layer=100):
                 self.pluginlabel.draw(n_instances=actdata.naircraft)
             if self.tbar_label is not None and self.show_tbar_ac:
                 self.tbar_label.draw(n_instances=actdata.naircraft)
-
-            self.leaderlines.draw()
+            if actdata.atcmode != 'TWR':
+                self.leaderlines.draw()
+            if actdata.show_lbl != 1 and actdata.atcmode == 'TWR':
+                self.leaderlines.draw()
 
         # Draw SSD
         if actdata.ssd_all or actdata.ssd_conflicts or len(actdata.ssd_ownship) > 0:
@@ -831,6 +843,7 @@ def baselabel(actdata, data, i):
     label = ''
 
     label += '%-8s' % data.id[i][:8]
+
     if actdata.show_lbl == 2:
         if data.alt[i] <= data.translvl:
             label += '%-5d' % int(data.alt[i] / ft + 0.5)
@@ -1072,6 +1085,8 @@ def twrlabel(actdata, data, i):
         label += '%-8s' % data.type[i][:8]
         # Line 4
         label += 8*' '
+    elif actdata.show_lbl == 1:
+        label = 8*5*' '
     else:
         label += 8*4*' '
 
