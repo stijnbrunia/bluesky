@@ -251,6 +251,12 @@ def initbasecmds():
             lambda flag, *args: bs.sim.ff(*args) if flag else bs.op(),
             "Legacy function for TMX compatibility",
         ],
+        "GROUND": [
+            "GROUND [ON/OFF], [day,month,year,HH:MM:SS.hh]",
+            "[onoff], [int,int,int,txt]",
+            bs.traf.activate_GroundRadar,
+            "Activating ground radar traffic",
+        ],
 
         "GROUP": [
             "GROUP [grname, (areaname OR acid,...) ]",
@@ -265,7 +271,7 @@ def initbasecmds():
             "HIGHRES db_Name, [ON/OFF]",
             "word, [onoff]",
             bs.traf.activate_HighRes,
-            "Manuel Switch per aircraft (using ADSB data)",
+            "Activating Highres Meteo mode",
         ],
         "HISTORY": [
             "HISTORY SYMBOLS",

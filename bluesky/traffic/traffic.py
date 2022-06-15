@@ -16,7 +16,7 @@ import bluesky as bs
 from bluesky.core import Entity, timed_function
 from bluesky.stack import refdata
 from bluesky.stack.recorder import savecmd
-from bluesky.tools import geo, Functions
+from bluesky.tools import geo, Functions, Ground_radar_read
 from bluesky.tools.misc import latlon2txt, angleFromCoordinate, get_indices
 from bluesky.tools.aero import cas2tas, casormach2tas, fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
@@ -98,6 +98,15 @@ class Traffic(Entity):
         self.id_select = ''  # aircraft that previously received a command
 
         self.trafdatafeed = TrafficDataFeed()
+
+        #Ground Radar
+        self.Ground_Radar_mode = False
+        self.GR_date = [1,1,2018, '07:00:00']
+        self.start_time = ''
+        self.GR_file = Ground_radar_read.filename
+        self.parktime = Ground_radar_read.park_time
+        self.current_line = 1
+        self.active_ac = pd.DataFrame(columns=["AC_id", "time", "lat", "lon", "V", "heading", "altitude", "park_count"])
 
         with self.settrafarrays():
             # Aircraft Info
@@ -428,6 +437,10 @@ class Traffic(Entity):
         return True
 
     def update(self):
+        # Ground radar mode should be able to update without traffic
+        if self.Ground_Radar_mode:
+            Ground_radar_read.update(self)
+
         # Update only if there is traffic ---------------------
         if self.ntraf == 0:
             return
@@ -616,7 +629,6 @@ class Traffic(Entity):
                 """ Manual Mode off """
                 print("MANUAL OFF")
 
-
     def meteo(self, flag):
         """
             Function:   Meteo function that activates a high resolution meteo data demo with data of 1-10-2021
@@ -691,6 +703,25 @@ class Traffic(Entity):
                         self.windnorth[idx + base] = Functions.time_interpolation(timefrac, value1[4], value2[4])
                         self.windeast[idx + base] = Functions.time_interpolation(timefrac, value1[5], value2[5])
 
+    def activate_GroundRadar(self, flag, *args):
+        """
+            Function:   Function that activates the ground radar
+            Args:
+                - self
+                - args: the date of the traffic data
+                - flag: the on/off switch
+            Returns: -
+
+            Created by: Stijn Brunia
+            Date: 15-06-2022
+        """
+        if args:
+            self.GR_date = [args[0], args[1], args[2], args[3]]
+        self.Ground_Radar_mode = flag
+        if self.Ground_Radar_mode:
+            print("Ground Radar mode has been initialised.")
+        else:
+            print("Ground Radar mode has been disabled.")
 
     def setnoise(self, noise=None):
         """Noise (turbulence, ADBS-transmission noise, ADSB-truncated effect)"""
