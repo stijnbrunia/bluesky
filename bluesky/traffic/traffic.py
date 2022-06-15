@@ -103,7 +103,8 @@ class Traffic(Entity):
         self.Ground_Radar_mode = False
         self.GR_date = [1,1,2018, '07:00:00']
         self.start_time = ''
-        self.GR_file = Ground_radar_read.filename
+        self.GR_directory = Ground_radar_read.directory
+        self.GR_file = ""
         self.parktime = Ground_radar_read.park_time
         self.current_line = 1
         self.active_ac = pd.DataFrame(columns=["AC_id", "time", "lat", "lon", "V", "heading", "altitude", "park_count"])
@@ -1017,4 +1018,3 @@ class Traffic(Entity):
         if self.swats[idx]:
             return True,"ATS of "+self.id[idx]+" is ON"
         return True, "ATS of " + self.id[idx] + " is OFF. THR is "+str(self.thr[idx])
-

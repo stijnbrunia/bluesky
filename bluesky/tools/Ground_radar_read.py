@@ -5,7 +5,7 @@ import numpy as np
 import bluesky as bs
 
 '''  Variables '''
-filename = 'C:\\Users\\stijn\\Documents\\Administratie\\Aerospace Engineering\\Master\\Master Thesis\\Code\\Data\\Astra\\20180101\\data.txt'
+directory = 'C:\\Users\\stijn\\Documents\\Administratie\\Aerospace Engineering\\Master\\Master Thesis\\Code\\Data\\Astra\\'
 park_time = 600
 
 ''' Main Functions'''
@@ -21,6 +21,7 @@ def update(self):
     # Only enters this statement when you start plotting ground radar data, its sets some initial variables
     if self.start_time == '':
         bs.sim.setutc(self.GR_date[0], self.GR_date[1], self.GR_date[2], self.GR_date[3])
+        self.GR_file = self.GR_directory + date2file([self.GR_date[0], self.GR_date[1], self.GR_date[2], self.GR_date[3]])
         self.current_line = timestamp_to_line(self.GR_file, int(datetime.timestamp(bs.sim.utc)))
         self.start_time = read_line(self.GR_file, 1)[0:10]
 
@@ -219,6 +220,9 @@ def actual_ac(ac_id):
     else:
         return True
 
+def date2file(date):
+    filename = str(date[2]) + '\\' + str(date[1]) + '\\' + str(date[0]) + '_' + str(date[1]) + '_' + str(date[2]) + '.txt'
+    return filename
 
 ''' Location Functions '''
 def get_latlon(x,y):
