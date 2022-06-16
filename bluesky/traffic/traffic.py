@@ -101,12 +101,14 @@ class Traffic(Entity):
 
         #Ground Radar
         self.Ground_Radar_mode = False
-        self.GR_date = [1,1,2018, '07:00:00']
-        self.start_time = ''
         self.GR_directory = Ground_radar_read.directory
         self.GR_file = ""
+
+        self.GR_date = [1,1,2018, '07:00:00']
+        self.current_line = 0
+        self.n_lines = 10
+
         self.parktime = Ground_radar_read.park_time
-        self.current_line = 1
         self.active_ac = pd.DataFrame(columns=["AC_id", "time", "lat", "lon", "V", "heading", "altitude", "park_count"])
 
         with self.settrafarrays():

@@ -1,5 +1,6 @@
 import linecache
 from datetime import datetime
+import pytz
 import numpy as np
 
 import bluesky as bs
@@ -19,17 +20,16 @@ def update(self):
         Date = 15-6-2022
     """
     # Only enters this statement when you start plotting ground radar data, its sets some initial variables
-    if self.start_time == '':
+    if self.current_line == 0 or self.current_line > self.n_lines:
         bs.sim.setutc(self.GR_date[0], self.GR_date[1], self.GR_date[2], self.GR_date[3])
-        self.GR_file = self.GR_directory + date2file([self.GR_date[0], self.GR_date[1], self.GR_date[2], self.GR_date[3]])
-        self.current_line = timestamp_to_line(self.GR_file, int(datetime.timestamp(bs.sim.utc)))
-        self.start_time = read_line(self.GR_file, 1)[0:10]
+        self.GR_file        = self.GR_directory + date2file([self.GR_date[0], self.GR_date[1], self.GR_date[2], self.GR_date[3]])
+        self.n_lines        = number_of_lines(self.GR_file)
+        self.current_line   = timestamp_to_line(self.GR_file, int(datetime.timestamp(pytz.utc.localize(bs.sim.utc))), self.n_lines)
 
     # Only enters this statement every whole second, this is the radar frequency so more is not needed
     if len(str(bs.sim.utc)) == 19:
-        sim_time = int(datetime.timestamp(bs.sim.utc))
+        sim_time = int(datetime.timestamp(pytz.utc.localize(bs.sim.utc)))
         lines = get_time_lines(self, sim_time)
-
         update_traffic(self, lines, sim_time)
 
 def update_traffic(self, lines, sim_time):
@@ -76,7 +76,7 @@ def read_line(file, x):
     line = linecache.getline(file, x)
     return line
 
-def timestamp_to_line(file, time):
+def timestamp_to_line(file, time, n_lines):
     """
        Function: This function will find the line in (file) at which the data for (time) starts
        Args: Data file (file), a timestamp (time)
@@ -86,31 +86,27 @@ def timestamp_to_line(file, time):
        Date = 15-6-2022
     """
 
-    # Finds the number of lines in the file
-    with open(file, 'r') as fp:
-        for count, line in enumerate(fp):
-            pass
-    n_lines = count + 1
-
     # Check if the time is located at the first line
     if time == int(read_line(file, 1)[0:10]):
         line_idx = 1
 
     else:
         # Using Binary Search to find a line that starts with (time)
+        low = 0
+        high = n_lines
         search1 = True
-        search_line = n_lines/2
         hist_search = []
+
         while search1:
+            search_line = (high+low)/2
             timestamp = int(read_line(file, int(search_line))[0:10])
+
             if timestamp == time:
                 search1 = False
             elif timestamp < time:
-                search_line += search_line/2
-                if search_line > n_lines:
-                    search_line = n_lines
+                low = search_line
             elif timestamp > time:
-                search_line -= search_line/2
+                high = search_line
 
             if search_line not in hist_search:
                 hist_search.append(search_line)
@@ -121,6 +117,7 @@ def timestamp_to_line(file, time):
         search2 = True
         while search2:
             search_line -= 1
+            # print(search_line, time)
             timestamp = int(read_line(file, int(search_line))[0:10])
             if timestamp == (time - 1):
                 search_line += 1
@@ -152,6 +149,12 @@ def get_time_lines(self, sim_time):
     self.current_line += x-1
     return lines
 
+def number_of_lines(file):
+    # Finds the number of lines in the file
+    with open(file, 'r') as fp:
+        for count, line in enumerate(fp):
+            pass
+    return count + 1
 
 ''' Smaller General Functions '''
 def time_delete(self, sim_time):
@@ -221,6 +224,7 @@ def actual_ac(ac_id):
         return True
 
 def date2file(date):
+    """ creates a filename from the selected date """
     filename = str(date[2]) + '\\' + str(date[1]) + '\\' + str(date[0]) + '_' + str(date[1]) + '_' + str(date[2]) + '.txt'
     return filename
 
