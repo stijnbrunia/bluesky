@@ -257,7 +257,6 @@ def initbasecmds():
             bs.traf.activate_GroundRadar,
             "Activating ground radar traffic",
         ],
-
         "GROUP": [
             "GROUP [grname, (areaname OR acid,...) ]",
             "[txt,acid/txt,...]",

@@ -2,6 +2,7 @@ import linecache
 from datetime import datetime
 import pytz
 import numpy as np
+import pandas as pd
 
 import bluesky as bs
 
@@ -60,15 +61,33 @@ def update_traffic(self, lines, sim_time):
                         self.active_ac.at[i[0][0], 'lon'] = lon
 
                     idx = bs.traf.id2idx(line[8])
-                    bs.traf.move(idx, lat, lon)  # , alt=None, hdg=None, casmach=None, vspd=None)
+                    bs.traf.move(idx, lat, lon)
             else:
                 self.active_ac = self.active_ac.append({'AC_id': line[8], 'time': line[0], 'lat': lat, 'lon': lon, 'park_count': 0},ignore_index=True)
-                bs.traf.cre(line[8], "B737", lat, lon)  # , achdg=None, acalt=0, acspd=0)
+                bs.traf.cre(line[8], "B737", lat, lon)
+                if inbound_check(lat, lon):
+                    self.where_created = self.where_created.append({'AC_id': line[8], 'time': bs.sim.utc, 'lat': lat, 'lon': lon},ignore_index=True)
+                gate_recording(self)
 
         # Deleting aircraft when needed
         location_delete(self)
         time_delete(self, sim_time)
 
+
+''' Gate Recording '''
+def gate_recording(self):
+    if self.record_gates:
+        writer = pd.ExcelWriter(self.gates_file, engine='xlsxwriter')
+
+        self.where_created.to_excel(writer, sheet_name='sheet_1')
+        writer.save()
+
+def inbound_check(lat, lon):
+    if 52.2857 <= lat <= 52.3226:
+        if 4.7291 <= lon <= 4.8170:
+            return True
+    else:
+        return False
 
 ''' Text Reading Functions '''
 def read_line(file, x):
@@ -79,7 +98,7 @@ def read_line(file, x):
 def timestamp_to_line(file, time, n_lines):
     """
        Function: This function will find the line in (file) at which the data for (time) starts
-       Args: Data file (file), a timestamp (time)
+       Args: Data file (file), a timestamp (time), Number of lines (n_lines)
        Returns: Line index (line_idx)
 
        Created by: Stijn Brunia

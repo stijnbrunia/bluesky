@@ -21,7 +21,6 @@ from bluesky.tools.misc import latlon2txt, angleFromCoordinate, get_indices
 from bluesky.tools.aero import cas2tas, casormach2tas, fpm, kts, ft, g0, Rearth, nm, tas2cas,\
                          vatmos,  vtas2cas, vtas2mach, vcasormach
 
-
 from bluesky.traffic.asas import ConflictDetection, ConflictResolution
 from .windsim import WindSim
 from .conditional import Condition
@@ -110,6 +109,10 @@ class Traffic(Entity):
 
         self.parktime = Ground_radar_read.park_time
         self.active_ac = pd.DataFrame(columns=["AC_id", "time", "lat", "lon", "V", "heading", "altitude", "park_count"])
+
+        self.record_gates = True
+        self.where_created = pd.DataFrame(columns=["AC_id", "time", "lat", "lon"])
+        self.gates_file = 'C:\\Users\\stijn\\Documents\\Administratie\\Aerospace Engineering\\Master\\Master Thesis\\Code\\Data\\Astra_Gates\\1-1-2018.xlsx'
 
         with self.settrafarrays():
             # Aircraft Info
