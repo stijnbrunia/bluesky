@@ -106,12 +106,13 @@ class Traffic(Entity):
         self.GR_date = [1,1,2018, '07:00:00']
         self.current_line = 0
         self.n_lines = 10
+        self.start_time = 0
 
         self.parktime = Ground_radar_read.park_time
         self.active_ac = pd.DataFrame(columns=["AC_id", "time", "lat", "lon", "V", "heading", "altitude", "park_count"])
 
         self.record_gates = True
-        self.where_created = pd.DataFrame(columns=["AC_id", "time", "lat", "lon"])
+        self.where_created = pd.DataFrame(columns=["AC_id", "time", "lat", "lon", "bay"])
         self.gates_file = 'C:\\Users\\stijn\\Documents\\Administratie\\Aerospace Engineering\\Master\\Master Thesis\\Code\\Data\\Astra_Gates\\1-1-2018.xlsx'
 
         with self.settrafarrays():

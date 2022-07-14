@@ -26,6 +26,7 @@ def update(self):
         self.GR_file        = self.GR_directory + date2file([self.GR_date[0], self.GR_date[1], self.GR_date[2], self.GR_date[3]])
         self.n_lines        = number_of_lines(self.GR_file)
         self.current_line   = timestamp_to_line(self.GR_file, int(datetime.timestamp(pytz.utc.localize(bs.sim.utc))), self.n_lines)
+        self.start_time     = int(datetime.timestamp(pytz.utc.localize(bs.sim.utc)))
 
     # Only enters this statement every whole second, this is the radar frequency so more is not needed
     if len(str(bs.sim.utc)) == 19:
@@ -65,8 +66,9 @@ def update_traffic(self, lines, sim_time):
             else:
                 self.active_ac = self.active_ac.append({'AC_id': line[8], 'time': line[0], 'lat': lat, 'lon': lon, 'park_count': 0},ignore_index=True)
                 bs.traf.cre(line[8], "B737", lat, lon)
-                if inbound_check(lat, lon):
-                    self.where_created = self.where_created.append({'AC_id': line[8], 'time': bs.sim.utc, 'lat': lat, 'lon': lon},ignore_index=True)
+                if inbound_check(lat, lon) and sim_time > self.start_time:
+                    bay = which_bay(lat,lon)
+                    self.where_created = self.where_created.append({'AC_id': line[8], 'time': bs.sim.utc, 'lat': lat, 'lon': lon, 'bay': bay},ignore_index=True)
                 gate_recording(self)
 
         # Deleting aircraft when needed
@@ -88,6 +90,112 @@ def inbound_check(lat, lon):
             return True
     else:
         return False
+
+def which_bay(lat, lon):
+    bay = "unknown"
+    # Easy Bays first
+    if 52.30820 < lat < 52.31402:
+        if 4.74278 < lon < 4.74890:
+            bay = "JP"
+            return bay
+    if 52.30421 < lat < 52.30633:
+        if 4.74208 < lon < 4.74484:
+            bay = "Y"
+            return bay
+    if 52.30825 < lat < 52.314414:
+        if 4.75000 < lon < 4.75700:
+            bay = "GH"
+            return bay
+    if 52.31103 < lat < 52.314380:
+        if 4.75710 < lon < 4.762112:
+            bay = "FG"
+            return bay
+    if 52.30745 < lat < 52.30950:
+        if 4.76992 < lon < 4.77469:
+            bay = "D"
+            return bay
+    if 52.29892 < lat < 52.30587:
+        if 4.75119 < lon < 4.7640:
+            bay = "A"
+            return bay
+
+    # Split Bays
+    if 52.30850 < lat < 52.30954:
+        if 4.76554 < lon < 4.76995:
+            bay = "DE"
+            return bay
+    if 52.30809 < lat < 52.31014:
+        if 4.76995 < lon < 4.77469:
+            bay = "DE"
+            return bay
+    if 52.31042 < lat < 52.314414:
+        if 4.75700 < lon < 4.76378:
+            bay = "EF"
+            return bay
+    if 52.30700 < lat < 52.30853:
+        if 4.76459 < lon < 4.77000:
+            bay = "CD"
+            return bay
+    if 52.30678 < lat < 52.30744:
+        if 4.77000 < lon < 4.77417:
+            bay = "CD"
+            return bay
+
+    # Split by inclined line
+    if 52.3100 < lat < 52.3150:
+        if 4.76482 < lon < 4.76770:
+            side = side_of_line(52.30290, 4.76382, 52.30573, 4.76081, lat, lon)
+            if side < 0:
+                bay = "DE"
+                return bay
+            else:
+                bay = "EF"
+                return bay
+
+    if 52.31110 < lat < 52.31482:
+        if 4.76770 < lon < 4.77120:
+            side = side_of_line(52.31011, 4.76487, 52.31463, 4.76979, lat, lon)
+            if side < 0:
+                bay = "DE"
+                return bay
+            else:
+                bay = "EF"
+                return bay
+
+    if 52.30424 < lat < 52.30714:
+        if 4.76427 < lon < 4.76865:
+            side = side_of_line(52.30705, 4.76480, 52.30433, 4.76707, lat, lon)
+            if side < 0:
+                bay = "BC"
+                return bay
+            else:
+                bay = "CD"
+                return bay
+
+    if 52.30267 < lat < 52.30588:
+        if 4.7640 < lon < 4.76865:
+            side = side_of_line(52.30573, 4.76081, 52.30290, 4.76382, lat, lon)
+            if side < 0:
+                bay = "B"
+                return bay
+            else:
+                bay = "BC"
+                return bay
+
+    if 52.30244 < lat < 52.30267:
+        if 4.7640 < lon < 4.76495:
+            side = side_of_line(52.30290, 4.76382, 52.30573, 4.76081, lat, lon)
+            if side < 0:
+                bay = "B"
+                return bay
+            else:
+                bay = "BC"
+                return bay
+    return bay
+
+def side_of_line(lat_1, lon_1, lat_2, lon_2, lat, lon):
+    position = np.sign((lon_2 - lon_1) * (lat - lat_1) - (lat_2 - lat_1) * (lon - lon_1))
+    return position
 
 ''' Text Reading Functions '''
 def read_line(file, x):
